@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Staff Management - NSC ICT Service Desk</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="app-shell" id="app-shell"></div>
+
+  <div class="modal-overlay" id="s-modal">
+    <div class="modal" style="position:relative;">
+      <span class="close-x" onclick="closeStaffModal()">&times;</span>
+      <h3 id="s-title">Add Account</h3>
+      <div class="error-box" id="s-error"></div>
+      <form id="s-form">
+        <input type="hidden" id="user_id">
+        <div class="form-grid">
+          <div class="field full"><label>Full Name *</label><input id="full_name" required></div>
+          <div class="field"><label>Email *</label><input type="email" id="email" required></div>
+          <div class="field"><label>Username *</label><input id="username" required></div>
+          <div class="field" id="password-field"><label>Password *</label><input type="password" id="password" minlength="6"></div>
+          <div class="field"><label>Role *</label>
+            <select id="role"><option value="staff">Staff/User</option><option value="technician">Technician</option><option value="ict_officer">ICT Officer</option><option value="admin">Administrator</option></select>
+          </div>
+          <div class="field"><label>User Type *</label>
+            <select id="user_type" onchange="toggleLifecycleFields(this.value)">
+              <option value="employee">Employee</option>
+              <option value="intern">Intern</option>
+              <option value="corper">Corper</option>
+              <option value="contractor">Contractor</option>
+              <option value="guest">Guest</option>
+            </select>
+          </div>
+          <div class="field"><label>Department</label><select id="department_id"><option value="">- None -</option></select></div>
+          <div class="field"><label>Phone</label><input id="phone"></div>
+          <div class="field"><label>Account Start Date</label><input type="date" id="account_start_date"></div>
+          <div class="field"><label>Account Expiration Date</label><input type="date" id="account_expiration_date"></div>
+          <div class="field full"><label>Sponsor or Supervisor</label><input id="sponsor_name" placeholder="Required for temporary users"></div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" onclick="closeStaffModal()">Cancel</button>
+          <button type="submit" class="btn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="i-modal">
+    <div class="modal" style="position:relative;">
+      <span class="close-x" onclick="document.getElementById('i-modal').classList.remove('open')">&times;</span>
+      <h3>Issue Invitation</h3>
+      <div class="error-box" id="i-error"></div>
+      <form id="i-form">
+        <div class="form-grid">
+          <div class="field full"><label>Full Name *</label><input id="i_full_name" required></div>
+          <div class="field"><label>Email *</label><input type="email" id="i_email" required></div>
+          <div class="field"><label>Preferred Username</label><input id="i_username"></div>
+          <div class="field"><label>Role *</label>
+            <select id="i_role"><option value="staff">Staff/User</option><option value="technician">Technician</option><option value="ict_officer">ICT Officer</option><option value="admin">Administrator</option></select>
+          </div>
+          <div class="field"><label>User Type *</label>
+            <select id="i_user_type" onchange="toggleInviteLifecycleFields(this.value)">
+              <option value="employee">Employee</option>
+              <option value="intern">Intern</option>
+              <option value="corper">Corper</option>
+              <option value="contractor">Contractor</option>
+              <option value="guest">Guest</option>
+            </select>
+          </div>
+          <div class="field"><label>Department</label><select id="i_department_id"><option value="">- None -</option></select></div>
+          <div class="field"><label>Account Start Date</label><input type="date" id="i_account_start_date"></div>
+          <div class="field"><label>Account Expiration Date</label><input type="date" id="i_account_expiration_date"></div>
+          <div class="field"><label>Invitation Expires In (days)</label><input type="number" id="i_expires_in_days" min="1" value="7"></div>
+          <div class="field full"><label>Sponsor or Supervisor</label><input id="i_sponsor_name" placeholder="Required for temporary users"></div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" onclick="document.getElementById('i-modal').classList.remove('open')">Cancel</button>
+          <button type="submit" class="btn">Create Invitation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/layout.js"></script>
+  <script>
+    requireAuthPage();
+    requireRolePage('admin', 'ict_officer');
+    renderLayout('staff', 'Staff Management');
+    const user = getUser();
+    const isAdmin = user.role === 'admin';
+    const userTypeLabels = { employee: 'Employee', intern: 'Intern', corper: 'Corper', contractor: 'Contractor', guest: 'Guest' };
+    const roleLabels = { admin: 'Administrator', ict_officer: 'ICT Officer', technician: 'Technician', staff: 'Staff/User' };
+
+    function renderContent() {
+      document.getElementById('page-content').innerHTML = `
+        <div class="panel">
+          <div class="toolbar">
+            <div class="filters">
+              <input type="text" id="search" placeholder="Search name, email, username...">
+              <select id="filter-role">
+                <option value="">All Roles</option>
+                <option value="admin">Administrator</option>
+                <option value="ict_officer">ICT Officer</option>
+                <option value="technician">Technician</option>
+                <option value="staff">Staff/User</option>
+              </select>
+              <select id="filter-user-type">
+                <option value="">All User Types</option>
+                <option value="employee">Employee</option>
+                <option value="intern">Intern</option>
+                <option value="corper">Corper</option>
+                <option value="contractor">Contractor</option>
+                <option value="guest">Guest</option>
+              </select>
+            </div>
+            ${isAdmin ? '<div style="display:flex; gap:10px;"><button class="btn secondary" onclick="openInvite()">+ Issue Invitation</button><button class="btn" onclick="openNew()">+ Add Account</button></div>' : ''}
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Name</th><th>Email</th><th>User Type</th><th>Role</th><th>Department</th><th>Expiry</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table></div>
+          <div id="empty" class="empty-state" style="display:none;">No staff found.</div>
+        </div>
+
+        ${isAdmin ? `
+        <div class="panel" style="margin-top:22px;">
+          <div class="toolbar">
+            <h3 style="margin:0;">Pending Invitations</h3>
+            <button class="btn secondary small" onclick="loadInvitations()">Refresh</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Name</th><th>Email</th><th>User Type</th><th>Role</th><th>Expiry</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="invite-rows"></tbody>
+          </table></div>
+          <div id="invite-empty" class="empty-state" style="display:none;">No invitations found.</div>
+        </div>` : ''}
+      `;
+
+      document.getElementById('search').addEventListener('input', debounce(loadStaff, 350));
+      document.getElementById('filter-role').addEventListener('change', loadStaff);
+      document.getElementById('filter-user-type').addEventListener('change', loadStaff);
+    }
+
+    function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+    function isTemporaryUser(type) { return ['intern', 'corper', 'contractor', 'guest'].includes(type); }
+
+    let departments = [];
+    async function loadDepartments() {
+      departments = await api('/departments');
+      const options = departments.map(d => `<option value="${d.department_id}">${escapeHtml(d.name)}</option>`).join('');
+      document.getElementById('department_id').innerHTML += options;
+      document.getElementById('i_department_id').innerHTML += options;
+    }
+
+    function toggleLifecycleFields(type) {
+      const sponsor = document.getElementById('sponsor_name');
+      const expiry = document.getElementById('account_expiration_date');
+      sponsor.required = isTemporaryUser(type);
+      expiry.required = isTemporaryUser(type);
+    }
+
+    function toggleInviteLifecycleFields(type) {
+      const sponsor = document.getElementById('i_sponsor_name');
+      const expiry = document.getElementById('i_account_expiration_date');
+      sponsor.required = isTemporaryUser(type);
+      expiry.required = isTemporaryUser(type);
+    }
+
+    async function loadStaff() {
+      const params = new URLSearchParams();
+      const search = document.getElementById('search').value.trim();
+      const role = document.getElementById('filter-role').value;
+      const userType = document.getElementById('filter-user-type').value;
+      if (search) params.set('search', search);
+      if (role) params.set('role', role);
+      if (userType) params.set('user_type', userType);
+
+      try {
+        const list = await api(`/staff?${params.toString()}`);
+        document.getElementById('empty').style.display = list.length ? 'none' : 'block';
+        document.getElementById('rows').innerHTML = list.map(s => `
+          <tr>
+            <td>${escapeHtml(s.full_name)}</td>
+            <td>${escapeHtml(s.email)}</td>
+            <td>${escapeHtml(userTypeLabels[s.user_type] || s.user_type || '-')}</td>
+            <td>${escapeHtml(roleLabels[s.role] || s.role)}</td>
+            <td>${escapeHtml(s.department_name || '-')}</td>
+            <td>${escapeHtml(fmtDate(s.account_expiration_date))}</td>
+            <td>${s.is_active ? '<span class="badge status-Active">Active</span>' : '<span class="badge status-Damaged">Inactive</span>'}</td>
+            <td>${isAdmin ? `
+              <button class="link-btn" onclick='editStaff(${JSON.stringify(s)})'>Edit</button> ·
+              <button class="link-btn" onclick="toggleActive(${s.user_id}, ${!s.is_active})">${s.is_active ? 'Deactivate' : 'Activate'}</button>
+              ${s.user_type !== 'employee' ? `· <button class="link-btn" onclick="extendAccount(${s.user_id})">Extend</button>` : ''}
+            ` : ''}</td>
+          </tr>`).join('');
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function loadInvitations() {
+      if (!isAdmin) return;
+      try {
+        const list = await api('/invitations');
+        document.getElementById('invite-empty').style.display = list.length ? 'none' : 'block';
+        document.getElementById('invite-rows').innerHTML = list.map(inv => `
+          <tr>
+            <td>${escapeHtml(inv.full_name)}</td>
+            <td>${escapeHtml(inv.email)}</td>
+            <td>${escapeHtml(userTypeLabels[inv.user_type] || inv.user_type)}</td>
+            <td>${escapeHtml(roleLabels[inv.role] || inv.role)}</td>
+            <td>${escapeHtml(fmtDate(inv.expires_at))}</td>
+            <td><span class="badge status-${escapeHtml(inv.status)}">${escapeHtml(inv.status)}</span></td>
+            <td>${inv.status === 'pending' ? `<button class="link-btn" onclick="revokeInvitation(${inv.invitation_id})">Revoke</button>` : '-'}</td>
+          </tr>`).join('');
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function closeStaffModal() {
+      document.getElementById('s-modal').classList.remove('open');
+      document.getElementById('username').disabled = false;
+    }
+
+    function openNew() {
+      document.getElementById('s-title').textContent = 'Add Account';
+      document.getElementById('s-form').reset();
+      document.getElementById('user_id').value = '';
+      document.getElementById('password-field').style.display = 'block';
+      document.getElementById('password').required = true;
+      document.getElementById('username').disabled = false;
+      document.getElementById('user_type').value = 'employee';
+      toggleLifecycleFields('employee');
+      document.getElementById('s-error').style.display = 'none';
+      document.getElementById('s-modal').classList.add('open');
+    }
+
+    function openInvite() {
+      document.getElementById('i-form').reset();
+      document.getElementById('i_user_type').value = 'employee';
+      toggleInviteLifecycleFields('employee');
+      document.getElementById('i-error').style.display = 'none';
+      document.getElementById('i-modal').classList.add('open');
+    }
+
+    function editStaff(s) {
+      document.getElementById('s-title').textContent = `Edit - ${s.full_name}`;
+      document.getElementById('user_id').value = s.user_id;
+      document.getElementById('full_name').value = s.full_name;
+      document.getElementById('email').value = s.email;
+      document.getElementById('username').value = s.username;
+      document.getElementById('username').disabled = true;
+      document.getElementById('password-field').style.display = 'none';
+      document.getElementById('password').required = false;
+      document.getElementById('role').value = s.role;
+      document.getElementById('user_type').value = s.user_type || 'employee';
+      document.getElementById('department_id').value = s.department_id || '';
+      document.getElementById('phone').value = s.phone || '';
+      document.getElementById('account_start_date').value = s.account_start_date ? String(s.account_start_date).slice(0, 10) : '';
+      document.getElementById('account_expiration_date').value = s.account_expiration_date ? String(s.account_expiration_date).slice(0, 10) : '';
+      document.getElementById('sponsor_name').value = s.sponsor_name || '';
+      toggleLifecycleFields(s.user_type || 'employee');
+      document.getElementById('s-error').style.display = 'none';
+      document.getElementById('s-modal').classList.add('open');
+    }
+
+    document.getElementById('s-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('user_id').value;
+      const errBox = document.getElementById('s-error');
+
+      const body = {
+        full_name: document.getElementById('full_name').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        role: document.getElementById('role').value,
+        user_type: document.getElementById('user_type').value,
+        department_id: document.getElementById('department_id').value || null,
+        phone: document.getElementById('phone').value.trim(),
+        sponsor_name: document.getElementById('sponsor_name').value.trim(),
+        account_start_date: document.getElementById('account_start_date').value || null,
+        account_expiration_date: document.getElementById('account_expiration_date').value || null,
+      };
+
+      if (!id) {
+        body.username = document.getElementById('username').value.trim();
+        body.password = document.getElementById('password').value;
+      }
+
+      try {
+        await api(id ? `/staff/${id}` : '/staff', { method: id ? 'PUT' : 'POST', body });
+        closeStaffModal();
+        await loadStaff();
+      } catch (err) {
+        errBox.textContent = err.message;
+        errBox.style.display = 'block';
+      }
+    });
+
+    document.getElementById('i-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errBox = document.getElementById('i-error');
+      const body = {
+        full_name: document.getElementById('i_full_name').value.trim(),
+        email: document.getElementById('i_email').value.trim(),
+        preferred_username: document.getElementById('i_username').value.trim() || null,
+        role: document.getElementById('i_role').value,
+        user_type: document.getElementById('i_user_type').value,
+        department_id: document.getElementById('i_department_id').value || null,
+        sponsor_name: document.getElementById('i_sponsor_name').value.trim(),
+        account_start_date: document.getElementById('i_account_start_date').value || null,
+        account_expiration_date: document.getElementById('i_account_expiration_date').value || null,
+        expires_in_days: document.getElementById('i_expires_in_days').value || 7,
+      };
+
+      try {
+        const invitation = await api('/invitations', { method: 'POST', body });
+        document.getElementById('i-modal').classList.remove('open');
+        window.prompt('Copy and share this invitation URL. It is shown only once.', invitation.acceptance_url);
+        await loadInvitations();
+      } catch (err) {
+        errBox.textContent = err.message;
+        errBox.style.display = 'block';
+      }
+    });
+
+    async function toggleActive(id, newState) {
+      const deactivationReason = newState ? null : window.prompt('Deactivation reason', 'Account access revoked by administrator');
+      if (!newState && deactivationReason === null) return;
+      try {
+        await api(`/staff/${id}/status`, { method: 'PATCH', body: { is_active: newState, deactivation_reason: deactivationReason } });
+        await loadStaff();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function extendAccount(id) {
+      const newDate = window.prompt('Enter the new expiration date (YYYY-MM-DD)');
+      if (!newDate) return;
+      try {
+        await api(`/staff/${id}/extend`, { method: 'PATCH', body: { account_expiration_date: newDate } });
+        await loadStaff();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function revokeInvitation(id) {
+      if (!confirm('Revoke this pending invitation?')) return;
+      try {
+        await api(`/invitations/${id}/revoke`, { method: 'POST' });
+        await loadInvitations();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    (async () => {
+      renderContent();
+      await loadDepartments();
+      await loadStaff();
+      await loadInvitations();
+    })();
+  </script>
+</body>
+</html>

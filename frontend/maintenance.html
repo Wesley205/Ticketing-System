@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Maintenance — NSC ICT Service Desk</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="app-shell" id="app-shell"></div>
+
+  <div class="modal-overlay" id="m-modal">
+    <div class="modal" style="position:relative;">
+      <span class="close-x" onclick="document.getElementById('m-modal').classList.remove('open')">&times;</span>
+      <h3>New Maintenance Record</h3>
+      <div class="error-box" id="m-error"></div>
+      <form id="m-form">
+        <div class="field"><label>Asset *</label><select id="asset_id" required></select></div>
+        <div class="field"><label>Problem *</label><textarea id="problem" rows="2" required></textarea></div>
+        <div class="field"><label>Action Taken</label><textarea id="action_taken" rows="2"></textarea></div>
+        <div class="form-grid">
+          <div class="field"><label>Maintenance Date</label><input type="date" id="maintenance_date"></div>
+          <div class="field"><label>Cost (₦)</label><input type="number" id="cost" step="0.01" value="0"></div>
+          <div class="field"><label>Status</label>
+            <select id="status"><option>Scheduled</option><option>In Progress</option><option>Completed</option><option>Cancelled</option></select>
+          </div>
+          <div class="field"><label>Notes</label><input id="notes"></div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" onclick="document.getElementById('m-modal').classList.remove('open')">Cancel</button>
+          <button type="submit" class="btn">Save Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/layout.js"></script>
+  <script>
+    requireAuthPage();
+    requireRolePage('admin', 'ict_officer', 'technician');
+    renderLayout('maintenance', 'Maintenance');
+
+    function renderContent() {
+      document.getElementById('page-content').innerHTML = `
+        <div class="panel">
+          <div class="toolbar">
+            <div class="filters">
+              <select id="filter-status">
+                <option value="">All Statuses</option>
+                <option>Scheduled</option><option>In Progress</option><option>Completed</option><option>Cancelled</option>
+              </select>
+            </div>
+            <button class="btn" onclick="openNew()">+ New Maintenance Record</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Asset</th><th>Problem</th><th>Technician</th><th>Date</th><th>Cost</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table></div>
+          <div id="empty" class="empty-state" style="display:none;">No maintenance records yet.</div>
+        </div>
+      `;
+      document.getElementById('filter-status').addEventListener('change', load);
+    }
+
+    async function loadAssetOptions() {
+      const assets = await api('/assets');
+      document.getElementById('asset_id').innerHTML = assets.map(a => `<option value="${a.asset_id}">${escapeHtml(a.asset_tag)} — ${escapeHtml(a.asset_type)}</option>`).join('');
+    }
+
+    async function load() {
+      const status = document.getElementById('filter-status').value;
+      const params = new URLSearchParams();
+      if (status) params.set('status', status);
+      try {
+        const list = await api(`/maintenance?${params.toString()}`);
+        document.getElementById('empty').style.display = list.length ? 'none' : 'block';
+        document.getElementById('rows').innerHTML = list.map(m => `
+          <tr>
+            <td>${escapeHtml(m.asset_tag)}</td>
+            <td>${escapeHtml(m.problem)}</td>
+            <td>${escapeHtml(m.technician_name || '—')}</td>
+            <td>${fmtDate(m.maintenance_date)}</td>
+            <td>₦${Number(m.cost).toLocaleString()}</td>
+            <td><span class="badge ${statusClass(m.status)}">${m.status}</span></td>
+            <td>${m.status !== 'Completed' ? `<button class="link-btn" onclick="markComplete(${m.maintenance_id})">Mark Complete</button>` : ''}</td>
+          </tr>`).join('');
+      } catch (err) { alert(err.message); }
+    }
+
+    async function markComplete(id) {
+      try {
+        await api(`/maintenance/${id}`, { method: 'PUT', body: { status: 'Completed' } });
+        load();
+      } catch (err) { alert(err.message); }
+    }
+
+    async function openNew() {
+      await loadAssetOptions();
+      document.getElementById('m-form').reset();
+      document.getElementById('m-error').style.display = 'none';
+      document.getElementById('m-modal').classList.add('open');
+    }
+
+    document.getElementById('m-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = {
+        asset_id: document.getElementById('asset_id').value,
+        problem: document.getElementById('problem').value.trim(),
+        action_taken: document.getElementById('action_taken').value.trim(),
+        maintenance_date: document.getElementById('maintenance_date').value || null,
+        cost: document.getElementById('cost').value || 0,
+        status: document.getElementById('status').value,
+        notes: document.getElementById('notes').value.trim(),
+      };
+      try {
+        await api('/maintenance', { method: 'POST', body });
+        document.getElementById('m-modal').classList.remove('open');
+        load();
+      } catch (err) {
+        document.getElementById('m-error').textContent = err.message;
+        document.getElementById('m-error').style.display = 'block';
+      }
+    });
+
+    renderContent();
+    load();
+  </script>
+</body>
+</html>

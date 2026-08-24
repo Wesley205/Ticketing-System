@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Service Desk — NSC ICT Service Desk</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="app-shell" id="app-shell"></div>
+
+  <div class="modal-overlay" id="new-modal">
+    <div class="modal" style="position:relative;">
+      <span class="close-x" onclick="document.getElementById('new-modal').classList.remove('open')">&times;</span>
+      <h3>Submit a Service Request</h3>
+      <div class="error-box" id="new-error"></div>
+      <form id="new-form">
+        <div class="field"><label>Category *</label>
+          <select id="category" required>
+            <option>Computer</option><option>Network</option><option>Printer</option><option>Internet</option>
+            <option>Software</option><option>Email</option><option>Hardware</option><option>Other</option>
+          </select>
+        </div>
+        <div class="field"><label>Priority</label>
+          <select id="priority"><option>Low</option><option selected>Medium</option><option>High</option><option>Critical</option></select>
+        </div>
+        <div class="field"><label>Subject *</label><input id="subject" required placeholder="Brief summary of the issue"></div>
+        <div class="field"><label>Description *</label><textarea id="description" rows="4" required placeholder="Describe the issue in detail"></textarea></div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" onclick="document.getElementById('new-modal').classList.remove('open')">Cancel</button>
+          <button type="submit" class="btn">Submit Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="assign-modal">
+    <div class="modal" style="position:relative;max-width:400px;">
+      <span class="close-x" onclick="document.getElementById('assign-modal').classList.remove('open')">&times;</span>
+      <h3>Assign Technician</h3>
+      <div class="field"><label>Technician</label><select id="tech-select"></select></div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" onclick="document.getElementById('assign-modal').classList.remove('open')">Cancel</button>
+        <button type="button" class="btn" onclick="confirmAssign()">Assign</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/layout.js"></script>
+  <script>
+    requireAuthPage();
+    renderLayout('service-requests', 'Service Desk');
+    const user = getUser();
+    const canAssign = ['admin', 'ict_officer'].includes(user.role);
+    let activeAssignId = null;
+
+    function renderContent() {
+      document.getElementById('page-content').innerHTML = `
+        <div class="panel">
+          <div class="toolbar">
+            <div class="filters">
+              <select id="filter-status">
+                <option value="">All Statuses</option>
+                <option>Pending</option><option>Assigned</option><option>In Progress</option><option>Resolved</option><option>Closed</option>
+              </select>
+              <select id="filter-priority">
+                <option value="">All Priorities</option>
+                <option>Low</option><option>Medium</option><option>High</option><option>Critical</option>
+              </select>
+            </div>
+            <button class="btn" onclick="document.getElementById('new-form').reset();document.getElementById('new-error').style.display='none';document.getElementById('new-modal').classList.add('open')">+ New Request</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr>
+              <th>ID</th><th>Subject</th><th>Requester</th><th>Category</th><th>Priority</th>
+              <th>Technician</th><th>Status</th><th>Submitted</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="rows"></tbody>
+          </table></div>
+          <div id="empty" class="empty-state" style="display:none;">No service requests found.</div>
+        </div>
+      `;
+      document.getElementById('filter-status').addEventListener('change', load);
+      document.getElementById('filter-priority').addEventListener('change', load);
+    }
+
+    async function load() {
+      const status = document.getElementById('filter-status').value;
+      const priority = document.getElementById('filter-priority').value;
+      const params = new URLSearchParams();
+      if (status) params.set('status', status);
+      if (priority) params.set('priority', priority);
+      try {
+        const list = await api(`/service-requests?${params.toString()}`);
+        document.getElementById('empty').style.display = list.length ? 'none' : 'block';
+        document.getElementById('rows').innerHTML = list.map(r => `
+          <tr>
+            <td>#${r.request_id}</td>
+            <td>${escapeHtml(r.subject)}</td>
+            <td>${escapeHtml(r.requester_name)}</td>
+            <td>${escapeHtml(r.category)}</td>
+            <td><span class="badge priority-${r.priority}">${r.priority}</span></td>
+            <td>${escapeHtml(r.technician_name || '—')}</td>
+            <td><span class="badge ${statusClass(r.status)}">${r.status}</span></td>
+            <td>${fmtDate(r.date_submitted)}</td>
+            <td>${canAssign && !r.assigned_technician_id ? `<button class="link-btn" onclick="openAssign(${r.request_id})">Assign</button>` : ''}</td>
+          </tr>
+        `).join('');
+      } catch (err) { alert(err.message); }
+    }
+
+    document.getElementById('new-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = {
+        category: document.getElementById('category').value,
+        priority: document.getElementById('priority').value,
+        subject: document.getElementById('subject').value.trim(),
+        description: document.getElementById('description').value.trim(),
+      };
+      const errBox = document.getElementById('new-error');
+      try {
+        await api('/service-requests', { method: 'POST', body });
+        document.getElementById('new-modal').classList.remove('open');
+        load();
+      } catch (err) {
+        errBox.textContent = err.message;
+        errBox.style.display = 'block';
+      }
+    });
+
+    async function openAssign(id) {
+      activeAssignId = id;
+      try {
+        const techs = await api('/staff/technicians');
+        document.getElementById('tech-select').innerHTML = techs.map(t => `<option value="${t.user_id}">${escapeHtml(t.full_name)}</option>`).join('');
+        document.getElementById('assign-modal').classList.add('open');
+      } catch (err) { alert(err.message); }
+    }
+
+    async function confirmAssign() {
+      const techId = document.getElementById('tech-select').value;
+      try {
+        await api(`/service-requests/${activeAssignId}/assign`, { method: 'PATCH', body: { assigned_technician_id: techId } });
+        document.getElementById('assign-modal').classList.remove('open');
+        load();
+      } catch (err) { alert(err.message); }
+    }
+
+    renderContent();
+    load();
+  </script>
+</body>
+</html>

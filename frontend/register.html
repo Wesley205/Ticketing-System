@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Accept Invitation - NSC ICT Service Desk</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-visual">
+      <div class="beacon-eyebrow"><span class="beacon-dot-pulse"></span> INVITATION-ONLY ACCESS</div>
+      <h1>Activate your approved account.</h1>
+      <p>Employees and approved temporary users must use an administrator-issued invitation to access the service desk.</p>
+      <div class="stat-strip">
+        <div><b>INVITE</b>CONTROLLED ONBOARDING</div>
+        <div><b>ROLE</b>APPROVED ACCESS</div>
+        <div><b>DATE</b>LIFECYCLE ENFORCED</div>
+      </div>
+    </div>
+
+    <div class="auth-panel">
+      <div class="auth-card">
+        <div class="auth-logo">
+          <img src="/img/logo-solid.svg" alt="" class="auth-logo-img">
+          <div class="brand">NSC ICT Service Desk</div>
+          <div class="sub">ACCOUNT ACTIVATION</div>
+        </div>
+        <h1>Accept invitation</h1>
+        <div class="error-box" id="error-box"></div>
+        <form id="accept-form">
+          <div class="field">
+            <label for="token">Invitation Token</label>
+            <input type="text" id="token" required placeholder="Paste the invitation token or open your invitation link">
+          </div>
+          <div class="field">
+            <label for="username">Username</label>
+            <input type="text" id="username" required minlength="3" autocomplete="username" placeholder="e.g. jane.doe">
+          </div>
+          <div class="field">
+            <label for="phone">Phone</label>
+            <input type="text" id="phone" placeholder="Optional">
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input type="password" id="password" required minlength="6" autocomplete="new-password" placeholder="At least 6 characters">
+          </div>
+          <button type="submit" class="btn full" id="accept-btn">Activate Account</button>
+        </form>
+        <div class="auth-footer">
+          Need access? Contact an administrator for an invitation. <a href="/index.html" class="link-btn" style="display:inline">Back to login</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script>
+    if (getToken()) window.location.href = '/dashboard.html';
+
+    const tokenField = document.getElementById('token');
+    const urlToken = new URLSearchParams(window.location.search).get('token');
+    if (urlToken) tokenField.value = urlToken;
+
+    document.getElementById('accept-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errorBox = document.getElementById('error-box');
+      errorBox.style.display = 'none';
+      const btn = document.getElementById('accept-btn');
+      btn.disabled = true;
+      btn.textContent = 'Activating...';
+
+      try {
+        const body = {
+          token: tokenField.value.trim(),
+          username: document.getElementById('username').value.trim(),
+          phone: document.getElementById('phone').value.trim(),
+          password: document.getElementById('password').value,
+        };
+        const data = await api('/invitations/accept', { method: 'POST', body });
+        setSession(data.token, data.user);
+        window.location.href = '/dashboard.html';
+      } catch (err) {
+        errorBox.textContent = err.message;
+        errorBox.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Activate Account';
+      }
+    });
+  </script>
+</body>
+</html>

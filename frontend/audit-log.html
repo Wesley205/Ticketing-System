@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Audit Log — NSC ICT Service Desk</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="app-shell" id="app-shell"></div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/layout.js"></script>
+  <script>
+    requireAuthPage();
+    requireRolePage('admin', 'ict_officer');
+    renderLayout('audit-log', 'Audit Log');
+
+    function renderContent() {
+      document.getElementById('page-content').innerHTML = `
+        <div class="panel">
+          <div class="toolbar">
+            <div class="filters">
+              <input type="text" id="filter-action" placeholder="Filter by action (e.g. 'logged in')">
+            </div>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>User</th><th>Role</th><th>Action</th><th>Record</th><th>Details</th><th>Date & Time</th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table></div>
+          <div id="empty" class="empty-state" style="display:none;">No audit records found.</div>
+        </div>
+      `;
+      document.getElementById('filter-action').addEventListener('input', debounce(load, 350));
+    }
+    function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+    async function load() {
+      const action = document.getElementById('filter-action').value;
+      const params = new URLSearchParams();
+      if (action) params.set('action', action);
+      try {
+        const list = await api(`/audit-logs?${params.toString()}`);
+        document.getElementById('empty').style.display = list.length ? 'none' : 'block';
+        document.getElementById('rows').innerHTML = list.map(l => `
+          <tr>
+            <td>${escapeHtml(l.user_name || 'System')}</td>
+            <td>${escapeHtml(l.user_role || '—')}</td>
+            <td>${escapeHtml(l.action)}</td>
+            <td>${escapeHtml(l.record_type || '—')}${l.record_id ? ' #' + l.record_id : ''}</td>
+            <td>${escapeHtml(l.details || '—')}</td>
+            <td>${fmtDateTime(l.created_at)}</td>
+          </tr>`).join('');
+      } catch (err) { alert(err.message); }
+    }
+
+    renderContent();
+    load();
+  </script>
+</body>
+</html>

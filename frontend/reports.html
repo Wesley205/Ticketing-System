@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Reports — NSC ICT Service Desk</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="app-shell" id="app-shell"></div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/layout.js"></script>
+  <script>
+    requireAuthPage();
+    requireRolePage('admin', 'ict_officer');
+    renderLayout('reports', 'Reports');
+
+    function renderContent() {
+      document.getElementById('page-content').innerHTML = `
+        <div class="toolbar">
+          <div></div>
+          <div class="filters">
+            <button class="btn secondary" onclick="exportCsv('assets')">Export Assets CSV</button>
+            <button class="btn secondary" onclick="exportCsv('service-requests')">Export Requests CSV</button>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel"><h3>Assets by Status</h3><canvas id="chart-status"></canvas></div>
+          <div class="panel"><h3>Assets by Type</h3><canvas id="chart-type"></canvas></div>
+          <div class="panel"><h3>Assets by Department</h3><canvas id="chart-dept"></canvas></div>
+          <div class="panel"><h3>Requests by Priority</h3><canvas id="chart-priority"></canvas></div>
+          <div class="panel"><h3>Requests by Category</h3><canvas id="chart-category"></canvas></div>
+          <div class="panel"><h3>Requests by Status</h3><canvas id="chart-req-status"></canvas></div>
+        </div>
+
+        <div class="section-title">Technician Workload & Resolutions</div>
+        <div class="panel table-wrap">
+          <table>
+            <thead><tr><th>Technician</th><th>Open Requests</th><th>Resolved (all time)</th></tr></thead>
+            <tbody id="tech-rows"></tbody>
+          </table>
+        </div>
+
+        <div class="section-title">Department Statistics</div>
+        <div class="panel table-wrap">
+          <table>
+            <thead><tr><th>Department</th><th>Total Assets</th><th>Total Requests</th></tr></thead>
+            <tbody id="dept-rows"></tbody>
+          </table>
+        </div>
+
+        <div class="section-title">Monthly Maintenance Cost</div>
+        <div class="panel table-wrap">
+          <table>
+            <thead><tr><th>Month</th><th>Records</th><th>Total Cost</th></tr></thead>
+            <tbody id="maint-rows"></tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    const palette = ['#0a7d3e','#2fae66','#f4a300','#14904a','#c0362c','#b7791f','#5c6b62','#8fe0ad'];
+
+    function makeChart(canvasId, labels, data, type = 'bar') {
+      const ctx = document.getElementById(canvasId);
+      new Chart(ctx, {
+        type,
+        data: { labels, datasets: [{ data, backgroundColor: palette, borderWidth: 0 }] },
+        options: { plugins: { legend: { display: type === 'doughnut' } }, scales: type === 'bar' ? { y: { beginAtZero: true, ticks: { precision: 0 } } } : {} },
+      });
+    }
+
+    async function load() {
+      try {
+        const r = await api('/reports/summary');
+
+        makeChart('chart-status', r.assets_by_status.map(x => x.status), r.assets_by_status.map(x => x.total), 'doughnut');
+        makeChart('chart-type', r.assets_by_type.map(x => x.asset_type), r.assets_by_type.map(x => x.total));
+        makeChart('chart-dept', r.assets_by_department.map(x => x.department), r.assets_by_department.map(x => x.total));
+        makeChart('chart-priority', r.requests_by_priority.map(x => x.priority), r.requests_by_priority.map(x => x.total), 'doughnut');
+        makeChart('chart-category', r.requests_by_category.map(x => x.category), r.requests_by_category.map(x => x.total));
+        makeChart('chart-req-status', r.requests_by_status.map(x => x.status), r.requests_by_status.map(x => x.total), 'doughnut');
+
+        document.getElementById('tech-rows').innerHTML = r.technician_workload.map(t => {
+          const res = r.technician_resolutions.find(x => x.technician === t.technician);
+          return `<tr><td>${escapeHtml(t.technician)}</td><td>${t.open_requests}</td><td>${res ? res.resolved_count : 0}</td></tr>`;
+        }).join('') || '<tr><td colspan="3" class="empty-state">No technicians yet</td></tr>';
+
+        document.getElementById('dept-rows').innerHTML = r.department_stats.map(d =>
+          `<tr><td>${escapeHtml(d.name)}</td><td>${d.total_assets}</td><td>${d.total_requests}</td></tr>`
+        ).join('');
+
+        document.getElementById('maint-rows').innerHTML = r.monthly_maintenance.map(m =>
+          `<tr><td>${m.month}</td><td>${m.total_records}</td><td>₦${Number(m.total_cost).toLocaleString()}</td></tr>`
+        ).join('') || '<tr><td colspan="3" class="empty-state">No maintenance records yet</td></tr>';
+      } catch (err) { alert(err.message); }
+    }
+
+    async function exportCsv(type) {
+      try {
+        const blob = await api(`/reports/export/${type}.csv`, { isCsv: true });
+        downloadBlob(blob, `${type}_report.csv`);
+      } catch (err) { alert('Export failed: ' + err.message); }
+    }
+
+    renderContent();
+    load();
+  </script>
+</body>
+</html>

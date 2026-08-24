@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>About the System — NSC ICT Service Desk</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="app-shell" id="app-shell"></div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/layout.js"></script>
+  <script>
+    requireAuthPage();
+    renderLayout('about', 'About the System');
+
+    document.getElementById('page-content').innerHTML = `
+      <div class="panel about-content">
+        <h3>Purpose of the System</h3>
+        <p>The NSC ICT Service Desk and Asset Management System is a prototype web application built to
+        help an ICT department track its hardware assets and manage staff-reported technical support
+        requests from a single, centralized platform. It is developed as an academic
+        Computer Science / SIWES project and uses entirely fictional sample data.</p>
+
+        <h3>Problems the System Addresses</h3>
+        <ul>
+          <li>Manual, paper- or spreadsheet-based tracking of ICT equipment, which is error-prone and hard to search.</li>
+          <li>No centralized record of who is using which asset, or an asset's maintenance history.</li>
+          <li>Ad-hoc, undocumented handling of staff IT complaints with no accountability trail.</li>
+          <li>Lack of visibility into technician workload and resolution performance.</li>
+          <li>No audit trail of who changed what and when.</li>
+        </ul>
+
+        <h3>Main Features</h3>
+        <ul>
+          <li>Secure, role-based authentication (Administrator, ICT Officer, Technician, Staff/User)</li>
+          <li>Live dashboard with statistics computed directly from the database</li>
+          <li>Full asset lifecycle management: add, edit, assign, reassign, status changes, history</li>
+          <li>Service desk ticketing with categories, priorities, and statuses</li>
+          <li>Dedicated technician workspace for managing assigned tickets</li>
+          <li>Maintenance records linked to individual assets</li>
+          <li>Staff and department management</li>
+          <li>System-wide audit logging</li>
+          <li>Reports with charts and CSV export</li>
+        </ul>
+
+        <h3>Technologies Used</h3>
+        <ul>
+          <li><b>Frontend:</b> HTML5, CSS3, vanilla JavaScript (no build step required), Chart.js for charts</li>
+          <li><b>Backend:</b> Node.js with Express.js (REST API)</li>
+          <li><b>Authentication:</b> JSON Web Tokens (JWT) + bcrypt password hashing</li>
+          <li><b>Database:</b> PostgreSQL (relational, normalized schema)</li>
+        </ul>
+
+        <h3>Database Used</h3>
+        <p>PostgreSQL. The full schema, relationships, and sample data are provided as SQL files in the
+        project's <code>/database</code> folder, and documented in detail in the separate
+        Database Documentation report.</p>
+
+        <h3>Project Objectives</h3>
+        <ul>
+          <li>Demonstrate a complete, working full-stack CRUD application connected to a real relational database.</li>
+          <li>Apply role-based access control to a multi-user business workflow.</li>
+          <li>Model realistic ICT asset and service-desk operations for a shipping-sector organization.</li>
+          <li>Produce a properly normalized database with documented relationships and an ERD.</li>
+        </ul>
+
+        <h3>System Limitations</h3>
+        <ul>
+          <li>This is a prototype/demo — it uses fictional data and is not connected to any real organizational system.</li>
+          <li>No email/SMS notifications are sent when tickets are assigned or resolved.</li>
+          <li>File/photo attachments on tickets or maintenance records are not implemented.</li>
+          <li>"Forgot password" currently requires an administrator to reset the account (no email delivery is configured).</li>
+          <li>PDF report export is not implemented; reports export as CSV, and charts can be viewed on screen.</li>
+          <li>Designed for local/demo deployment; production hardening (rate limiting, refresh tokens, HTTPS) is not included.</li>
+        </ul>
+      </div>
+    `;
+  </script>
+</body>
+</html>

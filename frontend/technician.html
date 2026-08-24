@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Assigned Requests — NSC ICT Service Desk</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="app-shell" id="app-shell"></div>
+
+  <div class="modal-overlay" id="update-modal">
+    <div class="modal" style="position:relative;">
+      <span class="close-x" onclick="document.getElementById('update-modal').classList.remove('open')">&times;</span>
+      <h3 id="update-title">Update Request</h3>
+      <div class="field"><label>Status</label>
+        <select id="update-status">
+          <option>Assigned</option><option>In Progress</option><option>Resolved</option><option>Closed</option>
+        </select>
+      </div>
+      <div class="field"><label>Troubleshooting Notes / Resolution</label>
+        <textarea id="update-resolution" rows="4" placeholder="Describe the action taken..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" onclick="document.getElementById('update-modal').classList.remove('open')">Cancel</button>
+        <button type="button" class="btn" onclick="saveUpdate()">Save Update</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/layout.js"></script>
+  <script>
+    requireAuthPage();
+    requireRolePage('technician');
+    renderLayout('technician', 'My Assigned Requests');
+    let activeId = null;
+
+    function renderContent() {
+      document.getElementById('page-content').innerHTML = `
+        <div class="panel">
+          <div class="section-title" style="margin-top:0;">Open & In-Progress Requests</div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>ID</th><th>Subject</th><th>Requester</th><th>Priority</th><th>Status</th><th>Submitted</th><th>Actions</th></tr></thead>
+            <tbody id="open-rows"></tbody>
+          </table></div>
+          <div id="open-empty" class="empty-state" style="display:none;">No open requests assigned to you.</div>
+
+          <div class="section-title">Previously Completed Requests</div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>ID</th><th>Subject</th><th>Requester</th><th>Resolution</th><th>Resolved</th></tr></thead>
+            <tbody id="done-rows"></tbody>
+          </table></div>
+          <div id="done-empty" class="empty-state" style="display:none;">No completed requests yet.</div>
+        </div>
+      `;
+    }
+
+    async function load() {
+      try {
+        const list = await api('/service-requests/assigned-to-me');
+        const open = list.filter(r => !['Resolved', 'Closed'].includes(r.status));
+        const done = list.filter(r => ['Resolved', 'Closed'].includes(r.status));
+
+        document.getElementById('open-empty').style.display = open.length ? 'none' : 'block';
+        document.getElementById('open-rows').innerHTML = open.map(r => `
+          <tr>
+            <td>#${r.request_id}</td><td>${escapeHtml(r.subject)}</td><td>${escapeHtml(r.requester_name)}</td>
+            <td><span class="badge priority-${r.priority}">${r.priority}</span></td>
+            <td><span class="badge ${statusClass(r.status)}">${r.status}</span></td>
+            <td>${fmtDate(r.date_submitted)}</td>
+            <td><button class="link-btn" onclick="openUpdate(${r.request_id}, '${r.status}')">Update</button></td>
+          </tr>`).join('');
+
+        document.getElementById('done-empty').style.display = done.length ? 'none' : 'block';
+        document.getElementById('done-rows').innerHTML = done.map(r => `
+          <tr>
+            <td>#${r.request_id}</td><td>${escapeHtml(r.subject)}</td><td>${escapeHtml(r.requester_name)}</td>
+            <td>${escapeHtml(r.resolution || '—')}</td><td>${fmtDate(r.date_resolved)}</td>
+          </tr>`).join('');
+      } catch (err) { alert(err.message); }
+    }
+
+    function openUpdate(id, currentStatus) {
+      activeId = id;
+      document.getElementById('update-title').textContent = `Update Request #${id}`;
+      document.getElementById('update-status').value = currentStatus === 'Pending' ? 'Assigned' : currentStatus;
+      document.getElementById('update-resolution').value = '';
+      document.getElementById('update-modal').classList.add('open');
+    }
+
+    async function saveUpdate() {
+      const status = document.getElementById('update-status').value;
+      const resolution = document.getElementById('update-resolution').value.trim();
+      try {
+        await api(`/service-requests/${activeId}/status`, { method: 'PATCH', body: { status, resolution } });
+        document.getElementById('update-modal').classList.remove('open');
+        load();
+      } catch (err) { alert(err.message); }
+    }
+
+    renderContent();
+    load();
+  </script>
+</body>
+</html>

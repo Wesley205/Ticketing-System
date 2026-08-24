@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Departments — NSC ICT Service Desk</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="app-shell" id="app-shell"></div>
+
+  <div class="modal-overlay" id="d-modal">
+    <div class="modal" style="position:relative;max-width:460px;">
+      <span class="close-x" onclick="document.getElementById('d-modal').classList.remove('open')">&times;</span>
+      <h3 id="d-title">Add Department</h3>
+      <div class="error-box" id="d-error"></div>
+      <form id="d-form">
+        <input type="hidden" id="department_id">
+        <div class="field"><label>Name *</label><input id="name" required></div>
+        <div class="field"><label>Description</label><textarea id="description" rows="3"></textarea></div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" onclick="document.getElementById('d-modal').classList.remove('open')">Cancel</button>
+          <button type="submit" class="btn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="detail-modal">
+    <div class="modal" style="position:relative;max-width:600px;">
+      <span class="close-x" onclick="document.getElementById('detail-modal').classList.remove('open')">&times;</span>
+      <h3 id="detail-title">Department Detail</h3>
+      <div id="detail-body"></div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/layout.js"></script>
+  <script>
+    requireAuthPage();
+    requireRolePage('admin', 'ict_officer');
+    renderLayout('departments', 'Departments');
+    const isAdmin = getUser().role === 'admin';
+
+    function renderContent() {
+      document.getElementById('page-content').innerHTML = `
+        <div class="panel">
+          <div class="toolbar">
+            <div></div>
+            ${isAdmin ? '<button class="btn" onclick="openNew()">+ Add Department</button>' : ''}
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Name</th><th>Description</th><th>Staff</th><th>Assets</th><th>Requests</th><th>Actions</th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table></div>
+        </div>
+      `;
+    }
+
+    async function load() {
+      try {
+        const list = await api('/departments');
+        document.getElementById('rows').innerHTML = list.map(d => `
+          <tr>
+            <td><b>${escapeHtml(d.name)}</b></td>
+            <td>${escapeHtml(d.description || '—')}</td>
+            <td>${d.staff_count}</td>
+            <td>${d.asset_count}</td>
+            <td>${d.request_count}</td>
+            <td>
+              <button class="link-btn" onclick="viewDetail(${d.department_id})">View</button>
+              ${isAdmin ? ` · <button class="link-btn" onclick='editDept(${JSON.stringify(d)})'>Edit</button>` : ''}
+            </td>
+          </tr>`).join('');
+      } catch (err) { alert(err.message); }
+    }
+
+    function openNew() {
+      document.getElementById('d-title').textContent = 'Add Department';
+      document.getElementById('d-form').reset();
+      document.getElementById('department_id').value = '';
+      document.getElementById('d-error').style.display = 'none';
+      document.getElementById('d-modal').classList.add('open');
+    }
+    function editDept(d) {
+      document.getElementById('d-title').textContent = `Edit — ${d.name}`;
+      document.getElementById('department_id').value = d.department_id;
+      document.getElementById('name').value = d.name;
+      document.getElementById('description').value = d.description || '';
+      document.getElementById('d-error').style.display = 'none';
+      document.getElementById('d-modal').classList.add('open');
+    }
+
+    document.getElementById('d-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('department_id').value;
+      const body = { name: document.getElementById('name').value.trim(), description: document.getElementById('description').value.trim() };
+      try {
+        if (id) await api(`/departments/${id}`, { method: 'PUT', body });
+        else await api('/departments', { method: 'POST', body });
+        document.getElementById('d-modal').classList.remove('open');
+        load();
+      } catch (err) {
+        document.getElementById('d-error').textContent = err.message;
+        document.getElementById('d-error').style.display = 'block';
+      }
+    });
+
+    async function viewDetail(id) {
+      document.getElementById('detail-body').innerHTML = 'Loading...';
+      document.getElementById('detail-modal').classList.add('open');
+      try {
+        const d = await api(`/departments/${id}`);
+        document.getElementById('detail-title').textContent = d.name;
+        document.getElementById('detail-body').innerHTML = `
+          <p style="color:#667085">${escapeHtml(d.description || 'No description provided.')}</p>
+          <h4>Staff (${d.staff.length})</h4>
+          <ul>${d.staff.map(s => `<li>${escapeHtml(s.full_name)} — ${escapeHtml(s.role)}</li>`).join('') || '<li>None</li>'}</ul>
+          <h4>Assets (${d.assets.length})</h4>
+          <ul>${d.assets.map(a => `<li>${escapeHtml(a.asset_tag)} (${escapeHtml(a.asset_type)}) — ${escapeHtml(a.status)}</li>`).join('') || '<li>None</li>'}</ul>
+          <h4>Service Requests (${d.service_requests.length})</h4>
+          <ul>${d.service_requests.map(r => `<li>#${r.request_id} ${escapeHtml(r.subject)} — ${escapeHtml(r.status)}</li>`).join('') || '<li>None</li>'}</ul>
+        `;
+      } catch (err) {
+        document.getElementById('detail-body').innerHTML = `<p style="color:#c0362c">${err.message}</p>`;
+      }
+    }
+
+    renderContent();
+    load();
+  </script>
+</body>
+</html>
