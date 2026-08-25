@@ -16,6 +16,7 @@ router.get('/summary', requireAuth, async (req, res) => {
       assetsByType, assetsByStatus, assetsByDepartment,
       requestsByCategory, requestsByPriority, requestsByStatus,
       monthlyMaintenance, technicianWorkload, technicianResolutions, departmentStats,
+      requestsByAssignment, overdueTickets, slaPolicyCoverage,
     ] = await Promise.all([
       pool.query('SELECT asset_type, COUNT(*) AS total FROM assets GROUP BY asset_type ORDER BY total DESC'),
       pool.query('SELECT status, COUNT(*) AS total FROM assets GROUP BY status ORDER BY total DESC'),
@@ -29,7 +30,7 @@ router.get('/summary', requireAuth, async (req, res) => {
                          COUNT(*) AS total_records, COALESCE(SUM(cost),0) AS total_cost
                   FROM maintenance GROUP BY month ORDER BY month DESC LIMIT 12`),
       pool.query(`SELECT u.full_name AS technician,
-                         COUNT(sr.request_id) FILTER (WHERE sr.status IN ('Assigned','In Progress')) AS open_requests
+                         COUNT(sr.request_id) FILTER (WHERE sr.status IN ('Assigned','Accepted','In Progress','Waiting for User','Waiting for Parts','Reopened')) AS open_requests
                   FROM users u LEFT JOIN service_requests sr ON sr.assigned_technician_id = u.user_id
                   WHERE u.role = 'technician' GROUP BY u.full_name ORDER BY open_requests DESC`),
       pool.query(`SELECT u.full_name AS technician,
@@ -40,6 +41,26 @@ router.get('/summary', requireAuth, async (req, res) => {
                     (SELECT COUNT(*) FROM assets a WHERE a.department_id = d.department_id) AS total_assets,
                     (SELECT COUNT(*) FROM service_requests sr WHERE sr.department_id = d.department_id) AS total_requests
                   FROM departments d ORDER BY d.name`),
+      pool.query(`SELECT
+                    COUNT(*) FILTER (WHERE assigned_technician_id IS NULL AND status NOT IN ('Closed','Cancelled')) AS unassigned,
+                    COUNT(*) FILTER (WHERE assigned_technician_id IS NOT NULL AND status IN ('Assigned','Accepted','In Progress','Waiting for User','Waiting for Parts','Reopened')) AS actively_assigned,
+                    COUNT(*) FILTER (WHERE expected_completion_at IS NOT NULL AND expected_completion_at < NOW() AND status NOT IN ('Resolved','Closed','Cancelled')) AS expected_completion_overdue
+                  FROM service_requests`),
+      pool.query(`SELECT ticket_number, subject, priority, status, expected_completion_at, escalation_count
+                  FROM service_requests
+                  WHERE status NOT IN ('Resolved','Closed','Cancelled')
+                    AND (
+                      (sla_response_due_at IS NOT NULL AND first_response_at IS NULL AND sla_response_due_at < NOW())
+                      OR (sla_resolution_due_at IS NOT NULL AND sla_resolution_due_at < NOW())
+                      OR (expected_completion_at IS NOT NULL AND expected_completion_at < NOW())
+                    )
+                  ORDER BY priority DESC, expected_completion_at NULLS LAST, ticket_number
+                  LIMIT 25`),
+      pool.query(`SELECT
+                    COUNT(*) FILTER (WHERE sla_policy_id IS NOT NULL) AS with_policy,
+                    COUNT(*) FILTER (WHERE sla_policy_id IS NULL) AS without_policy,
+                    COUNT(*) FILTER (WHERE escalation_count > 0) AS escalated
+                  FROM service_requests`),
     ]);
 
     res.json({
@@ -53,6 +74,9 @@ router.get('/summary', requireAuth, async (req, res) => {
       technician_workload: technicianWorkload.rows,
       technician_resolutions: technicianResolutions.rows,
       department_stats: departmentStats.rows,
+      requests_by_assignment: requestsByAssignment.rows[0],
+      overdue_tickets: overdueTickets.rows,
+      sla_policy_coverage: slaPolicyCoverage.rows[0],
     });
   } catch (err) {
     console.error(err);
@@ -114,18 +138,20 @@ router.get('/export/service-requests.csv', requireAuth, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT sr.request_id, req.full_name AS requester, d.name AS department, sr.category,
-             sr.subject, sr.priority, sr.status, tech.full_name AS technician,
-             sr.date_submitted, sr.date_resolved
+             sr.ticket_type, sr.subject, sr.priority, sr.status, tech.full_name AS technician,
+             sr.assignment_notes, sr.expected_completion_at, sr.sla_response_due_at, sr.sla_resolution_due_at,
+             sr.escalation_count, sr.date_submitted, sr.date_resolved
       FROM service_requests sr
       LEFT JOIN users req ON req.user_id = sr.requester_id
       LEFT JOIN departments d ON d.department_id = sr.department_id
       LEFT JOIN users tech ON tech.user_id = sr.assigned_technician_id
       ORDER BY sr.request_id
     `);
-    const headers = ['Request ID', 'Requester', 'Department', 'Category', 'Subject', 'Priority', 'Status', 'Technician', 'Date Submitted', 'Date Resolved'];
+    const headers = ['Request ID', 'Requester', 'Department', 'Category', 'Ticket Type', 'Subject', 'Priority', 'Status', 'Technician', 'Assignment Notes', 'Expected Completion', 'Response Due', 'Resolution Due', 'Escalation Count', 'Date Submitted', 'Date Resolved'];
     const rows = result.rows.map(r => [
-      r.request_id, r.requester, r.department, r.category, r.subject,
-      r.priority, r.status, r.technician, r.date_submitted, r.date_resolved,
+      r.request_id, r.requester, r.department, r.category, r.ticket_type, r.subject,
+      r.priority, r.status, r.technician, r.assignment_notes, r.expected_completion_at,
+      r.sla_response_due_at, r.sla_resolution_due_at, r.escalation_count, r.date_submitted, r.date_resolved,
     ]);
     const csv = [headers, ...rows]
       .map(row => row.map(v => `"${(v ?? '').toString().replace(/"/g, '""')}"`).join(','))

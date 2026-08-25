@@ -40,9 +40,34 @@ Use this checklist after setup to confirm major workflows end to end.
 
 ## Service Desk
 
-- [ ] As staff, submit a service request.
+- [ ] As staff, submit a service request with ticket type, priority, impact, and urgency.
 - [ ] As staff, confirm only own requests are visible in the main queue.
-- [ ] As admin or ICT officer, assign a technician to a pending request.
+- [ ] As admin or ICT officer, assign or reassign a technician to an open ticket.
+- [ ] As assigned technician, move a ticket from `Assigned` to `Accepted`, then `In Progress`, then `Resolved`.
+- [ ] As requester, confirm internal notes and internal attachments are not visible.
+- [ ] As ICT officer, add an internal note and confirm it appears in the timeline.
+- [ ] Upload an allowed attachment to a ticket and confirm the authorized download route works.
+- [ ] Attempt to upload a blocked file type and confirm validation rejects it.
+- [ ] Attempt an invalid status jump such as `New -> Resolved` and confirm the API rejects it.
+- [ ] As requester, close a resolved ticket and confirm the timeline records the closure.
+- [ ] Reopen a resolved or closed ticket with a reason and confirm the reopen event appears in history.
+- [ ] Assign a ticket with an expected completion date and confirm both the ticket detail and assignment history show it.
+- [ ] Reassign an open ticket and confirm the previous assignment is closed in assignment history.
+- [ ] Remove an assignee from an open ticket and confirm the ticket returns to a pending state.
+- [ ] Move an assigned ticket to `Accepted` and confirm acceptance time is recorded.
+- [ ] Confirm a newly created ticket gets an SLA policy and response/resolution due timestamps when a matching policy exists.
+- [ ] Force a ticket past its SLA response deadline in a local test database, run `npm run sla-monitor`, and confirm escalation notifications and a timeline escalation event are created.
+- [ ] Confirm overdue and escalated ticket counts appear on the dashboard.
+- [ ] Confirm reports show assignment coverage, SLA coverage, and overdue-ticket rows.
+
+## Notifications
+
+- [ ] Trigger a ticket assignment and confirm a new in-app notification appears for the requester and assignee.
+- [ ] Trigger a public ticket comment and confirm it creates a new notification row for other participants.
+- [ ] Trigger an SLA escalation and confirm the in-app notification severity reflects the escalation.
+- [ ] Open the topbar notification menu and confirm unread count, list rendering, and mark-read actions work.
+- [ ] Use the notification preference modal to disable comment notifications and confirm later comments no longer create in-app notifications for that user.
+- [ ] Enable email notifications for a test user, run `npm run notification-queue` without SMTP configuration, and confirm queued deliveries move to a deferred or retryable state rather than being marked sent.
 
 ## Staff Management
 

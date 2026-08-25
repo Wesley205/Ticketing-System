@@ -10,7 +10,7 @@ router.get('/stats', requireAuth, async (req, res) => {
   try {
     if (!canViewAllOperationalData(req.user)) {
       const departmentId = req.user.department_id || -1;
-      const [totalAssets, activeAssets, availableAssets, maintenanceAssets, damagedAssets, retiredAssets, totalRequests, pendingRequests, inProgressRequests, resolvedRequests, totalStaff, totalTechnicians] = await Promise.all([
+      const [totalAssets, activeAssets, availableAssets, maintenanceAssets, damagedAssets, retiredAssets, totalRequests, pendingRequests, inProgressRequests, resolvedRequests, overdueRequests, escalatedRequests, totalStaff, totalTechnicians] = await Promise.all([
         pool.query('SELECT COUNT(*) AS count FROM assets WHERE assigned_to = $1 OR department_id = $2', [req.user.user_id, departmentId]),
         pool.query("SELECT COUNT(*) AS count FROM assets WHERE status = 'Active' AND (assigned_to = $1 OR department_id = $2)", [req.user.user_id, departmentId]),
         pool.query("SELECT COUNT(*) AS count FROM assets WHERE status = 'Available' AND (assigned_to = $1 OR department_id = $2)", [req.user.user_id, departmentId]),
@@ -21,14 +21,40 @@ router.get('/stats', requireAuth, async (req, res) => {
           ? pool.query('SELECT COUNT(*) AS count FROM service_requests WHERE assigned_technician_id = $1', [req.user.user_id])
           : pool.query('SELECT COUNT(*) AS count FROM service_requests WHERE requester_id = $1', [req.user.user_id]),
         isTechnician(req.user)
-          ? pool.query("SELECT COUNT(*) AS count FROM service_requests WHERE assigned_technician_id = $1 AND status = 'Pending'", [req.user.user_id])
-          : pool.query("SELECT COUNT(*) AS count FROM service_requests WHERE requester_id = $1 AND status = 'Pending'", [req.user.user_id]),
+          ? pool.query("SELECT COUNT(*) AS count FROM service_requests WHERE assigned_technician_id = $1 AND status IN ('New','Pending')", [req.user.user_id])
+          : pool.query("SELECT COUNT(*) AS count FROM service_requests WHERE requester_id = $1 AND status IN ('New','Pending')", [req.user.user_id]),
         isTechnician(req.user)
-          ? pool.query("SELECT COUNT(*) AS count FROM service_requests WHERE assigned_technician_id = $1 AND status = 'In Progress'", [req.user.user_id])
-          : pool.query("SELECT COUNT(*) AS count FROM service_requests WHERE requester_id = $1 AND status = 'In Progress'", [req.user.user_id]),
+          ? pool.query("SELECT COUNT(*) AS count FROM service_requests WHERE assigned_technician_id = $1 AND status IN ('Accepted','In Progress','Waiting for User','Waiting for Parts','Reopened')", [req.user.user_id])
+          : pool.query("SELECT COUNT(*) AS count FROM service_requests WHERE requester_id = $1 AND status IN ('Accepted','In Progress','Waiting for User','Waiting for Parts','Reopened')", [req.user.user_id]),
         isTechnician(req.user)
           ? pool.query("SELECT COUNT(*) AS count FROM service_requests WHERE assigned_technician_id = $1 AND status IN ('Resolved','Closed')", [req.user.user_id])
           : pool.query("SELECT COUNT(*) AS count FROM service_requests WHERE requester_id = $1 AND status IN ('Resolved','Closed')", [req.user.user_id]),
+        isTechnician(req.user)
+          ? pool.query(`SELECT COUNT(*) AS count
+                        FROM service_requests
+                        WHERE assigned_technician_id = $1
+                          AND status NOT IN ('Resolved','Closed','Cancelled')
+                          AND (
+                            (sla_response_due_at IS NOT NULL AND first_response_at IS NULL AND sla_response_due_at < NOW())
+                            OR (sla_resolution_due_at IS NOT NULL AND sla_resolution_due_at < NOW())
+                          )`, [req.user.user_id])
+          : pool.query(`SELECT COUNT(*) AS count
+                        FROM service_requests
+                        WHERE requester_id = $1
+                          AND status NOT IN ('Resolved','Closed','Cancelled')
+                          AND (
+                            (sla_response_due_at IS NOT NULL AND first_response_at IS NULL AND sla_response_due_at < NOW())
+                            OR (sla_resolution_due_at IS NOT NULL AND sla_resolution_due_at < NOW())
+                          )`, [req.user.user_id]),
+        isTechnician(req.user)
+          ? pool.query(`SELECT COUNT(*) AS count
+                        FROM service_requests
+                        WHERE assigned_technician_id = $1
+                          AND escalation_count > 0`, [req.user.user_id])
+          : pool.query(`SELECT COUNT(*) AS count
+                        FROM service_requests
+                        WHERE requester_id = $1
+                          AND escalation_count > 0`, [req.user.user_id]),
         pool.query("SELECT COUNT(*) AS count FROM users WHERE role = 'staff' AND is_active = TRUE AND department_id = $1", [departmentId]),
         pool.query("SELECT COUNT(*) AS count FROM users WHERE role = 'technician' AND is_active = TRUE AND department_id = $1", [departmentId]),
       ]);
@@ -44,6 +70,8 @@ router.get('/stats', requireAuth, async (req, res) => {
         pending_requests: Number(pendingRequests.rows[0].count),
         in_progress_requests: Number(inProgressRequests.rows[0].count),
         resolved_requests: Number(resolvedRequests.rows[0].count),
+        overdue_requests: Number(overdueRequests.rows[0].count),
+        escalated_requests: Number(escalatedRequests.rows[0].count),
         total_staff: Number(totalStaff.rows[0].count),
         total_technicians: Number(totalTechnicians.rows[0].count),
       });
@@ -60,6 +88,8 @@ router.get('/stats', requireAuth, async (req, res) => {
       pendingRequests,
       inProgressRequests,
       resolvedRequests,
+      overdueRequests,
+      escalatedRequests,
       totalStaff,
       totalTechnicians,
     ] = await Promise.all([
@@ -70,9 +100,17 @@ router.get('/stats', requireAuth, async (req, res) => {
       pool.query("SELECT COUNT(*) AS count FROM assets WHERE status = 'Damaged'"),
       pool.query("SELECT COUNT(*) AS count FROM assets WHERE status = 'Retired'"),
       pool.query('SELECT COUNT(*) AS count FROM service_requests'),
-      pool.query("SELECT COUNT(*) AS count FROM service_requests WHERE status = 'Pending'"),
+      pool.query("SELECT COUNT(*) AS count FROM service_requests WHERE status IN ('New','Pending')"),
       pool.query("SELECT COUNT(*) AS count FROM service_requests WHERE status = 'In Progress'"),
       pool.query("SELECT COUNT(*) AS count FROM service_requests WHERE status IN ('Resolved','Closed')"),
+      pool.query(`SELECT COUNT(*) AS count
+                  FROM service_requests
+                  WHERE status NOT IN ('Resolved','Closed','Cancelled')
+                    AND (
+                      (sla_response_due_at IS NOT NULL AND first_response_at IS NULL AND sla_response_due_at < NOW())
+                      OR (sla_resolution_due_at IS NOT NULL AND sla_resolution_due_at < NOW())
+                    )`),
+      pool.query("SELECT COUNT(*) AS count FROM service_requests WHERE escalation_count > 0"),
       pool.query("SELECT COUNT(*) AS count FROM users WHERE role = 'staff' AND is_active = TRUE"),
       pool.query("SELECT COUNT(*) AS count FROM users WHERE role = 'technician' AND is_active = TRUE"),
     ]);
@@ -88,6 +126,8 @@ router.get('/stats', requireAuth, async (req, res) => {
       pending_requests: Number(pendingRequests.rows[0].count),
       in_progress_requests: Number(inProgressRequests.rows[0].count),
       resolved_requests: Number(resolvedRequests.rows[0].count),
+      overdue_requests: Number(overdueRequests.rows[0].count),
+      escalated_requests: Number(escalatedRequests.rows[0].count),
       total_staff: Number(totalStaff.rows[0].count),
       total_technicians: Number(totalTechnicians.rows[0].count),
     });

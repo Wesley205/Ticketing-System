@@ -2,43 +2,101 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Service Desk — NSC ICT Service Desk</title>
+<title>Service Desk - NSC ICT Service Desk</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="/css/style.css">
+<style>
+  .service-grid { display:grid; gap:18px; grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr); }
+  .detail-panel { min-height: 720px; }
+  .detail-empty { padding: 28px; color: #667085; }
+  .ticket-kpis { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:10px; margin:14px 0 18px; }
+  .ticket-kpi { border:1px solid #e4e7ec; border-radius:12px; padding:12px; background:#fff; }
+  .ticket-kpi span { display:block; font-size:12px; color:#667085; margin-bottom:4px; }
+  .ticket-kpi strong { font-size:14px; color:#101828; }
+  .detail-block { border-top:1px solid #eaecf0; padding-top:14px; margin-top:14px; }
+  .timeline-list, .comment-list, .attachment-list { display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+  .timeline-item, .comment-item, .attachment-item { border:1px solid #eaecf0; border-radius:12px; padding:12px; background:#fff; }
+  .timeline-item small, .comment-item small, .attachment-item small { color:#667085; display:block; margin-top:6px; }
+  .artifact-flag { font-size:11px; font-weight:700; color:#b42318; text-transform:uppercase; letter-spacing:.04em; }
+  .detail-meta { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  .detail-meta div { font-size:13px; color:#344054; }
+  .detail-meta strong { display:block; color:#667085; font-size:11px; text-transform:uppercase; margin-bottom:4px; }
+  .form-stack { display:flex; flex-direction:column; gap:12px; }
+  .inline-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .attachment-item button { margin-top:8px; }
+  .muted { color:#667085; font-size:13px; }
+  @media (max-width: 1100px) {
+    .service-grid { grid-template-columns: 1fr; }
+    .detail-panel { min-height: 0; }
+  }
+</style>
 </head>
 <body>
   <div class="app-shell" id="app-shell"></div>
 
   <div class="modal-overlay" id="new-modal">
-    <div class="modal" style="position:relative;">
-      <span class="close-x" onclick="document.getElementById('new-modal').classList.remove('open')">&times;</span>
-      <h3>Submit a Service Request</h3>
+    <div class="modal" style="position:relative;max-width:640px;">
+      <span class="close-x" onclick="closeNewModal()">&times;</span>
+      <h3>Create Ticket</h3>
       <div class="error-box" id="new-error"></div>
-      <form id="new-form">
-        <div class="field"><label>Category *</label>
+      <form id="new-form" class="form-stack">
+        <div class="field">
+          <label>Ticket Type *</label>
+          <select id="ticket_type" required></select>
+        </div>
+        <div class="field">
+          <label>Category *</label>
           <select id="category" required>
             <option>Computer</option><option>Network</option><option>Printer</option><option>Internet</option>
             <option>Software</option><option>Email</option><option>Hardware</option><option>Other</option>
           </select>
         </div>
-        <div class="field"><label>Priority</label>
-          <select id="priority"><option>Low</option><option selected>Medium</option><option>High</option><option>Critical</option></select>
+        <div class="field">
+          <label>Subcategory</label>
+          <input id="subcategory" placeholder="Optional refinement, e.g. VPN, laptop, access reset">
         </div>
-        <div class="field"><label>Subject *</label><input id="subject" required placeholder="Brief summary of the issue"></div>
-        <div class="field"><label>Description *</label><textarea id="description" rows="4" required placeholder="Describe the issue in detail"></textarea></div>
+        <div class="field">
+          <label>Priority *</label>
+          <select id="priority"></select>
+        </div>
+        <div class="field">
+          <label>Impact</label>
+          <select id="impact"></select>
+        </div>
+        <div class="field">
+          <label>Urgency</label>
+          <select id="urgency"></select>
+        </div>
+        <div class="field">
+          <label>Subject *</label>
+          <input id="subject" required placeholder="Brief summary of the issue">
+        </div>
+        <div class="field">
+          <label>Description *</label>
+          <textarea id="description" rows="5" required placeholder="Describe the issue in detail"></textarea>
+        </div>
+        <div class="field">
+          <label>Affected Asset ID</label>
+          <input id="affected_asset_id" type="number" min="1" placeholder="Optional asset reference">
+        </div>
+        <div class="field">
+          <label><input id="closure_confirmation_required" type="checkbox"> Require requester closure confirmation</label>
+        </div>
         <div class="modal-actions">
-          <button type="button" class="btn secondary" onclick="document.getElementById('new-modal').classList.remove('open')">Cancel</button>
-          <button type="submit" class="btn">Submit Request</button>
+          <button type="button" class="btn secondary" onclick="closeNewModal()">Cancel</button>
+          <button type="submit" class="btn">Create Ticket</button>
         </div>
       </form>
     </div>
   </div>
 
   <div class="modal-overlay" id="assign-modal">
-    <div class="modal" style="position:relative;max-width:400px;">
+    <div class="modal" style="position:relative;max-width:430px;">
       <span class="close-x" onclick="document.getElementById('assign-modal').classList.remove('open')">&times;</span>
       <h3>Assign Technician</h3>
       <div class="field"><label>Technician</label><select id="tech-select"></select></div>
+      <div class="field"><label>Expected Completion</label><input id="expected_completion_at" type="datetime-local"></div>
+      <div class="field"><label>Assignment Note</label><textarea id="assignment_note" rows="3" placeholder="Optional note for the assignee"></textarea></div>
       <div class="modal-actions">
         <button type="button" class="btn secondary" onclick="document.getElementById('assign-modal').classList.remove('open')">Cancel</button>
         <button type="button" class="btn" onclick="confirmAssign()">Assign</button>
@@ -51,78 +109,302 @@
   <script>
     requireAuthPage();
     renderLayout('service-requests', 'Service Desk');
+
     const user = getUser();
-    const canAssign = ['admin', 'ict_officer'].includes(user.role);
     let activeAssignId = null;
+    let selectedTicketId = null;
+    let currentDetail = null;
+    let metadata = {
+      priorities: ['Low', 'Medium', 'High', 'Critical'],
+      statuses: ['New', 'Pending', 'Assigned', 'Accepted', 'In Progress', 'Waiting for User', 'Waiting for Parts', 'Resolved', 'Closed', 'Reopened', 'Cancelled'],
+      ticket_types: ['Incident', 'Service Request', 'Access Request', 'Maintenance Request', 'Change Request'],
+    };
+
+    function closeNewModal() {
+      document.getElementById('new-modal').classList.remove('open');
+    }
 
     function renderContent() {
       document.getElementById('page-content').innerHTML = `
-        <div class="panel">
-          <div class="toolbar">
-            <div class="filters">
-              <select id="filter-status">
-                <option value="">All Statuses</option>
-                <option>Pending</option><option>Assigned</option><option>In Progress</option><option>Resolved</option><option>Closed</option>
-              </select>
-              <select id="filter-priority">
-                <option value="">All Priorities</option>
-                <option>Low</option><option>Medium</option><option>High</option><option>Critical</option>
-              </select>
+        <div class="service-grid">
+          <div class="panel">
+            <div class="toolbar">
+              <div class="filters">
+                <select id="filter-type"></select>
+                <select id="filter-status"></select>
+                <select id="filter-priority"></select>
+              </div>
+              <div class="inline-actions">
+                <label class="muted"><input type="checkbox" id="filter-mine"> Only my tickets</label>
+                <button class="btn" onclick="openNewModal()">+ New Ticket</button>
+              </div>
             </div>
-            <button class="btn" onclick="document.getElementById('new-form').reset();document.getElementById('new-error').style.display='none';document.getElementById('new-modal').classList.add('open')">+ New Request</button>
-          </div>
-          <div class="table-wrap"><table>
+            <div class="table-wrap"><table>
             <thead><tr>
-              <th>ID</th><th>Subject</th><th>Requester</th><th>Category</th><th>Priority</th>
-              <th>Technician</th><th>Status</th><th>Submitted</th><th>Actions</th>
-            </tr></thead>
-            <tbody id="rows"></tbody>
-          </table></div>
-          <div id="empty" class="empty-state" style="display:none;">No service requests found.</div>
+                <th>Ticket</th><th>Type</th><th>Subject</th><th>Priority</th><th>Status</th><th>Assignee</th><th>Expected</th><th>Submitted</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="rows"></tbody>
+            </table></div>
+            <div id="empty" class="empty-state" style="display:none;">No tickets found for the current filters.</div>
+          </div>
+          <div class="panel detail-panel">
+            <div id="detail-root" class="detail-empty">Select a ticket to view its timeline, comments, notes, and attachments.</div>
+          </div>
         </div>
       `;
+
+      populateFilters();
+      document.getElementById('filter-type').addEventListener('change', load);
       document.getElementById('filter-status').addEventListener('change', load);
       document.getElementById('filter-priority').addEventListener('change', load);
+      document.getElementById('filter-mine').addEventListener('change', load);
+    }
+
+    function populateFilters() {
+      document.getElementById('filter-type').innerHTML = `<option value="">All Types</option>${metadata.ticket_types.map(v => `<option>${escapeHtml(v)}</option>`).join('')}`;
+      document.getElementById('filter-status').innerHTML = `<option value="">All Statuses</option>${metadata.statuses.map(v => `<option>${escapeHtml(v)}</option>`).join('')}`;
+      document.getElementById('filter-priority').innerHTML = `<option value="">All Priorities</option>${metadata.priorities.map(v => `<option>${escapeHtml(v)}</option>`).join('')}`;
+
+      document.getElementById('ticket_type').innerHTML = metadata.ticket_types.map(v => `<option>${escapeHtml(v)}</option>`).join('');
+      document.getElementById('priority').innerHTML = metadata.priorities.map(v => `<option ${v === 'Medium' ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('');
+      document.getElementById('impact').innerHTML = metadata.priorities.map(v => `<option ${v === 'Medium' ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('');
+      document.getElementById('urgency').innerHTML = metadata.priorities.map(v => `<option ${v === 'Medium' ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('');
+    }
+
+    function openNewModal() {
+      document.getElementById('new-form').reset();
+      document.getElementById('new-error').style.display = 'none';
+      populateFilters();
+      document.getElementById('new-modal').classList.add('open');
+    }
+
+    async function loadMetadata() {
+      try {
+        metadata = await api('/service-requests/metadata/options');
+      } catch (err) {
+        console.warn('Failed to load ticket metadata:', err.message);
+      }
     }
 
     async function load() {
+      const params = new URLSearchParams();
       const status = document.getElementById('filter-status').value;
       const priority = document.getElementById('filter-priority').value;
-      const params = new URLSearchParams();
+      const ticketType = document.getElementById('filter-type').value;
+      const mine = document.getElementById('filter-mine').checked;
       if (status) params.set('status', status);
       if (priority) params.set('priority', priority);
+      if (ticketType) params.set('ticket_type', ticketType);
+      if (mine) params.set('mine', 'true');
+
       try {
         const list = await api(`/service-requests?${params.toString()}`);
         document.getElementById('empty').style.display = list.length ? 'none' : 'block';
-        document.getElementById('rows').innerHTML = list.map(r => `
-          <tr>
-            <td>#${r.request_id}</td>
-            <td>${escapeHtml(r.subject)}</td>
-            <td>${escapeHtml(r.requester_name)}</td>
-            <td>${escapeHtml(r.category)}</td>
-            <td><span class="badge priority-${r.priority}">${r.priority}</span></td>
-            <td>${escapeHtml(r.technician_name || '—')}</td>
-            <td><span class="badge ${statusClass(r.status)}">${r.status}</span></td>
-            <td>${fmtDate(r.date_submitted)}</td>
-            <td>${canAssign && !r.assigned_technician_id ? `<button class="link-btn" onclick="openAssign(${r.request_id})">Assign</button>` : ''}</td>
+        document.getElementById('rows').innerHTML = list.map((ticket) => `
+          <tr ${selectedTicketId === ticket.request_id ? 'style="background:#f8fafc;"' : ''}>
+            <td><button class="link-btn" onclick="selectTicket(${ticket.request_id})">${escapeHtml(ticket.ticket_number || `#${ticket.request_id}`)}</button></td>
+            <td>${escapeHtml(ticket.ticket_type || 'Incident')}</td>
+            <td>${escapeHtml(ticket.subject)}</td>
+            <td><span class="badge priority-${ticket.priority}">${escapeHtml(ticket.priority)}</span></td>
+            <td><span class="badge ${statusClass(ticket.status)}">${escapeHtml(ticket.status)}</span></td>
+            <td>${escapeHtml(ticket.technician_name || 'Unassigned')}</td>
+            <td>${fmtDateTime(ticket.expected_completion_at)}</td>
+            <td>${fmtDateTime(ticket.date_submitted)}</td>
+            <td>${renderRowActions(ticket)}</td>
           </tr>
         `).join('');
-      } catch (err) { alert(err.message); }
+
+        if (selectedTicketId && !list.some((ticket) => ticket.request_id === selectedTicketId)) {
+          selectedTicketId = null;
+          currentDetail = null;
+          renderDetail();
+        }
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function renderRowActions(ticket) {
+      const assignAction = ['admin', 'ict_officer'].includes(user.role)
+        && !['Closed', 'Cancelled'].includes(ticket.status)
+        ? `<button class="link-btn" onclick="openAssign(${ticket.request_id})">${ticket.assigned_technician_id ? 'Reassign' : 'Assign'}</button>`
+        : '';
+      return `${assignAction} <button class="link-btn" onclick="selectTicket(${ticket.request_id})">Open</button>`;
+    }
+
+    async function selectTicket(id) {
+      selectedTicketId = id;
+      await load();
+      try {
+        currentDetail = await api(`/service-requests/${id}`);
+        renderDetail();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function renderDetail() {
+      const root = document.getElementById('detail-root');
+      if (!currentDetail) {
+        root.className = 'detail-empty';
+        root.innerHTML = 'Select a ticket to view its timeline, comments, notes, and attachments.';
+        return;
+      }
+
+      root.className = '';
+      root.innerHTML = `
+        <div>
+          <h3 style="margin-bottom:6px;">${escapeHtml(currentDetail.ticket_number || `#${currentDetail.request_id}`)} - ${escapeHtml(currentDetail.subject)}</h3>
+          <div class="inline-actions">
+            <span class="badge ${statusClass(currentDetail.status)}">${escapeHtml(currentDetail.status)}</span>
+            <span class="badge priority-${currentDetail.priority}">${escapeHtml(currentDetail.priority)}</span>
+            <span class="badge">${escapeHtml(currentDetail.ticket_type)}</span>
+          </div>
+          <div class="ticket-kpis">
+            <div class="ticket-kpi"><span>Requester</span><strong>${escapeHtml(currentDetail.requester_name || '-')}</strong></div>
+            <div class="ticket-kpi"><span>Technician</span><strong>${escapeHtml(currentDetail.technician_name || 'Unassigned')}</strong></div>
+            <div class="ticket-kpi"><span>Department</span><strong>${escapeHtml(currentDetail.department_name || '-')}</strong></div>
+            <div class="ticket-kpi"><span>Created</span><strong>${fmtDateTime(currentDetail.date_submitted)}</strong></div>
+            <div class="ticket-kpi"><span>Expected Completion</span><strong>${fmtDateTime(currentDetail.expected_completion_at)}</strong></div>
+            <div class="ticket-kpi"><span>Escalations</span><strong>${currentDetail.sla?.escalation_count || 0}</strong></div>
+          </div>
+
+          <div class="detail-meta">
+            <div><strong>Category</strong>${escapeHtml(currentDetail.category)}${currentDetail.subcategory ? ` / ${escapeHtml(currentDetail.subcategory)}` : ''}</div>
+            <div><strong>Impact / Urgency</strong>${escapeHtml(currentDetail.impact || '-')} / ${escapeHtml(currentDetail.urgency || '-')}</div>
+            <div><strong>Source Channel</strong>${escapeHtml(currentDetail.source_channel || '-')}</div>
+            <div><strong>Affected Asset</strong>${currentDetail.affected_asset_id ? `#${currentDetail.affected_asset_id}` : '-'}</div>
+            <div><strong>First Response</strong>${fmtDateTime(currentDetail.first_response_at)}</div>
+            <div><strong>Resolution Due</strong>${fmtDateTime(currentDetail.sla_resolution_due_at)}</div>
+            <div><strong>Response Due</strong>${fmtDateTime(currentDetail.sla_response_due_at)}</div>
+            <div><strong>Assigned By</strong>${escapeHtml(currentDetail.assigned_by_name || '-')}</div>
+          </div>
+
+          <div class="detail-block">
+            <strong>Description</strong>
+            <p style="margin-top:8px;">${escapeHtml(currentDetail.description)}</p>
+          </div>
+
+          <div class="detail-block">
+            <strong>Workflow</strong>
+            <div class="form-stack" style="margin-top:10px;">
+              <div class="inline-actions">
+                <select id="status-select">
+                  <option value="">Change status...</option>
+                  ${(currentDetail.permissions?.allowed_status_transitions || []).map((status) => `<option>${escapeHtml(status)}</option>`).join('')}
+                </select>
+                <button class="btn" onclick="submitStatusChange()">Apply</button>
+              </div>
+              <textarea id="status-note" rows="3" placeholder="Status note, reopen reason, cancellation reason, or resolution context"></textarea>
+              <textarea id="status-resolution" rows="3" placeholder="Resolution text when resolving or closing"></textarea>
+            </div>
+          </div>
+
+          <div class="detail-block">
+            <strong>SLA And Ownership</strong>
+            <div class="detail-meta" style="margin-top:10px;">
+              <div><strong>SLA Policy</strong>${escapeHtml(currentDetail.sla?.policy_name || 'Unmapped')}</div>
+              <div><strong>Response Overdue</strong>${currentDetail.sla?.responseOverdue ? 'Yes' : 'No'}</div>
+              <div><strong>Resolution Overdue</strong>${currentDetail.sla?.resolutionOverdue ? 'Yes' : 'No'}</div>
+              <div><strong>Expected Completion Overdue</strong>${currentDetail.sla?.expectedCompletionOverdue ? 'Yes' : 'No'}</div>
+            </div>
+            <div class="timeline-list" style="margin-top:12px;">
+              ${(currentDetail.assignment_history || []).length ? currentDetail.assignment_history.map((entry) => `
+                <div class="timeline-item">
+                  <div><strong>${escapeHtml(entry.technician_name || 'Unassigned')}</strong></div>
+                  <div>${escapeHtml(entry.assignment_notes || 'No assignment note')}</div>
+                  <small>
+                    Assigned by ${escapeHtml(entry.assigned_by_name || 'System')}
+                    on ${fmtDateTime(entry.assigned_at)}
+                    ${entry.expected_completion_at ? ` | Expected ${fmtDateTime(entry.expected_completion_at)}` : ''}
+                    ${entry.accepted_at ? ` | Accepted ${fmtDateTime(entry.accepted_at)}` : ''}
+                    ${entry.ended_at ? ` | Ended ${fmtDateTime(entry.ended_at)}` : ''}
+                  </small>
+                </div>
+              `).join('') : '<div class="muted">No assignment history yet.</div>'}
+            </div>
+          </div>
+
+          <div class="detail-block">
+            <strong>Comments And Notes</strong>
+            <div class="form-stack" style="margin-top:10px;">
+              <textarea id="comment-body" rows="3" placeholder="Add an update or question"></textarea>
+              <label class="muted"><input type="checkbox" id="comment-internal" ${currentDetail.permissions?.can_add_internal_note ? '' : 'disabled'}> Internal ICT note</label>
+              <div class="inline-actions">
+                <button class="btn" onclick="submitComment()">Post Comment</button>
+                <span class="muted">Internal notes are visible only to ICT officers, administrators, and the assigned technician.</span>
+              </div>
+            </div>
+            <div class="comment-list">
+              ${(currentDetail.comments || []).length ? currentDetail.comments.map((comment) => `
+                <div class="comment-item">
+                  ${comment.is_internal ? '<div class="artifact-flag">Internal Note</div>' : ''}
+                  <div>${escapeHtml(comment.comment_body)}</div>
+                  <small>${escapeHtml(comment.author_name || 'System')} - ${fmtDateTime(comment.created_at)}</small>
+                </div>
+              `).join('') : '<div class="muted">No comments or notes yet.</div>'}
+            </div>
+          </div>
+
+          <div class="detail-block">
+            <strong>Attachments</strong>
+            <div class="form-stack" style="margin-top:10px;">
+              <input id="attachment-file" type="file">
+              <label class="muted"><input type="checkbox" id="attachment-internal" ${currentDetail.permissions?.can_add_internal_note ? '' : 'disabled'}> Internal attachment</label>
+              <div class="inline-actions">
+                <button class="btn" onclick="submitAttachment()">Upload Attachment</button>
+                <span class="muted">Allowed types: PDF, PNG, JPG, WEBP, TXT, DOCX, XLSX.</span>
+              </div>
+            </div>
+            <div class="attachment-list">
+              ${(currentDetail.attachments || []).length ? currentDetail.attachments.map((attachment) => `
+                <div class="attachment-item">
+                  ${attachment.is_internal ? '<div class="artifact-flag">Internal Attachment</div>' : ''}
+                  <div><strong>${escapeHtml(attachment.file_name)}</strong></div>
+                  <small>${escapeHtml(attachment.uploaded_by_name || 'System')} - ${fmtDateTime(attachment.created_at)} - ${attachment.file_size_bytes || 0} bytes</small>
+                  <button class="link-btn" onclick="downloadAttachment(${attachment.attachment_id}, '${escapeHtml(attachment.file_name).replace(/'/g, '&#39;')}')">Download</button>
+                </div>
+              `).join('') : '<div class="muted">No attachments yet.</div>'}
+            </div>
+          </div>
+
+          <div class="detail-block">
+            <strong>Timeline</strong>
+            <div class="timeline-list">
+              ${(currentDetail.history || []).length ? currentDetail.history.map((entry) => `
+                <div class="timeline-item">
+                  <div><strong>${escapeHtml(entry.event_type.replace(/_/g, ' '))}</strong></div>
+                  <div>${entry.from_status || entry.to_status ? `${escapeHtml(entry.from_status || '-')} -> ${escapeHtml(entry.to_status || '-')}` : ''}</div>
+                  ${entry.details ? `<div style="margin-top:6px;">${escapeHtml(entry.details)}</div>` : ''}
+                  <small>${escapeHtml(entry.actor_name || 'System')} - ${fmtDateTime(entry.created_at)}</small>
+                </div>
+              `).join('') : '<div class="muted">No timeline entries yet.</div>'}
+            </div>
+          </div>
+        </div>
+      `;
     }
 
     document.getElementById('new-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const body = {
+        ticket_type: document.getElementById('ticket_type').value,
         category: document.getElementById('category').value,
+        subcategory: document.getElementById('subcategory').value.trim(),
         priority: document.getElementById('priority').value,
+        impact: document.getElementById('impact').value,
+        urgency: document.getElementById('urgency').value,
         subject: document.getElementById('subject').value.trim(),
         description: document.getElementById('description').value.trim(),
+        affected_asset_id: document.getElementById('affected_asset_id').value || null,
+        closure_confirmation_required: document.getElementById('closure_confirmation_required').checked,
       };
       const errBox = document.getElementById('new-error');
       try {
-        await api('/service-requests', { method: 'POST', body });
-        document.getElementById('new-modal').classList.remove('open');
-        load();
+        const created = await api('/service-requests', { method: 'POST', body });
+        closeNewModal();
+        await load();
+        await selectTicket(created.request_id);
       } catch (err) {
         errBox.textContent = err.message;
         errBox.style.display = 'block';
@@ -133,22 +415,139 @@
       activeAssignId = id;
       try {
         const techs = await api('/staff/technicians');
-        document.getElementById('tech-select').innerHTML = techs.map(t => `<option value="${t.user_id}">${escapeHtml(t.full_name)}</option>`).join('');
+        document.getElementById('tech-select').innerHTML = [
+          '<option value="">Unassigned</option>',
+          ...techs.map((tech) => `<option value="${tech.user_id}">${escapeHtml(tech.full_name)}</option>`),
+        ].join('');
+        document.getElementById('assignment_note').value = '';
+        document.getElementById('expected_completion_at').value = currentDetail?.expected_completion_at
+          ? new Date(currentDetail.expected_completion_at).toISOString().slice(0, 16)
+          : '';
         document.getElementById('assign-modal').classList.add('open');
-      } catch (err) { alert(err.message); }
+      } catch (err) {
+        alert(err.message);
+      }
     }
 
     async function confirmAssign() {
       const techId = document.getElementById('tech-select').value;
+      const assignmentNote = document.getElementById('assignment_note').value.trim();
+      const expectedCompletionAt = document.getElementById('expected_completion_at').value;
       try {
-        await api(`/service-requests/${activeAssignId}/assign`, { method: 'PATCH', body: { assigned_technician_id: techId } });
+        await api(`/service-requests/${activeAssignId}/assign`, {
+          method: 'PATCH',
+          body: {
+            assigned_technician_id: techId,
+            assignment_note: assignmentNote,
+            expected_completion_at: expectedCompletionAt || null,
+          },
+        });
         document.getElementById('assign-modal').classList.remove('open');
-        load();
-      } catch (err) { alert(err.message); }
+        await load();
+        if (selectedTicketId === activeAssignId) {
+          await selectTicket(activeAssignId);
+        }
+      } catch (err) {
+        alert(err.message);
+      }
     }
 
-    renderContent();
-    load();
+    async function submitStatusChange() {
+      if (!selectedTicketId) return;
+      const status = document.getElementById('status-select').value;
+      if (!status) {
+        alert('Choose a target status first.');
+        return;
+      }
+      try {
+        await api(`/service-requests/${selectedTicketId}/status`, {
+          method: 'PATCH',
+          body: {
+            status,
+            note: document.getElementById('status-note').value.trim(),
+            resolution: document.getElementById('status-resolution').value.trim(),
+          },
+        });
+        await load();
+        await selectTicket(selectedTicketId);
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function submitComment() {
+      if (!selectedTicketId) return;
+      const commentBody = document.getElementById('comment-body').value.trim();
+      if (!commentBody) {
+        alert('Enter a comment first.');
+        return;
+      }
+      try {
+        await api(`/service-requests/${selectedTicketId}/comments`, {
+          method: 'POST',
+          body: {
+            comment_body: commentBody,
+            is_internal: document.getElementById('comment-internal').checked,
+          },
+        });
+        await selectTicket(selectedTicketId);
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Failed to read file.'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function submitAttachment() {
+      if (!selectedTicketId) return;
+      const input = document.getElementById('attachment-file');
+      const file = input.files[0];
+      if (!file) {
+        alert('Choose a file first.');
+        return;
+      }
+      try {
+        const contentBase64 = await readFileAsDataUrl(file);
+        await api(`/service-requests/${selectedTicketId}/attachments`, {
+          method: 'POST',
+          body: {
+            file_name: file.name,
+            mime_type: file.type || 'application/octet-stream',
+            content_base64: contentBase64,
+            is_internal: document.getElementById('attachment-internal').checked,
+          },
+        });
+        input.value = '';
+        await selectTicket(selectedTicketId);
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function downloadAttachment(attachmentId, fileName) {
+      if (!selectedTicketId) return;
+      try {
+        const blob = await apiBlob(`/service-requests/${selectedTicketId}/attachments/${attachmentId}/download`);
+        downloadBlob(blob, fileName);
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function init() {
+      await loadMetadata();
+      renderContent();
+      await load();
+    }
+
+    init();
   </script>
 </body>
 </html>

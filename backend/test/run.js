@@ -4,4 +4,8 @@ require('./invitations.test');
 require('./authorization.test');
 require('./transactions.test');
 require('./migrations.test');
+require('./notificationService.test');
 require('./serviceRequests.test');
+require('./sla.test');
+require('./ticketWorkflow.test');
+require('./ticketAttachments.test');

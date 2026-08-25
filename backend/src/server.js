@@ -5,6 +5,8 @@ const pool = require('./config/db');
 const { isConfiguredForSecureAccess, isStrongJwtSecret } = require('./config/authPolicy');
 const { startExpirySweep } = require('./utils/accountExpiry');
 const { logAction } = require('./utils/audit');
+const { startNotificationQueue } = require('./utils/notificationProcessor');
+const { startSlaMonitor } = require('./utils/slaMonitor');
 
 if (!process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET is required.');
@@ -26,3 +28,5 @@ app.listen(PORT, () => {
 });
 
 startExpirySweep({ pool, logAction });
+startNotificationQueue({ pool });
+startSlaMonitor({ pool, logAction });

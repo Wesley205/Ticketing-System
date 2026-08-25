@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Reports — NSC ICT Service Desk</title>
+<title>Reports - NSC ICT Service Desk</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="/css/style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
@@ -34,6 +34,8 @@
           <div class="panel"><h3>Requests by Priority</h3><canvas id="chart-priority"></canvas></div>
           <div class="panel"><h3>Requests by Category</h3><canvas id="chart-category"></canvas></div>
           <div class="panel"><h3>Requests by Status</h3><canvas id="chart-req-status"></canvas></div>
+          <div class="panel"><h3>Assignment Coverage</h3><canvas id="chart-assignment"></canvas></div>
+          <div class="panel"><h3>SLA Coverage</h3><canvas id="chart-sla"></canvas></div>
         </div>
 
         <div class="section-title">Technician Workload & Resolutions</div>
@@ -59,17 +61,28 @@
             <tbody id="maint-rows"></tbody>
           </table>
         </div>
+
+        <div class="section-title">Overdue And Escalated Tickets</div>
+        <div class="panel table-wrap">
+          <table>
+            <thead><tr><th>Ticket</th><th>Subject</th><th>Priority</th><th>Status</th><th>Expected Completion</th><th>Escalations</th></tr></thead>
+            <tbody id="overdue-rows"></tbody>
+          </table>
+        </div>
       `;
     }
 
-    const palette = ['#0a7d3e','#2fae66','#f4a300','#14904a','#c0362c','#b7791f','#5c6b62','#8fe0ad'];
+    const palette = ['#0a7d3e', '#2fae66', '#f4a300', '#14904a', '#c0362c', '#b7791f', '#5c6b62', '#8fe0ad'];
 
     function makeChart(canvasId, labels, data, type = 'bar') {
       const ctx = document.getElementById(canvasId);
       new Chart(ctx, {
         type,
         data: { labels, datasets: [{ data, backgroundColor: palette, borderWidth: 0 }] },
-        options: { plugins: { legend: { display: type === 'doughnut' } }, scales: type === 'bar' ? { y: { beginAtZero: true, ticks: { precision: 0 } } } : {} },
+        options: {
+          plugins: { legend: { display: type === 'doughnut' } },
+          scales: type === 'bar' ? { y: { beginAtZero: true, ticks: { precision: 0 } } } : {},
+        },
       });
     }
 
@@ -83,27 +96,55 @@
         makeChart('chart-priority', r.requests_by_priority.map(x => x.priority), r.requests_by_priority.map(x => x.total), 'doughnut');
         makeChart('chart-category', r.requests_by_category.map(x => x.category), r.requests_by_category.map(x => x.total));
         makeChart('chart-req-status', r.requests_by_status.map(x => x.status), r.requests_by_status.map(x => x.total), 'doughnut');
+        makeChart(
+          'chart-assignment',
+          ['Unassigned', 'Actively Assigned', 'Expected Completion Overdue'],
+          [
+            Number(r.requests_by_assignment.unassigned || 0),
+            Number(r.requests_by_assignment.actively_assigned || 0),
+            Number(r.requests_by_assignment.expected_completion_overdue || 0),
+          ],
+          'doughnut'
+        );
+        makeChart(
+          'chart-sla',
+          ['With SLA Policy', 'Without SLA Policy', 'Escalated'],
+          [
+            Number(r.sla_policy_coverage.with_policy || 0),
+            Number(r.sla_policy_coverage.without_policy || 0),
+            Number(r.sla_policy_coverage.escalated || 0),
+          ],
+          'doughnut'
+        );
 
-        document.getElementById('tech-rows').innerHTML = r.technician_workload.map(t => {
-          const res = r.technician_resolutions.find(x => x.technician === t.technician);
+        document.getElementById('tech-rows').innerHTML = r.technician_workload.map((t) => {
+          const res = r.technician_resolutions.find((x) => x.technician === t.technician);
           return `<tr><td>${escapeHtml(t.technician)}</td><td>${t.open_requests}</td><td>${res ? res.resolved_count : 0}</td></tr>`;
         }).join('') || '<tr><td colspan="3" class="empty-state">No technicians yet</td></tr>';
 
-        document.getElementById('dept-rows').innerHTML = r.department_stats.map(d =>
+        document.getElementById('dept-rows').innerHTML = r.department_stats.map((d) =>
           `<tr><td>${escapeHtml(d.name)}</td><td>${d.total_assets}</td><td>${d.total_requests}</td></tr>`
         ).join('');
 
-        document.getElementById('maint-rows').innerHTML = r.monthly_maintenance.map(m =>
-          `<tr><td>${m.month}</td><td>${m.total_records}</td><td>₦${Number(m.total_cost).toLocaleString()}</td></tr>`
+        document.getElementById('maint-rows').innerHTML = r.monthly_maintenance.map((m) =>
+          `<tr><td>${m.month}</td><td>${m.total_records}</td><td>NGN ${Number(m.total_cost).toLocaleString()}</td></tr>`
         ).join('') || '<tr><td colspan="3" class="empty-state">No maintenance records yet</td></tr>';
-      } catch (err) { alert(err.message); }
+
+        document.getElementById('overdue-rows').innerHTML = r.overdue_tickets.map((t) =>
+          `<tr><td>${escapeHtml(t.ticket_number)}</td><td>${escapeHtml(t.subject)}</td><td>${escapeHtml(t.priority)}</td><td>${escapeHtml(t.status)}</td><td>${fmtDateTime(t.expected_completion_at)}</td><td>${t.escalation_count}</td></tr>`
+        ).join('') || '<tr><td colspan="6" class="empty-state">No overdue or escalated tickets right now</td></tr>';
+      } catch (err) {
+        alert(err.message);
+      }
     }
 
     async function exportCsv(type) {
       try {
         const blob = await api(`/reports/export/${type}.csv`, { isCsv: true });
         downloadBlob(blob, `${type}_report.csv`);
-      } catch (err) { alert('Export failed: ' + err.message); }
+      } catch (err) {
+        alert('Export failed: ' + err.message);
+      }
     }
 
     renderContent();

@@ -8,6 +8,7 @@ const dashboardRoutes = require('./routes/dashboard');
 const assetRoutes = require('./routes/assets');
 const serviceRequestRoutes = require('./routes/serviceRequests');
 const maintenanceRoutes = require('./routes/maintenance');
+const notificationRoutes = require('./routes/notifications');
 const staffRoutes = require('./routes/staff');
 const departmentRoutes = require('./routes/departments');
 const auditLogRoutes = require('./routes/auditLogs');
@@ -15,10 +16,11 @@ const reportRoutes = require('./routes/reports');
 
 function createApp() {
   const app = express();
+  const jsonBodyLimit = process.env.JSON_BODY_LIMIT || '6mb';
 
   app.disable('x-powered-by');
   app.use(cors());
-  app.use(express.json({ limit: '1mb' }));
+  app.use(express.json({ limit: jsonBodyLimit }));
 
   app.use('/api/auth', authRoutes);
   app.use('/api/invitations', invitationRoutes);
@@ -26,6 +28,7 @@ function createApp() {
   app.use('/api/assets', assetRoutes);
   app.use('/api/service-requests', serviceRequestRoutes);
   app.use('/api/maintenance', maintenanceRoutes);
+  app.use('/api/notifications', notificationRoutes);
   app.use('/api/staff', staffRoutes);
   app.use('/api/departments', departmentRoutes);
   app.use('/api/audit-logs', auditLogRoutes);

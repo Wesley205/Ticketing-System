@@ -84,9 +84,31 @@ function canAssignServiceRequest(user) {
   return canViewAllOperationalData(user);
 }
 
+function canManageServiceRequestAssignments(user) {
+  return canAssignServiceRequest(user);
+}
+
 function canUpdateServiceRequest(user, request) {
   if (canViewAllOperationalData(user)) return true;
   return isTechnician(user) && Number(request?.assigned_technician_id) === Number(user.user_id);
+}
+
+function canCommentOnServiceRequest(user, request) {
+  return canViewServiceRequest(user, request) || canViewAllOperationalData(user);
+}
+
+function canAddInternalTicketNote(user) {
+  return canViewAllOperationalData(user) || isTechnician(user);
+}
+
+function canViewInternalTicketArtifacts(user, request) {
+  if (!request) return false;
+  if (canViewAllOperationalData(user)) return true;
+  return isTechnician(user) && Number(request.assigned_technician_id) === Number(user.user_id);
+}
+
+function canManageTicketAttachments(user, request) {
+  return canCommentOnServiceRequest(user, request);
 }
 
 function constrainAssetVisibility(user, { clauses, params, alias = 'a' }) {
@@ -158,11 +180,15 @@ function canUpdateMaintenance(user, record) {
 
 module.exports = {
   canAssignServiceRequest,
+  canAddInternalTicketNote,
+  canCommentOnServiceRequest,
   canCreateInvitation,
   canCreateMaintenance,
   canCreateServiceRequest,
   canManageAssets,
   canManageDepartments,
+  canManageServiceRequestAssignments,
+  canManageTicketAttachments,
   canManageUsers,
   canUpdateAssetStatus,
   canUpdateMaintenance,
@@ -175,6 +201,7 @@ module.exports = {
   canViewReports,
   canViewServiceRequest,
   canViewTechnicianDirectory,
+  canViewInternalTicketArtifacts,
   constrainAssetVisibility,
   constrainMaintenanceVisibility,
   constrainServiceRequestVisibility,

@@ -43,6 +43,24 @@ async function api(path, { method = 'GET', body, isCsv = false } = {}) {
   return data;
 }
 
+async function apiBlob(path, { method = 'GET' } = {}) {
+  const headers = {};
+  const token = getToken();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE}${path}`, { method, headers });
+  if (res.status === 401) {
+    clearSession();
+    window.location.href = '/index.html';
+    throw new Error('Session expired');
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'Download failed');
+  }
+  return res.blob();
+}
+
 function requireAuthPage() {
   if (!getToken()) {
     window.location.href = '/index.html';

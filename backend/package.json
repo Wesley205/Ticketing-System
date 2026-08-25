@@ -7,6 +7,8 @@
   "scripts": {
     "migrate": "node src/scripts/runMigrations.js",
     "expire-accounts": "node src/scripts/expireAccounts.js",
+    "notification-queue": "node src/scripts/runNotificationQueue.js",
+    "sla-monitor": "node src/scripts/runSlaMonitor.js",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "test": "node test/run.js"
