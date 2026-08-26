@@ -9,6 +9,7 @@ const assetRoutes = require('./routes/assets');
 const serviceRequestRoutes = require('./routes/serviceRequests');
 const maintenanceRoutes = require('./routes/maintenance');
 const notificationRoutes = require('./routes/notifications');
+const knowledgeBaseRoutes = require('./routes/knowledgeBase');
 const staffRoutes = require('./routes/staff');
 const departmentRoutes = require('./routes/departments');
 const auditLogRoutes = require('./routes/auditLogs');
@@ -29,6 +30,7 @@ function createApp() {
   app.use('/api/service-requests', serviceRequestRoutes);
   app.use('/api/maintenance', maintenanceRoutes);
   app.use('/api/notifications', notificationRoutes);
+  app.use('/api/knowledge-base', knowledgeBaseRoutes);
   app.use('/api/staff', staffRoutes);
   app.use('/api/departments', departmentRoutes);
   app.use('/api/audit-logs', auditLogRoutes);

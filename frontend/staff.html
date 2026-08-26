@@ -86,11 +86,10 @@
   <script src="/js/api.js"></script>
   <script src="/js/layout.js"></script>
   <script>
-    requireAuthPage();
-    requireRolePage('admin', 'ict_officer');
-    renderLayout('staff', 'Staff Management');
+    requireRoutePage('staff');
+    renderLayout('staff', 'Staff Management', 'Account lifecycle, invitations, and internal directory');
     const user = getUser();
-    const isAdmin = user.role === 'admin';
+    const isAdmin = hasPermission('can_access_admin_portal');
     const userTypeLabels = { employee: 'Employee', intern: 'Intern', corper: 'Corper', contractor: 'Contractor', guest: 'Guest' };
     const roleLabels = { admin: 'Administrator', ict_officer: 'ICT Officer', technician: 'Technician', staff: 'Staff/User' };
 

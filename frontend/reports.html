@@ -13,70 +13,96 @@
   <script src="/js/api.js"></script>
   <script src="/js/layout.js"></script>
   <script>
-    requireAuthPage();
-    requireRolePage('admin', 'ict_officer');
-    renderLayout('reports', 'Reports');
+    requireRoutePage('reports');
+    renderLayout('reports', 'Reports', 'Permission-aware metrics, exports, and operational detail');
+
+    let charts = [];
+    let filterData = { departments: [], technicians: [] };
 
     function renderContent() {
       document.getElementById('page-content').innerHTML = `
         <div class="toolbar">
-          <div></div>
           <div class="filters">
+            <input id="date_from" type="date">
+            <input id="date_to" type="date">
+            <select id="department_id"><option value="">All Departments</option></select>
+            <select id="technician_id"><option value="">All Technicians</option></select>
+            <select id="category"><option value="">All Categories</option><option>Computer</option><option>Network</option><option>Printer</option><option>Internet</option><option>Software</option><option>Email</option><option>Hardware</option><option>Other</option></select>
+            <select id="ticket_type"><option value="">All Ticket Types</option><option>Incident</option><option>Service Request</option><option>Access Request</option><option>Maintenance Request</option><option>Change Request</option></select>
+          </div>
+          <div class="filters">
+            <button class="btn secondary" onclick="resetFilters()">Reset</button>
             <button class="btn secondary" onclick="exportCsv('assets')">Export Assets CSV</button>
             <button class="btn secondary" onclick="exportCsv('service-requests')">Export Requests CSV</button>
+            <button class="btn" onclick="loadReports()">Apply Filters</button>
           </div>
         </div>
 
         <div class="grid-2">
           <div class="panel"><h3>Assets by Status</h3><canvas id="chart-status"></canvas></div>
           <div class="panel"><h3>Assets by Type</h3><canvas id="chart-type"></canvas></div>
-          <div class="panel"><h3>Assets by Department</h3><canvas id="chart-dept"></canvas></div>
           <div class="panel"><h3>Requests by Priority</h3><canvas id="chart-priority"></canvas></div>
-          <div class="panel"><h3>Requests by Category</h3><canvas id="chart-category"></canvas></div>
           <div class="panel"><h3>Requests by Status</h3><canvas id="chart-req-status"></canvas></div>
-          <div class="panel"><h3>Assignment Coverage</h3><canvas id="chart-assignment"></canvas></div>
           <div class="panel"><h3>SLA Coverage</h3><canvas id="chart-sla"></canvas></div>
+          <div class="panel"><h3>Maintenance Schedule Health</h3><canvas id="chart-maint-health"></canvas></div>
         </div>
 
-        <div class="section-title">Technician Workload & Resolutions</div>
-        <div class="panel table-wrap">
-          <table>
-            <thead><tr><th>Technician</th><th>Open Requests</th><th>Resolved (all time)</th></tr></thead>
-            <tbody id="tech-rows"></tbody>
-          </table>
-        </div>
+        <div class="section-title">Technician Workload</div>
+        <div class="panel table-wrap"><table><thead><tr><th>Technician</th><th>Open Requests</th><th>Resolved</th></tr></thead><tbody id="tech-rows"></tbody></table></div>
 
-        <div class="section-title">Department Statistics</div>
-        <div class="panel table-wrap">
-          <table>
-            <thead><tr><th>Department</th><th>Total Assets</th><th>Total Requests</th></tr></thead>
-            <tbody id="dept-rows"></tbody>
-          </table>
-        </div>
+        <div class="section-title">Knowledge Base and SLA</div>
+        <div class="panel table-wrap"><table><thead><tr><th>Response SLA Met</th><th>Response Measured</th><th>Resolution SLA Met</th><th>Resolution Measured</th><th>Avg Response Hours</th><th>Avg Resolution Hours</th></tr></thead><tbody id="sla-rows"></tbody></table></div>
 
-        <div class="section-title">Monthly Maintenance Cost</div>
-        <div class="panel table-wrap">
-          <table>
-            <thead><tr><th>Month</th><th>Records</th><th>Total Cost</th></tr></thead>
-            <tbody id="maint-rows"></tbody>
-          </table>
-        </div>
+        <div class="section-title">Ticket Detail Rows</div>
+        <div class="panel table-wrap"><table><thead><tr><th>Ticket</th><th>Subject</th><th>Category</th><th>Type</th><th>Priority</th><th>Status</th><th>Technician</th><th>Submitted</th></tr></thead><tbody id="ticket-rows"></tbody></table></div>
+        <div class="toolbar"><div></div><div class="filters"><button class="btn secondary" onclick="changePage('tickets', -1)">Prev</button><span id="tickets-page-label" class="muted"></span><button class="btn secondary" onclick="changePage('tickets', 1)">Next</button></div></div>
 
-        <div class="section-title">Overdue And Escalated Tickets</div>
-        <div class="panel table-wrap">
-          <table>
-            <thead><tr><th>Ticket</th><th>Subject</th><th>Priority</th><th>Status</th><th>Expected Completion</th><th>Escalations</th></tr></thead>
-            <tbody id="overdue-rows"></tbody>
-          </table>
-        </div>
+        <div class="section-title">Asset Detail Rows</div>
+        <div class="panel table-wrap"><table><thead><tr><th>Asset Tag</th><th>Type</th><th>Department</th><th>Status</th><th>Condition</th><th>Assigned To</th></tr></thead><tbody id="asset-rows"></tbody></table></div>
+        <div class="toolbar"><div></div><div class="filters"><button class="btn secondary" onclick="changePage('assets', -1)">Prev</button><span id="assets-page-label" class="muted"></span><button class="btn secondary" onclick="changePage('assets', 1)">Next</button></div></div>
+
+        <div class="section-title">Maintenance Detail Rows</div>
+        <div class="panel table-wrap"><table><thead><tr><th>Asset</th><th>Type</th><th>Problem</th><th>Status</th><th>Cost</th><th>Date</th><th>Technician</th></tr></thead><tbody id="maintenance-rows"></tbody></table></div>
+        <div class="toolbar"><div></div><div class="filters"><button class="btn secondary" onclick="changePage('maintenance', -1)">Prev</button><span id="maintenance-page-label" class="muted"></span><button class="btn secondary" onclick="changePage('maintenance', 1)">Next</button></div></div>
       `;
     }
 
     const palette = ['#0a7d3e', '#2fae66', '#f4a300', '#14904a', '#c0362c', '#b7791f', '#5c6b62', '#8fe0ad'];
+    const pageState = {
+      tickets: 1,
+      assets: 1,
+      maintenance: 1,
+    };
+
+    function getFilters(extra = {}) {
+      const params = new URLSearchParams();
+      ['date_from', 'date_to', 'department_id', 'technician_id', 'category', 'ticket_type'].forEach((key) => {
+        const node = document.getElementById(key);
+        if (node && node.value) params.set(key, node.value);
+      });
+      Object.entries(extra).forEach(([key, value]) => params.set(key, String(value)));
+      return params;
+    }
+
+    function resetFilters() {
+      ['date_from', 'date_to', 'department_id', 'technician_id', 'category', 'ticket_type'].forEach((key) => {
+        const node = document.getElementById(key);
+        if (node) node.value = '';
+      });
+      pageState.tickets = 1;
+      pageState.assets = 1;
+      pageState.maintenance = 1;
+      loadReports();
+    }
+
+    function destroyCharts() {
+      charts.forEach((chart) => chart.destroy());
+      charts = [];
+    }
 
     function makeChart(canvasId, labels, data, type = 'bar') {
       const ctx = document.getElementById(canvasId);
-      new Chart(ctx, {
+      const chart = new Chart(ctx, {
         type,
         data: { labels, datasets: [{ data, backgroundColor: palette, borderWidth: 0 }] },
         options: {
@@ -84,71 +110,92 @@
           scales: type === 'bar' ? { y: { beginAtZero: true, ticks: { precision: 0 } } } : {},
         },
       });
+      charts.push(chart);
     }
 
-    async function load() {
+    async function loadFilterOptions() {
+      filterData = await api('/reports/filters');
+      document.getElementById('department_id').innerHTML += filterData.departments.map((department) => `<option value="${department.department_id}">${escapeHtml(department.name)}</option>`).join('');
+      document.getElementById('technician_id').innerHTML += filterData.technicians.map((technician) => `<option value="${technician.user_id}">${escapeHtml(technician.full_name)}</option>`).join('');
+    }
+
+    async function loadPage(endpoint, targetId, labelId, columns, stateKey) {
+      const params = getFilters({ page: pageState[stateKey], page_size: 10 });
+      const result = await api(`/reports/${endpoint}?${params.toString()}`);
+      document.getElementById(targetId).innerHTML = result.rows.map(columns).join('')
+        || `<tr><td colspan="8" class="empty-state">No rows for the current filters.</td></tr>`;
+      const totalPages = Math.max(1, Math.ceil(Number(result.total || 0) / Number(result.page_size || 10)));
+      document.getElementById(labelId).textContent = `Page ${result.page} of ${totalPages}`;
+      if (pageState[stateKey] > totalPages) {
+        pageState[stateKey] = totalPages;
+      }
+    }
+
+    async function loadReports() {
       try {
-        const r = await api('/reports/summary');
+        destroyCharts();
+        const summary = await api(`/reports/summary?${getFilters().toString()}`);
 
-        makeChart('chart-status', r.assets_by_status.map(x => x.status), r.assets_by_status.map(x => x.total), 'doughnut');
-        makeChart('chart-type', r.assets_by_type.map(x => x.asset_type), r.assets_by_type.map(x => x.total));
-        makeChart('chart-dept', r.assets_by_department.map(x => x.department), r.assets_by_department.map(x => x.total));
-        makeChart('chart-priority', r.requests_by_priority.map(x => x.priority), r.requests_by_priority.map(x => x.total), 'doughnut');
-        makeChart('chart-category', r.requests_by_category.map(x => x.category), r.requests_by_category.map(x => x.total));
-        makeChart('chart-req-status', r.requests_by_status.map(x => x.status), r.requests_by_status.map(x => x.total), 'doughnut');
-        makeChart(
-          'chart-assignment',
-          ['Unassigned', 'Actively Assigned', 'Expected Completion Overdue'],
-          [
-            Number(r.requests_by_assignment.unassigned || 0),
-            Number(r.requests_by_assignment.actively_assigned || 0),
-            Number(r.requests_by_assignment.expected_completion_overdue || 0),
-          ],
-          'doughnut'
-        );
-        makeChart(
-          'chart-sla',
-          ['With SLA Policy', 'Without SLA Policy', 'Escalated'],
-          [
-            Number(r.sla_policy_coverage.with_policy || 0),
-            Number(r.sla_policy_coverage.without_policy || 0),
-            Number(r.sla_policy_coverage.escalated || 0),
-          ],
-          'doughnut'
-        );
+        makeChart('chart-status', summary.assets_by_status.map((row) => row.status), summary.assets_by_status.map((row) => Number(row.total || 0)), 'doughnut');
+        makeChart('chart-type', summary.assets_by_type.map((row) => row.asset_type), summary.assets_by_type.map((row) => Number(row.total || 0)));
+        makeChart('chart-priority', summary.requests_by_priority.map((row) => row.priority), summary.requests_by_priority.map((row) => Number(row.total || 0)), 'doughnut');
+        makeChart('chart-req-status', summary.requests_by_status.map((row) => row.status), summary.requests_by_status.map((row) => Number(row.total || 0)), 'doughnut');
+        makeChart('chart-sla', ['With Policy', 'Without Policy', 'Escalated'], [
+          Number(summary.sla_policy_coverage.with_policy || 0),
+          Number(summary.sla_policy_coverage.without_policy || 0),
+          Number(summary.sla_policy_coverage.escalated || 0),
+        ], 'doughnut');
+        makeChart('chart-maint-health', ['Active', 'Due Now', 'Overdue'], [
+          Number(summary.maintenance_schedule_health.active_schedules || 0),
+          Number(summary.maintenance_schedule_health.due_now || 0),
+          Number(summary.maintenance_schedule_health.overdue || 0),
+        ], 'doughnut');
 
-        document.getElementById('tech-rows').innerHTML = r.technician_workload.map((t) => {
-          const res = r.technician_resolutions.find((x) => x.technician === t.technician);
-          return `<tr><td>${escapeHtml(t.technician)}</td><td>${t.open_requests}</td><td>${res ? res.resolved_count : 0}</td></tr>`;
-        }).join('') || '<tr><td colspan="3" class="empty-state">No technicians yet</td></tr>';
+        document.getElementById('tech-rows').innerHTML = summary.technician_workload.map((row) => {
+          const resolved = summary.technician_resolutions.find((candidate) => candidate.technician === row.technician);
+          return `<tr><td>${escapeHtml(row.technician)}</td><td>${row.open_requests}</td><td>${resolved ? resolved.resolved_count : 0}</td></tr>`;
+        }).join('') || '<tr><td colspan="3" class="empty-state">No technicians for the current filter.</td></tr>';
 
-        document.getElementById('dept-rows').innerHTML = r.department_stats.map((d) =>
-          `<tr><td>${escapeHtml(d.name)}</td><td>${d.total_assets}</td><td>${d.total_requests}</td></tr>`
-        ).join('');
+        document.getElementById('sla-rows').innerHTML = `<tr>
+          <td>${Number(summary.sla_performance.response_met || 0)}</td>
+          <td>${Number(summary.sla_performance.response_measured || 0)}</td>
+          <td>${Number(summary.sla_performance.resolution_met || 0)}</td>
+          <td>${Number(summary.sla_performance.resolution_measured || 0)}</td>
+          <td>${summary.sla_performance.avg_response_hours === null ? '-' : Number(summary.sla_performance.avg_response_hours).toFixed(1)}</td>
+          <td>${summary.sla_performance.avg_resolution_hours === null ? '-' : Number(summary.sla_performance.avg_resolution_hours).toFixed(1)}</td>
+        </tr>`;
 
-        document.getElementById('maint-rows').innerHTML = r.monthly_maintenance.map((m) =>
-          `<tr><td>${m.month}</td><td>${m.total_records}</td><td>NGN ${Number(m.total_cost).toLocaleString()}</td></tr>`
-        ).join('') || '<tr><td colspan="3" class="empty-state">No maintenance records yet</td></tr>';
-
-        document.getElementById('overdue-rows').innerHTML = r.overdue_tickets.map((t) =>
-          `<tr><td>${escapeHtml(t.ticket_number)}</td><td>${escapeHtml(t.subject)}</td><td>${escapeHtml(t.priority)}</td><td>${escapeHtml(t.status)}</td><td>${fmtDateTime(t.expected_completion_at)}</td><td>${t.escalation_count}</td></tr>`
-        ).join('') || '<tr><td colspan="6" class="empty-state">No overdue or escalated tickets right now</td></tr>';
+        await Promise.all([
+          loadPage('tickets', 'ticket-rows', 'tickets-page-label', (row) => `<tr><td>${escapeHtml(row.ticket_number || '-')}</td><td>${escapeHtml(row.subject)}</td><td>${escapeHtml(row.category)}</td><td>${escapeHtml(row.ticket_type)}</td><td>${escapeHtml(row.priority)}</td><td>${escapeHtml(row.status)}</td><td>${escapeHtml(row.technician_name || '-')}</td><td>${fmtDateTime(row.date_submitted)}</td></tr>`, 'tickets'),
+          loadPage('assets', 'asset-rows', 'assets-page-label', (row) => `<tr><td>${escapeHtml(row.asset_tag)}</td><td>${escapeHtml(row.asset_type)}</td><td>${escapeHtml(row.department_name || '-')}</td><td>${escapeHtml(row.status)}</td><td>${escapeHtml(row.condition)}</td><td>${escapeHtml(row.assigned_staff_name || '-')}</td></tr>`, 'assets'),
+          loadPage('maintenance', 'maintenance-rows', 'maintenance-page-label', (row) => `<tr><td>${escapeHtml(row.asset_tag)}</td><td>${escapeHtml(row.maintenance_type)}</td><td>${escapeHtml(row.problem)}</td><td>${escapeHtml(row.status)}</td><td>NGN ${Number(row.cost || 0).toLocaleString()}</td><td>${fmtDate(row.maintenance_date)}</td><td>${escapeHtml(row.technician_name || '-')}</td></tr>`, 'maintenance'),
+        ]);
       } catch (err) {
         alert(err.message);
       }
     }
 
+    async function changePage(kind, delta) {
+      pageState[kind] = Math.max(1, pageState[kind] + delta);
+      await loadReports();
+    }
+
     async function exportCsv(type) {
       try {
-        const blob = await api(`/reports/export/${type}.csv`, { isCsv: true });
+        const blob = await api(`/reports/export/${type}.csv?${getFilters().toString()}`, { isCsv: true });
         downloadBlob(blob, `${type}_report.csv`);
       } catch (err) {
-        alert('Export failed: ' + err.message);
+        alert(`Export failed: ${err.message}`);
       }
     }
 
-    renderContent();
-    load();
+    async function init() {
+      renderContent();
+      await loadFilterOptions();
+      await loadReports();
+    }
+
+    init();
   </script>
 </body>
 </html>

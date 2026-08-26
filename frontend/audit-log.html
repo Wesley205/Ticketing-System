@@ -12,9 +12,8 @@
   <script src="/js/api.js"></script>
   <script src="/js/layout.js"></script>
   <script>
-    requireAuthPage();
-    requireRolePage('admin', 'ict_officer');
-    renderLayout('audit-log', 'Audit Log');
+    requireRoutePage('audit-log');
+    renderLayout('audit-log', 'Audit Log', 'Auditable actions within your authorized oversight scope');
 
     function renderContent() {
       document.getElementById('page-content').innerHTML = `

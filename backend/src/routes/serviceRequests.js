@@ -9,6 +9,7 @@ const {
   canCreateServiceRequest,
   canManageServiceRequestAssignments,
   canManageTicketAttachments,
+  canViewAsset,
   canViewServiceRequest,
   canViewInternalTicketArtifacts,
   constrainServiceRequestVisibility,
@@ -29,6 +30,7 @@ const {
   getServiceRequestDetails,
   loadAssignmentHistory,
   loadAttachmentRecord,
+  updateServiceRequestAssetRecord,
   updateServiceRequestStatusRecord,
 } = require('../services/serviceRequests');
 const { resolveAttachmentPath, saveAttachmentFile } = require('../utils/ticketAttachments');
@@ -52,6 +54,17 @@ async function loadRequestOr404(req, res) {
     return null;
   }
   return request;
+}
+
+async function loadAssetForTicket(assetId) {
+  if (!assetId) return null;
+  const result = await pool.query(
+    `SELECT asset_id, asset_tag, department_id, assigned_to, status, is_archived
+     FROM assets
+     WHERE asset_id = $1`,
+    [assetId]
+  );
+  return result.rows[0] || null;
 }
 
 router.get('/', requireAuth, async (req, res) => {
@@ -206,6 +219,19 @@ router.post(
     }
 
     try {
+      if (affected_asset_id) {
+        const asset = await loadAssetForTicket(affected_asset_id);
+        if (!asset) {
+          return res.status(404).json({ error: 'Affected asset not found.' });
+        }
+        if (asset.is_archived) {
+          return res.status(400).json({ error: 'Archived assets cannot be linked to tickets.' });
+        }
+        if (!canViewAsset(req.user, asset)) {
+          return res.status(403).json({ error: 'You do not have permission to link that asset to this ticket.' });
+        }
+      }
+
       const result = await createServiceRequestRecord({
         requester_id: req.user.user_id,
         requester_role: req.user.role,
@@ -264,6 +290,36 @@ router.patch('/:id/assign', requireAuth, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(400).json({ error: err.message || 'Failed to assign technician.' });
+  }
+});
+
+router.patch('/:id/affected-asset', requireAuth, async (req, res) => {
+  try {
+    const request = await loadRequestOr404(req, res);
+    if (!request) return;
+    if (!canViewServiceRequest(req.user, request)) {
+      return res.status(403).json({ error: 'You do not have permission to update this request.' });
+    }
+
+    const nextAssetId = req.body.affected_asset_id || null;
+    if (nextAssetId) {
+      const asset = await loadAssetForTicket(nextAssetId);
+      if (!asset) {
+        return res.status(404).json({ error: 'Affected asset not found.' });
+      }
+      if (asset.is_archived) {
+        return res.status(400).json({ error: 'Archived assets cannot be linked to tickets.' });
+      }
+      if (!canViewAsset(req.user, asset)) {
+        return res.status(403).json({ error: 'You do not have permission to link that asset to this request.' });
+      }
+    }
+
+    const result = await updateServiceRequestAssetRecord(req.params.id, nextAssetId, req.user);
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ error: err.message || 'Failed to update affected asset.' });
   }
 });
 

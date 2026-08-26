@@ -6,6 +6,7 @@ const { isConfiguredForSecureAccess, isStrongJwtSecret } = require('./config/aut
 const { startExpirySweep } = require('./utils/accountExpiry');
 const { logAction } = require('./utils/audit');
 const { startNotificationQueue } = require('./utils/notificationProcessor');
+const { startMaintenanceMonitor } = require('./utils/maintenanceMonitor');
 const { startSlaMonitor } = require('./utils/slaMonitor');
 
 if (!process.env.JWT_SECRET) {
@@ -29,4 +30,5 @@ app.listen(PORT, () => {
 
 startExpirySweep({ pool, logAction });
 startNotificationQueue({ pool });
+startMaintenanceMonitor({ pool, logAction });
 startSlaMonitor({ pool, logAction });

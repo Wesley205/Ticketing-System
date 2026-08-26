@@ -10,6 +10,7 @@ const NOTIFICATION_EVENT_TYPES = {
   ticket_escalated: { category: 'sla', critical: true, supportsEmail: true, severity: 'error' },
   maintenance_created: { category: 'maintenance', critical: false, supportsEmail: true, severity: 'info' },
   maintenance_completed: { category: 'maintenance', critical: false, supportsEmail: true, severity: 'success' },
+  maintenance_due: { category: 'maintenance', critical: true, supportsEmail: true, severity: 'warning' },
   invitation_created: { category: 'system', critical: false, supportsEmail: true, severity: 'info' },
   account_expiry: { category: 'system', critical: true, supportsEmail: true, severity: 'warning' },
   system: { category: 'system', critical: false, supportsEmail: false, severity: 'info' },

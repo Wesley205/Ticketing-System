@@ -9,3 +9,7 @@ require('./serviceRequests.test');
 require('./sla.test');
 require('./ticketWorkflow.test');
 require('./ticketAttachments.test');
+require('./assetsMaintenance.test');
+require('./knowledgeBase.test');
+require('./reporting.test');
+require('./frontendAccess.test');

@@ -37,10 +37,9 @@
   <script src="/js/api.js"></script>
   <script src="/js/layout.js"></script>
   <script>
-    requireAuthPage();
-    requireRolePage('admin', 'ict_officer');
-    renderLayout('departments', 'Departments');
-    const isAdmin = getUser().role === 'admin';
+    requireRoutePage('departments');
+    renderLayout('departments', 'Departments', 'Department records, membership, and linked operational context');
+    const isAdmin = hasPermission('can_access_admin_portal');
 
     function renderContent() {
       document.getElementById('page-content').innerHTML = `

@@ -16,6 +16,8 @@
   .detail-block { border-top:1px solid #eaecf0; padding-top:14px; margin-top:14px; }
   .timeline-list, .comment-list, .attachment-list { display:flex; flex-direction:column; gap:10px; margin-top:10px; }
   .timeline-item, .comment-item, .attachment-item { border:1px solid #eaecf0; border-radius:12px; padding:12px; background:#fff; }
+  .suggestion-card { border:1px solid #d0d5dd; border-radius:12px; padding:12px; background:#f8fafc; }
+  .suggestion-card strong { display:block; margin-bottom:6px; }
   .timeline-item small, .comment-item small, .attachment-item small { color:#667085; display:block; margin-top:6px; }
   .artifact-flag { font-size:11px; font-weight:700; color:#b42318; text-transform:uppercase; letter-spacing:.04em; }
   .detail-meta { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
@@ -76,8 +78,16 @@
           <textarea id="description" rows="5" required placeholder="Describe the issue in detail"></textarea>
         </div>
         <div class="field">
-          <label>Affected Asset ID</label>
-          <input id="affected_asset_id" type="number" min="1" placeholder="Optional asset reference">
+          <label>Affected Asset</label>
+          <select id="affected_asset_id">
+            <option value="">No linked asset</option>
+          </select>
+        </div>
+        <div class="detail-block" style="border-top:none;padding-top:0;margin-top:0;">
+          <strong>Suggested Knowledge Articles</strong>
+          <div id="ticket-suggestions" class="comment-list" style="margin-top:10px;">
+            <div class="muted">Suggestions will appear as you describe the issue.</div>
+          </div>
         </div>
         <div class="field">
           <label><input id="closure_confirmation_required" type="checkbox"> Require requester closure confirmation</label>
@@ -107,13 +117,16 @@
   <script src="/js/api.js"></script>
   <script src="/js/layout.js"></script>
   <script>
-    requireAuthPage();
-    renderLayout('service-requests', 'Service Desk');
+    requireRoutePage('service-requests');
+    renderLayout('service-requests', 'Service Desk', 'Ticket workflows, assignment, comments, and secure history');
 
     const user = getUser();
+    const accessProfile = getAccessProfile();
     let activeAssignId = null;
     let selectedTicketId = null;
     let currentDetail = null;
+    let assetOptions = [];
+    let suggestionTimer = null;
     let metadata = {
       priorities: ['Low', 'Medium', 'High', 'Critical'],
       statuses: ['New', 'Pending', 'Assigned', 'Accepted', 'In Progress', 'Waiting for User', 'Waiting for Parts', 'Resolved', 'Closed', 'Reopened', 'Cancelled'],
@@ -171,11 +184,46 @@
       document.getElementById('urgency').innerHTML = metadata.priorities.map(v => `<option ${v === 'Medium' ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('');
     }
 
-    function openNewModal() {
+    async function loadAssetOptions() {
+      try {
+        assetOptions = await api('/assets');
+      } catch (err) {
+        assetOptions = [];
+      }
+
+      const html = ['<option value="">No linked asset</option>']
+        .concat(assetOptions.map((asset) => `<option value="${asset.asset_id}">${escapeHtml(asset.asset_tag)} - ${escapeHtml(asset.asset_type)}</option>`))
+        .join('');
+
+      const createSelect = document.getElementById('affected_asset_id');
+      if (createSelect) {
+        createSelect.innerHTML = html;
+      }
+
+      const detailSelect = document.getElementById('detail-affected-asset');
+      if (detailSelect) {
+        detailSelect.innerHTML = html;
+        detailSelect.value = currentDetail?.affected_asset_id || '';
+      }
+    }
+
+    async function openNewModal() {
       document.getElementById('new-form').reset();
       document.getElementById('new-error').style.display = 'none';
       populateFilters();
+      await loadAssetOptions();
       document.getElementById('new-modal').classList.add('open');
+      bindSuggestionInputs();
+      renderKnowledgeSuggestions([], 'ticket-suggestions');
+    }
+
+    function bindSuggestionInputs() {
+      ['category', 'subcategory', 'subject', 'description', 'affected_asset_id'].forEach((id) => {
+        const node = document.getElementById(id);
+        if (!node) return;
+        node.oninput = debounce(loadTicketCreationSuggestions, 250);
+        node.onchange = debounce(loadTicketCreationSuggestions, 250);
+      });
     }
 
     async function loadMetadata() {
@@ -225,7 +273,7 @@
     }
 
     function renderRowActions(ticket) {
-      const assignAction = ['admin', 'ict_officer'].includes(user.role)
+      const assignAction = hasPermission('can_manage_service_request_assignments')
         && !['Closed', 'Cancelled'].includes(ticket.status)
         ? `<button class="link-btn" onclick="openAssign(${ticket.request_id})">${ticket.assigned_technician_id ? 'Reassign' : 'Assign'}</button>`
         : '';
@@ -273,7 +321,7 @@
             <div><strong>Category</strong>${escapeHtml(currentDetail.category)}${currentDetail.subcategory ? ` / ${escapeHtml(currentDetail.subcategory)}` : ''}</div>
             <div><strong>Impact / Urgency</strong>${escapeHtml(currentDetail.impact || '-')} / ${escapeHtml(currentDetail.urgency || '-')}</div>
             <div><strong>Source Channel</strong>${escapeHtml(currentDetail.source_channel || '-')}</div>
-            <div><strong>Affected Asset</strong>${currentDetail.affected_asset_id ? `#${currentDetail.affected_asset_id}` : '-'}</div>
+            <div><strong>Affected Asset</strong>${escapeHtml(currentDetail.affected_asset_tag || (currentDetail.affected_asset_id ? `Asset #${currentDetail.affected_asset_id}` : '-'))}</div>
             <div><strong>First Response</strong>${fmtDateTime(currentDetail.first_response_at)}</div>
             <div><strong>Resolution Due</strong>${fmtDateTime(currentDetail.sla_resolution_due_at)}</div>
             <div><strong>Response Due</strong>${fmtDateTime(currentDetail.sla_response_due_at)}</div>
@@ -283,6 +331,23 @@
           <div class="detail-block">
             <strong>Description</strong>
             <p style="margin-top:8px;">${escapeHtml(currentDetail.description)}</p>
+          </div>
+
+          <div class="detail-block">
+            <strong>Asset Link</strong>
+            <div class="inline-actions" style="margin-top:10px;">
+              <select id="detail-affected-asset">
+                <option value="">No linked asset</option>
+              </select>
+              <button class="btn" onclick="submitAffectedAssetUpdate()">Save Asset Link</button>
+            </div>
+          </div>
+
+          <div class="detail-block">
+            <strong>Suggested Knowledge Articles</strong>
+            <div id="detail-suggestions" class="comment-list" style="margin-top:10px;">
+              <div class="muted">Loading suggestions...</div>
+            </div>
           </div>
 
           <div class="detail-block">
@@ -383,6 +448,61 @@
           </div>
         </div>
       `;
+      loadAssetOptions();
+      loadTicketDetailSuggestions();
+    }
+
+    function renderKnowledgeSuggestions(articles, targetId) {
+      const root = document.getElementById(targetId);
+      if (!root) return;
+      root.innerHTML = articles.length
+        ? articles.map((article) => `
+          <div class="suggestion-card">
+            <strong>${escapeHtml(article.title)}</strong>
+            <div>${escapeHtml(article.summary || 'No summary available.')}</div>
+            <small>${escapeHtml(article.category || 'General')} | Helpful: ${Number(article.helpful_count || 0)} | Score: ${Number(article.suggestion_score || 0)}</small>
+            <button class="link-btn" onclick="window.location.href='/knowledge-base.html#article-${article.article_id}'">Open article</button>
+          </div>
+        `).join('')
+        : '<div class="muted">No matching knowledge-base suggestions yet.</div>';
+    }
+
+    async function loadTicketCreationSuggestions() {
+      clearTimeout(suggestionTimer);
+      suggestionTimer = setTimeout(async () => {
+        const params = new URLSearchParams({
+          category: document.getElementById('category').value || '',
+          subcategory: document.getElementById('subcategory').value || '',
+          subject: document.getElementById('subject').value || '',
+          description: document.getElementById('description').value || '',
+          affected_asset_id: document.getElementById('affected_asset_id').value || '',
+          limit: '5',
+        });
+        try {
+          const suggestions = await api(`/knowledge-base/suggestions?${params.toString()}`);
+          renderKnowledgeSuggestions(suggestions, 'ticket-suggestions');
+        } catch (err) {
+          renderKnowledgeSuggestions([], 'ticket-suggestions');
+        }
+      }, 0);
+    }
+
+    async function loadTicketDetailSuggestions() {
+      if (!currentDetail) return;
+      const params = new URLSearchParams({
+        category: currentDetail.category || '',
+        subcategory: currentDetail.subcategory || '',
+        subject: currentDetail.subject || '',
+        description: currentDetail.description || '',
+        affected_asset_id: currentDetail.affected_asset_id || '',
+        limit: '5',
+      });
+      try {
+        const suggestions = await api(`/knowledge-base/suggestions?${params.toString()}`);
+        renderKnowledgeSuggestions(suggestions, 'detail-suggestions');
+      } catch (err) {
+        renderKnowledgeSuggestions([], 'detail-suggestions');
+      }
     }
 
     document.getElementById('new-form').addEventListener('submit', async (e) => {
@@ -447,6 +567,21 @@
         if (selectedTicketId === activeAssignId) {
           await selectTicket(activeAssignId);
         }
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function submitAffectedAssetUpdate() {
+      if (!selectedTicketId) return;
+      try {
+        await api(`/service-requests/${selectedTicketId}/affected-asset`, {
+          method: 'PATCH',
+          body: {
+            affected_asset_id: document.getElementById('detail-affected-asset').value || null,
+          },
+        });
+        await selectTicket(selectedTicketId);
       } catch (err) {
         alert(err.message);
       }

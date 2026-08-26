@@ -46,6 +46,28 @@ const phase7MigrationSql = fs.readFileSync(
   ),
   'utf8'
 );
+const phase8MigrationSql = fs.readFileSync(
+  path.join(
+    __dirname,
+    '..',
+    '..',
+    'database',
+    'migrations',
+    '006_phase_8_asset_maintenance_management.sql'
+  ),
+  'utf8'
+);
+const phase9MigrationSql = fs.readFileSync(
+  path.join(
+    __dirname,
+    '..',
+    '..',
+    'database',
+    'migrations',
+    '007_phase_9_knowledge_base.sql'
+  ),
+  'utf8'
+);
 
 test('phase 4 migration creates the new operational tables', () => {
   const expectedTables = [
@@ -115,4 +137,24 @@ test('phase 7 migration adds delivery queue and richer notification preferences'
   assert.match(phase7MigrationSql, /ADD COLUMN IF NOT EXISTS comment_enabled BOOLEAN NOT NULL DEFAULT TRUE/i);
   assert.match(phase7MigrationSql, /ADD COLUMN IF NOT EXISTS sla_enabled BOOLEAN NOT NULL DEFAULT TRUE/i);
   assert.match(phase7MigrationSql, /notification_type IN \(\s*'ticket_assigned',\s*'ticket_updated',\s*'ticket_resolved',\s*'ticket_comment',\s*'ticket_attachment'/i);
+});
+
+test('phase 8 migration adds maintenance schedules and asset lifecycle tracking', () => {
+  assert.match(phase8MigrationSql, /ADD COLUMN IF NOT EXISTS expected_return_at TIMESTAMP/i);
+  assert.match(phase8MigrationSql, /CREATE TABLE IF NOT EXISTS asset_status_history/i);
+  assert.match(phase8MigrationSql, /CREATE TABLE IF NOT EXISTS maintenance_schedules/i);
+  assert.match(phase8MigrationSql, /ADD COLUMN IF NOT EXISTS maintenance_type VARCHAR\(30\) NOT NULL DEFAULT 'Corrective'/i);
+  assert.match(phase8MigrationSql, /ADD COLUMN IF NOT EXISTS schedule_id INTEGER REFERENCES maintenance_schedules\(schedule_id\)/i);
+  assert.match(phase8MigrationSql, /notification_type IN \(\s*'ticket_assigned'/i);
+  assert.match(phase8MigrationSql, /'maintenance_due'/i);
+});
+
+test('phase 9 migration expands the knowledge base with revisions, relations, and feedback', () => {
+  assert.match(phase9MigrationSql, /ADD COLUMN IF NOT EXISTS category VARCHAR\(80\) NOT NULL DEFAULT 'General'/i);
+  assert.match(phase9MigrationSql, /ADD COLUMN IF NOT EXISTS visibility_scope VARCHAR\(30\) NOT NULL DEFAULT 'all_users'/i);
+  assert.match(phase9MigrationSql, /CREATE TABLE IF NOT EXISTS knowledge_base_article_revisions/i);
+  assert.match(phase9MigrationSql, /CREATE TABLE IF NOT EXISTS knowledge_base_article_relations/i);
+  assert.match(phase9MigrationSql, /CREATE TABLE IF NOT EXISTS knowledge_base_article_feedback/i);
+  assert.match(phase9MigrationSql, /CREATE INDEX IF NOT EXISTS idx_knowledge_base_title_search/i);
+  assert.match(phase9MigrationSql, /Backfilled initial revision during Phase 9 migration/i);
 });

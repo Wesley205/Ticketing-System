@@ -2,6 +2,9 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const {
+  buildFrontendAccessProfile,
+  canManageKnowledgeBase,
+  canViewKnowledgeBaseArticle,
   canManageAssets,
   canManageDepartments,
   canUpdateServiceRequest,
@@ -59,4 +62,41 @@ test('query scope helpers add restrictive clauses for non-admin roles', () => {
   assert.match(assetClauses[0], /assigned_to/);
   assert.equal(requestParams[0], 3);
   assert.equal(assetParams[0], 3);
+});
+
+test('knowledge-base visibility respects publication state and article scope', () => {
+  const staff = { user_id: 9, role: 'staff', department_id: 4 };
+  const technician = { user_id: 5, role: 'technician', department_id: 4 };
+
+  assert.equal(canViewKnowledgeBaseArticle(staff, { status: 'published', visibility_scope: 'all_users' }), true);
+  assert.equal(canViewKnowledgeBaseArticle(staff, { status: 'draft', visibility_scope: 'all_users' }), false);
+  assert.equal(canViewKnowledgeBaseArticle(staff, { status: 'published', visibility_scope: 'operational_only' }), false);
+  assert.equal(canViewKnowledgeBaseArticle(technician, { status: 'published', visibility_scope: 'operational_only' }), true);
+  assert.equal(canViewKnowledgeBaseArticle(staff, { status: 'published', visibility_scope: 'department', department_id: 4 }), true);
+  assert.equal(canManageKnowledgeBase({ user_id: 1, role: 'ict_officer' }), true);
+});
+
+test('frontend access profile exposes normalized scope and portal metadata', () => {
+  const technicianProfile = buildFrontendAccessProfile({
+    user_id: 4,
+    role: 'technician',
+    user_type: 'employee',
+    department_id: 2,
+  });
+  const staffProfile = buildFrontendAccessProfile({
+    user_id: 8,
+    role: 'staff',
+    user_type: 'employee',
+    department_id: 5,
+  });
+
+  assert.equal(technicianProfile.primary_portal, 'technician');
+  assert.equal(technicianProfile.scope.assigned_only, true);
+  assert.equal(technicianProfile.permissions.can_access_technician_portal, true);
+  assert.equal(technicianProfile.permissions.can_view_reports, false);
+
+  assert.equal(staffProfile.primary_portal, 'department_supervisor');
+  assert.equal(staffProfile.scope.department_scope, true);
+  assert.equal(staffProfile.scope.user_only, true);
+  assert.equal(staffProfile.permissions.can_manage_assets, false);
 });

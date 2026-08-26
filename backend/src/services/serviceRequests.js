@@ -1,85 +1,96 @@
-const { withTransaction } = require('../utils/transactions');
-const { logAction } = require('../utils/audit');
-const { emitNotificationEvent } = require('../utils/notificationService');
-const { removeAttachmentFile } = require('../utils/ticketAttachments');
+const { withTransaction } = require("../utils/transactions");
+const { logAction } = require("../utils/audit");
+const { emitNotificationEvent } = require("../utils/notificationService");
+const { removeAttachmentFile } = require("../utils/ticketAttachments");
 const {
   buildSlaDeadlinesFromPolicy,
   calculateSlaState,
   selectSlaPolicy,
-} = require('../utils/sla');
+} = require("../utils/sla");
 
 const TICKET_TYPES = [
-  'Incident',
-  'Service Request',
-  'Access Request',
-  'Maintenance Request',
-  'Change Request',
+  "Incident",
+  "Service Request",
+  "Access Request",
+  "Maintenance Request",
+  "Change Request",
 ];
 
 const TICKET_STATUSES = [
-  'New',
-  'Pending',
-  'Assigned',
-  'Accepted',
-  'In Progress',
-  'Waiting for User',
-  'Waiting for Parts',
-  'Resolved',
-  'Closed',
-  'Reopened',
-  'Cancelled',
+  "New",
+  "Pending",
+  "Assigned",
+  "Accepted",
+  "In Progress",
+  "Waiting for User",
+  "Waiting for Parts",
+  "Resolved",
+  "Closed",
+  "Reopened",
+  "Cancelled",
 ];
 
-const TICKET_PRIORITIES = ['Low', 'Medium', 'High', 'Critical'];
-const TICKET_SOURCE_CHANNELS = ['portal', 'email', 'phone', 'walk-in', 'system'];
+const TICKET_PRIORITIES = ["Low", "Medium", "High", "Critical"];
+const TICKET_SOURCE_CHANNELS = [
+  "portal",
+  "email",
+  "phone",
+  "walk-in",
+  "system",
+];
 
 const STATUS_TRANSITIONS = {
-  New: ['Pending', 'Assigned', 'Cancelled'],
-  Pending: ['Assigned', 'Cancelled'],
-  Assigned: ['Accepted', 'In Progress', 'Cancelled'],
-  Accepted: ['In Progress'],
-  'In Progress': ['Waiting for User', 'Waiting for Parts', 'Resolved'],
-  'Waiting for User': ['In Progress'],
-  'Waiting for Parts': ['In Progress'],
-  Resolved: ['Closed', 'Reopened'],
-  Closed: ['Reopened'],
-  Reopened: ['Assigned'],
+  New: ["Pending", "Assigned", "Cancelled"],
+  Pending: ["Assigned", "Cancelled"],
+  Assigned: ["Accepted", "In Progress", "Cancelled"],
+  Accepted: ["In Progress"],
+  "In Progress": ["Waiting for User", "Waiting for Parts", "Resolved"],
+  "Waiting for User": ["In Progress"],
+  "Waiting for Parts": ["In Progress"],
+  Resolved: ["Closed", "Reopened"],
+  Closed: ["Reopened"],
+  Reopened: ["Assigned"],
   Cancelled: [],
 };
 
 function buildTicketNumber(requestId, date = new Date()) {
   const year = date.getFullYear();
-  return `NSC-${year}-${String(requestId).padStart(5, '0')}`;
+  return `NSC-${year}-${String(requestId).padStart(5, "0")}`;
 }
 
 function isOperationalRole(user) {
-  return ['admin', 'ict_officer', 'technician'].includes(user?.role);
+  return ["admin", "ict_officer", "technician"].includes(user?.role);
 }
 
 function canActorTransitionStatus(user, request, nextStatus) {
   if (!user || !request) return false;
 
-  if (['admin', 'ict_officer'].includes(user.role)) {
+  if (["admin", "ict_officer"].includes(user.role)) {
     return true;
   }
 
   const isRequester = Number(request.requester_id) === Number(user.user_id);
   const isAssignedTechnician =
-    user.role === 'technician' && Number(request.assigned_technician_id) === Number(user.user_id);
+    user.role === "technician" &&
+    Number(request.assigned_technician_id) === Number(user.user_id);
 
   if (isAssignedTechnician) {
     return [
-      'Accepted',
-      'In Progress',
-      'Waiting for User',
-      'Waiting for Parts',
-      'Resolved',
+      "Accepted",
+      "In Progress",
+      "Waiting for User",
+      "Waiting for Parts",
+      "Resolved",
     ].includes(nextStatus);
   }
 
   if (isRequester) {
-    if (request.status === 'Resolved' && nextStatus === 'Closed') return true;
-    if (['Resolved', 'Closed'].includes(request.status) && nextStatus === 'Reopened') return true;
+    if (request.status === "Resolved" && nextStatus === "Closed") return true;
+    if (
+      ["Resolved", "Closed"].includes(request.status) &&
+      nextStatus === "Reopened"
+    )
+      return true;
   }
 
   return false;
@@ -87,30 +98,38 @@ function canActorTransitionStatus(user, request, nextStatus) {
 
 function getAllowedTicketTransitions(user, request) {
   const allowed = STATUS_TRANSITIONS[request?.status] || [];
-  return allowed.filter((status) => canActorTransitionStatus(user, request, status));
+  return allowed.filter((status) =>
+    canActorTransitionStatus(user, request, status),
+  );
 }
 
 function validateTicketTransition(request, nextStatus, actorUser) {
   if (!TICKET_STATUSES.includes(nextStatus)) {
-    return 'Invalid ticket status.';
+    return "Invalid ticket status.";
   }
   if (!request) {
-    return 'Request not found.';
+    return "Request not found.";
   }
   if (request.status === nextStatus) {
-    return 'Ticket is already in that status.';
+    return "Ticket is already in that status.";
   }
   const allowedNext = STATUS_TRANSITIONS[request.status] || [];
   if (!allowedNext.includes(nextStatus)) {
     return `Tickets cannot move from ${request.status} to ${nextStatus}.`;
   }
   if (!canActorTransitionStatus(actorUser, request, nextStatus)) {
-    return 'You do not have permission to apply that ticket status transition.';
+    return "You do not have permission to apply that ticket status transition.";
   }
   return null;
 }
 
-async function insertTicketHistory(client, requestId, actorUserId, eventType, fields = {}) {
+async function insertTicketHistory(
+  client,
+  requestId,
+  actorUserId,
+  eventType,
+  fields = {},
+) {
   await client.query(
     `INSERT INTO ticket_history
       (request_id, actor_user_id, event_type, from_status, to_status, details)
@@ -122,26 +141,35 @@ async function insertTicketHistory(client, requestId, actorUserId, eventType, fi
       fields.from_status || null,
       fields.to_status || null,
       fields.details || null,
-    ]
+    ],
   );
 }
 
-async function insertNotifications(client, recipients, notificationType, title, message, requestId, options = {}) {
+async function insertNotifications(
+  client,
+  recipients,
+  notificationType,
+  title,
+  message,
+  requestId,
+  options = {},
+) {
   await emitNotificationEvent(
     {
       type: notificationType,
       title,
       message,
-      related_record_type: 'service_request',
+      related_record_type: "service_request",
       related_record_id: requestId,
       recipient_user_ids: recipients,
       payload: options.payload || {},
       severity: options.severity,
-      action_url: options.action_url || `/service-requests.html#ticket-${requestId}`,
+      action_url:
+        options.action_url || `/service-requests.html#ticket-${requestId}`,
       email_subject: options.email_subject,
       email_body_text: options.email_body_text,
     },
-    client
+    client,
   );
 }
 
@@ -151,7 +179,7 @@ async function fetchActiveSlaPolicies(client) {
             resolution_target_hours, escalation_threshold_hours, notification_recipients, is_active
      FROM sla_policies
      WHERE is_active = TRUE
-     ORDER BY CASE WHEN ticket_type IS NULL THEN 1 ELSE 0 END, priority`
+     ORDER BY CASE WHEN ticket_type IS NULL THEN 1 ELSE 0 END, priority`,
   );
   return result.rows;
 }
@@ -165,6 +193,8 @@ async function getServiceRequestById(client, requestId) {
             officer.full_name AS ict_officer_name,
             closer.full_name AS closed_by_name,
             assigner.full_name AS assigned_by_name,
+            asset.asset_tag AS affected_asset_tag,
+            asset.status AS affected_asset_status,
             sp.name AS sla_policy_name,
             sp.response_target_hours,
             sp.resolution_target_hours,
@@ -176,14 +206,19 @@ async function getServiceRequestById(client, requestId) {
      LEFT JOIN users closer ON closer.user_id = sr.closed_by_user_id
      LEFT JOIN users assigner ON assigner.user_id = sr.assigned_by_user_id
      LEFT JOIN departments d ON d.department_id = sr.department_id
+     LEFT JOIN assets asset ON asset.asset_id = sr.affected_asset_id
      LEFT JOIN sla_policies sp ON sp.sla_policy_id = sr.sla_policy_id
      WHERE sr.request_id = $1`,
-    [requestId]
+    [requestId],
   );
   return result.rows[0] || null;
 }
 
-async function loadTicketArtifacts(client, requestId, { includeInternal = false } = {}) {
+async function loadTicketArtifacts(
+  client,
+  requestId,
+  { includeInternal = false } = {},
+) {
   const commentsResult = await client.query(
     `SELECT tc.comment_id, tc.request_id, tc.author_user_id, tc.comment_body, tc.is_internal,
             tc.created_at, tc.updated_at, u.full_name AS author_name
@@ -193,7 +228,7 @@ async function loadTicketArtifacts(client, requestId, { includeInternal = false 
        AND tc.deleted_at IS NULL
        AND ($2::boolean = TRUE OR tc.is_internal = FALSE)
      ORDER BY tc.created_at ASC`,
-    [requestId, includeInternal]
+    [requestId, includeInternal],
   );
 
   const attachmentsResult = await client.query(
@@ -205,7 +240,7 @@ async function loadTicketArtifacts(client, requestId, { includeInternal = false 
        AND ta.deleted_at IS NULL
        AND ($2::boolean = TRUE OR ta.is_internal = FALSE)
      ORDER BY ta.created_at ASC`,
-    [requestId, includeInternal]
+    [requestId, includeInternal],
   );
 
   const historyResult = await client.query(
@@ -215,7 +250,7 @@ async function loadTicketArtifacts(client, requestId, { includeInternal = false 
      LEFT JOIN users u ON u.user_id = th.actor_user_id
      WHERE th.request_id = $1
      ORDER BY th.created_at ASC, th.history_id ASC`,
-    [requestId]
+    [requestId],
   );
 
   return {
@@ -238,7 +273,7 @@ async function loadAssignmentHistory(client, requestId) {
      LEFT JOIN users assigner ON assigner.user_id = ta.assigned_by_user_id
      WHERE ta.request_id = $1
      ORDER BY ta.assigned_at DESC, ta.ticket_assignment_id DESC`,
-    [requestId]
+    [requestId],
   );
   return result.rows;
 }
@@ -264,9 +299,10 @@ async function getServiceRequestDetails(client, requestId, actorUser) {
   const request = await getServiceRequestById(client, requestId);
   if (!request) return null;
 
-  const includeInternal = isOperationalRole(actorUser)
-    && (['admin', 'ict_officer'].includes(actorUser.role)
-      || Number(request.assigned_technician_id) === Number(actorUser.user_id));
+  const includeInternal =
+    isOperationalRole(actorUser) &&
+    (["admin", "ict_officer"].includes(actorUser.role) ||
+      Number(request.assigned_technician_id) === Number(actorUser.user_id));
 
   const [artifacts, assignmentHistory] = await Promise.all([
     loadTicketArtifacts(client, requestId, { includeInternal }),
@@ -286,66 +322,74 @@ async function createServiceRequestRecord(data) {
   return withTransaction(async (client) => {
     const policies = await fetchActiveSlaPolicies(client);
     const selectedPolicy = selectSlaPolicy(policies, {
-      priority: data.priority || 'Medium',
-      ticket_type: data.ticket_type || 'Incident',
+      priority: data.priority || "Medium",
+      ticket_type: data.ticket_type || "Incident",
     });
     const deadlines = buildSlaDeadlinesFromPolicy(selectedPolicy, new Date());
 
+    const idResult = await client.query(
+      `SELECT nextval(pg_get_serial_sequence('service_requests', 'request_id')) AS request_id`,
+    );
+
+    const requestId = Number(idResult.rows[0].request_id);
+    const now = new Date();
+    const ticketNumber = buildTicketNumber(requestId, now);
+
     const inserted = await client.query(
       `INSERT INTO service_requests
-        (requester_id, department_id, category, subject, description, priority, ticket_type,
-         subcategory, impact, urgency, source_channel, affected_asset_id,
-         closure_confirmation_required, status, sla_policy_id, sla_response_due_at, sla_resolution_due_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'New',$14,$15,$16)
-       RETURNING *`,
+        (request_id, ticket_number, requester_id, department_id, category, subject, description, priority, ticket_type,
+     subcategory, impact, urgency, source_channel, affected_asset_id,
+     closure_confirmation_required, status, sla_policy_id, sla_response_due_at, sla_resolution_due_at,
+     status_changed_at)
+   VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'New',$16,$17,$18,NOW())
+   RETURNING *`,
       [
+        requestId,
+        ticketNumber,
         data.requester_id,
         data.department_id || null,
         data.category,
         data.subject,
         data.description,
-        data.priority || 'Medium',
-        data.ticket_type || 'Incident',
+        data.priority || "Medium",
+        data.ticket_type || "Incident",
         data.subcategory || null,
-        data.impact || data.priority || 'Medium',
-        data.urgency || data.priority || 'Medium',
-        data.source_channel || 'portal',
+        data.impact || data.priority || "Medium",
+        data.urgency || data.priority || "Medium",
+        data.source_channel || "portal",
         data.affected_asset_id || null,
         !!data.closure_confirmation_required,
         selectedPolicy?.sla_policy_id || null,
         deadlines.responseDueAt,
         deadlines.resolutionDueAt,
-      ]
+      ],
     );
 
     const request = inserted.rows[0];
-    const ticketNumber = buildTicketNumber(request.request_id, request.date_submitted || request.created_at || new Date());
 
-    await client.query(
-      `UPDATE service_requests
-       SET ticket_number = $1,
-           status_changed_at = COALESCE(status_changed_at, NOW())
-       WHERE request_id = $2`,
-      [ticketNumber, request.request_id]
+    await insertTicketHistory(
+      client,
+      request.request_id,
+      data.requester_id,
+      "created",
+      {
+        to_status: "New",
+        details: `${data.ticket_type || "Incident"}: ${data.subject}`,
+      },
     );
-
-    await insertTicketHistory(client, request.request_id, data.requester_id, 'created', {
-      to_status: 'New',
-      details: `${data.ticket_type || 'Incident'}: ${data.subject}`,
-    });
 
     await logAction(
       data.requester_id,
-      'Service request created',
-      'service_request',
+      "Service request created",
+      "service_request",
       request.request_id,
       `${ticketNumber} created`,
-      client
+      client,
     );
 
     return getServiceRequestDetails(client, request.request_id, {
       user_id: data.requester_id,
-      role: data.requester_role || 'staff',
+      role: data.requester_role || "staff",
     });
   });
 }
@@ -357,7 +401,7 @@ async function closeActiveAssignment(client, requestId, endReason) {
          ended_at = NOW(),
          end_reason = COALESCE($2, end_reason)
      WHERE request_id = $1 AND is_active = TRUE`,
-    [requestId, endReason || null]
+    [requestId, endReason || null],
   );
 }
 
@@ -375,11 +419,16 @@ async function createAssignmentHistoryRow(client, requestId, details) {
       details.assignment_notes || null,
       details.accepted_at || null,
       details.expected_completion_at || null,
-    ]
+    ],
   );
 }
 
-async function assignServiceRequestRecord(requestId, assignedTechnicianId, actorUser, details = {}) {
+async function assignServiceRequestRecord(
+  requestId,
+  assignedTechnicianId,
+  actorUser,
+  details = {},
+) {
   return withTransaction(async (client) => {
     const existingResult = await client.query(
       `SELECT request_id, ticket_number, status, requester_id, department_id,
@@ -387,47 +436,55 @@ async function assignServiceRequestRecord(requestId, assignedTechnicianId, actor
        FROM service_requests
        WHERE request_id = $1
        FOR UPDATE`,
-      [requestId]
+      [requestId],
     );
     if (existingResult.rows.length === 0) return null;
 
     const previous = existingResult.rows[0];
-    if (['Closed', 'Cancelled'].includes(previous.status)) {
+    if (["Closed", "Cancelled"].includes(previous.status)) {
       throw new Error(`Cannot assign a ticket that is ${previous.status}.`);
     }
 
-    const nextAssignee = assignedTechnicianId ? Number(assignedTechnicianId) : null;
-    const nextStatus = nextAssignee ? 'Assigned' : 'Pending';
-    const assignedIctOfficerId = details.assigned_ict_officer_id || actorUser.user_id;
+    const nextAssignee = assignedTechnicianId
+      ? Number(assignedTechnicianId)
+      : null;
+    const nextStatus = nextAssignee ? "Assigned" : "Pending";
+    const assignedIctOfficerId = Number(
+      details.assigned_ict_officer_id || actorUser.user_id,
+    );
 
     await closeActiveAssignment(
       client,
       requestId,
-      nextAssignee ? 'Superseded by a newer assignment' : 'Ticket unassigned by ICT operations'
+      nextAssignee
+        ? "Superseded by a newer assignment"
+        : "Ticket unassigned by ICT operations",
     );
 
     const updated = await client.query(
       `UPDATE service_requests
-       SET assigned_technician_id = $1,
-           assigned_ict_officer_id = $2,
-           assigned_by_user_id = CASE WHEN $1 IS NULL THEN NULL ELSE $3 END,
-           assigned_at = CASE WHEN $1 IS NULL THEN NULL ELSE NOW() END,
-           accepted_at = CASE WHEN $1 IS NULL THEN NULL ELSE accepted_at END,
-           assignment_notes = $4,
-           expected_completion_at = $5,
-           status = $6,
-           status_changed_at = NOW()
-       WHERE request_id = $7
-       RETURNING *`,
+   SET assigned_technician_id = $1::integer,
+       assigned_ict_officer_id = $2::integer,
+       assigned_by_user_id = CASE WHEN $1::integer IS NULL THEN NULL ELSE $3::integer END,
+       assigned_at = CASE WHEN $1::integer IS NULL THEN NULL ELSE NOW() END,
+       accepted_at = CASE WHEN $1::integer IS NULL THEN NULL ELSE accepted_at END,
+       assignment_notes = $4,
+       expected_completion_at = $5,
+       status = $6,
+       status_changed_at = NOW()
+   WHERE request_id = $7::integer
+   RETURNING *`,
       [
         nextAssignee,
-        nextAssignee ? assignedIctOfficerId : previous.assigned_ict_officer_id,
-        actorUser.user_id,
+        nextAssignee
+          ? Number(assignedIctOfficerId)
+          : previous.assigned_ict_officer_id,
+        Number(actorUser.user_id),
         details.assignment_note || null,
         details.expected_completion_at || null,
         nextStatus,
-        requestId,
-      ]
+        Number(requestId),
+      ],
     );
 
     if (nextAssignee) {
@@ -441,17 +498,19 @@ async function assignServiceRequestRecord(requestId, assignedTechnicianId, actor
     }
 
     const eventType = !nextAssignee
-      ? 'unassigned'
+      ? "unassigned"
       : previous.assigned_technician_id
-        ? 'reassigned'
-        : 'assigned';
+        ? "reassigned"
+        : "assigned";
 
     await insertTicketHistory(client, requestId, actorUser.user_id, eventType, {
       from_status: previous.status,
       to_status: nextStatus,
-      details: details.assignment_note || (nextAssignee
-        ? `Assigned technician_id ${nextAssignee}`
-        : 'Assignment removed'),
+      details:
+        details.assignment_note ||
+        (nextAssignee
+          ? `Assigned technician_id ${nextAssignee}`
+          : "Assignment removed"),
     });
 
     const recipients = [previous.requester_id];
@@ -459,29 +518,41 @@ async function assignServiceRequestRecord(requestId, assignedTechnicianId, actor
     await insertNotifications(
       client,
       recipients,
-      'ticket_assigned',
-      nextAssignee ? 'Ticket assignment updated' : 'Ticket unassigned',
+      "ticket_assigned",
+      nextAssignee ? "Ticket assignment updated" : "Ticket unassigned",
       nextAssignee
         ? `Ticket ${updated.rows[0].ticket_number || requestId} has been assigned.`
         : `Ticket ${updated.rows[0].ticket_number || requestId} is awaiting reassignment.`,
       requestId,
-      { payload: { assigned_technician_id: nextAssignee, expected_completion_at: details.expected_completion_at || null } }
+      {
+        payload: {
+          assigned_technician_id: nextAssignee,
+          expected_completion_at: details.expected_completion_at || null,
+        },
+      },
     );
 
     await logAction(
       actorUser.user_id,
-      nextAssignee ? 'Technician assigned' : 'Ticket unassigned',
-      'service_request',
+      nextAssignee ? "Technician assigned" : "Ticket unassigned",
+      "service_request",
       requestId,
-      nextAssignee ? `Assigned technician_id ${nextAssignee}` : 'Removed assignee',
-      client
+      nextAssignee
+        ? `Assigned technician_id ${nextAssignee}`
+        : "Removed assignee",
+      client,
     );
 
     return updated.rows[0];
   });
 }
 
-async function updateServiceRequestStatusRecord(requestId, status, details, actorUser) {
+async function updateServiceRequestStatusRecord(
+  requestId,
+  status,
+  details,
+  actorUser,
+) {
   return withTransaction(async (client) => {
     const existingResult = await client.query(
       `SELECT request_id, ticket_number, status, requester_id, assigned_technician_id,
@@ -489,12 +560,16 @@ async function updateServiceRequestStatusRecord(requestId, status, details, acto
        FROM service_requests
        WHERE request_id = $1
        FOR UPDATE`,
-      [requestId]
+      [requestId],
     );
     if (existingResult.rows.length === 0) return null;
 
     const previous = existingResult.rows[0];
-    const transitionError = validateTicketTransition(previous, status, actorUser);
+    const transitionError = validateTicketTransition(
+      previous,
+      status,
+      actorUser,
+    );
     if (transitionError) {
       throw new Error(transitionError);
     }
@@ -502,79 +577,116 @@ async function updateServiceRequestStatusRecord(requestId, status, details, acto
     const note = details?.note?.trim() || null;
     const resolution = details?.resolution?.trim() || null;
 
-    if (['Resolved', 'Closed'].includes(status) && !resolution && !previous.date_resolved) {
-      throw new Error('A resolution is required before resolving or closing a ticket.');
+    if (
+      ["Resolved", "Closed"].includes(status) &&
+      !resolution &&
+      !previous.date_resolved
+    ) {
+      throw new Error(
+        "A resolution text is required before resolving or closing a ticket.",
+      );
     }
-    if (status === 'Reopened' && !note) {
-      throw new Error('A reopen reason is required.');
+    if (status === "Reopened" && !note) {
+      throw new Error("A reopen reason is required.");
     }
-    if (status === 'Cancelled' && !note) {
-      throw new Error('A cancellation reason is required.');
+    if (status === "Cancelled" && !note) {
+      throw new Error("A cancellation reason is required.");
     }
-    if (status === 'Closed' && actorUser.role === 'technician') {
-      throw new Error('Technicians cannot close tickets.');
+    if (status === "Closed" && actorUser.role === "technician") {
+      throw new Error("Technicians cannot close tickets.");
     }
 
     const shouldSetFirstResponse =
-      !previous.first_response_at && Number(actorUser.user_id) !== Number(previous.requester_id);
-    const acceptedAt = status === 'Accepted' ? new Date() : null;
+      !previous.first_response_at &&
+      Number(actorUser.user_id) !== Number(previous.requester_id);
+    const acceptedAt = status === "Accepted" ? new Date() : null;
 
     const updated = await client.query(
       `UPDATE service_requests
-       SET status = $1,
-           resolution = CASE WHEN $1 IN ('Resolved', 'Closed') THEN COALESCE($2, resolution) ELSE resolution END,
-           resolution_summary = CASE
-             WHEN $1 IN ('Resolved', 'Closed') THEN LEFT(COALESCE($2, resolution, ''), 255)
-             ELSE resolution_summary
-           END,
-           date_resolved = CASE WHEN $1 IN ('Resolved', 'Closed') THEN NOW() ELSE date_resolved END,
-           closed_at = CASE WHEN $1 = 'Closed' THEN NOW() ELSE closed_at END,
-           closed_by_user_id = CASE WHEN $1 = 'Closed' THEN $3 ELSE closed_by_user_id END,
-           first_response_at = CASE WHEN $4 THEN NOW() ELSE first_response_at END,
-           accepted_at = CASE WHEN $5::timestamp IS NOT NULL THEN $5 ELSE accepted_at END,
-           closure_confirmed_at = CASE
-             WHEN $1 = 'Closed' AND ($6 OR closure_confirmation_required = FALSE) THEN NOW()
-             ELSE closure_confirmed_at
-           END,
-           reopen_reason = CASE WHEN $1 = 'Reopened' THEN $7 ELSE reopen_reason END,
-           cancel_reason = CASE WHEN $1 = 'Cancelled' THEN $8 ELSE cancel_reason END,
-           response_escalated_at = CASE WHEN $1 IN ('Resolved', 'Closed') THEN NULL ELSE response_escalated_at END,
-           resolution_escalated_at = CASE WHEN $1 IN ('Resolved', 'Closed') THEN NULL ELSE resolution_escalated_at END,
-           status_changed_at = NOW()
-       WHERE request_id = $9
-       RETURNING *`,
+   SET status = $1::varchar,
+       resolution = CASE
+         WHEN $1::varchar IN ('Resolved', 'Closed') THEN COALESCE($2::text, resolution)
+         ELSE resolution
+       END,
+       resolution_summary = CASE
+         WHEN $1::varchar IN ('Resolved', 'Closed') THEN LEFT(COALESCE($2::text, resolution, ''), 255)
+         ELSE resolution_summary
+       END,
+       date_resolved = CASE
+         WHEN $1::varchar IN ('Resolved', 'Closed') THEN NOW()
+         ELSE date_resolved
+       END,
+       closed_at = CASE
+         WHEN $1::varchar = 'Closed' THEN NOW()
+         ELSE closed_at
+       END,
+       closed_by_user_id = CASE
+         WHEN $1::varchar = 'Closed' THEN $3::integer
+         ELSE closed_by_user_id
+       END,
+       first_response_at = CASE
+         WHEN $4::boolean THEN NOW()
+         ELSE first_response_at
+       END,
+       accepted_at = CASE
+         WHEN $5::timestamp IS NOT NULL THEN $5::timestamp
+         ELSE accepted_at
+       END,
+       closure_confirmed_at = CASE
+         WHEN $1::varchar = 'Closed' AND ($6::boolean OR closure_confirmation_required = FALSE) THEN NOW()
+         ELSE closure_confirmed_at
+       END,
+       reopen_reason = CASE
+         WHEN $1::varchar = 'Reopened' THEN $7::text
+         ELSE reopen_reason
+       END,
+       cancel_reason = CASE
+         WHEN $1::varchar = 'Cancelled' THEN $8::text
+         ELSE cancel_reason
+       END,
+       response_escalated_at = CASE
+         WHEN $1::varchar IN ('Resolved', 'Closed') THEN NULL
+         ELSE response_escalated_at
+       END,
+       resolution_escalated_at = CASE
+         WHEN $1::varchar IN ('Resolved', 'Closed') THEN NULL
+         ELSE resolution_escalated_at
+       END,
+       status_changed_at = NOW()
+   WHERE request_id = $9::integer
+   RETURNING *`,
       [
-        status,
+        String(status),
         resolution,
-        actorUser.user_id,
+        Number(actorUser.user_id),
         shouldSetFirstResponse,
         acceptedAt,
         Number(actorUser.user_id) === Number(previous.requester_id),
-        status === 'Reopened' ? note : null,
-        status === 'Cancelled' ? note : null,
-        requestId,
-      ]
+        status === "Reopened" ? note : null,
+        status === "Cancelled" ? note : null,
+        Number(requestId),
+      ],
     );
 
-    if (status === 'Accepted') {
+    if (status === "Accepted") {
       await client.query(
         `UPDATE ticket_assignments
          SET accepted_at = COALESCE(accepted_at, NOW())
-         WHERE request_id = $1 AND is_active = TRUE`,
-        [requestId]
+        WHERE request_id = $1::integer AND is_active = TRUE`,
+        [requestId],
       );
     }
 
     const eventType =
-      status === 'Resolved'
-        ? 'resolved'
-        : status === 'Closed'
-          ? 'closed'
-          : status === 'Reopened'
-            ? 'reopened'
-            : status === 'Accepted'
-              ? 'accepted'
-              : 'status_changed';
+      status === "Resolved"
+        ? "resolved"
+        : status === "Closed"
+          ? "closed"
+          : status === "Reopened"
+            ? "reopened"
+            : status === "Accepted"
+              ? "accepted"
+              : "status_changed";
 
     await insertTicketHistory(client, requestId, actorUser.user_id, eventType, {
       from_status: previous.status,
@@ -585,22 +697,22 @@ async function updateServiceRequestStatusRecord(requestId, status, details, acto
     await insertNotifications(
       client,
       [previous.requester_id, previous.assigned_technician_id].filter(
-        (value) => Number(value) !== Number(actorUser.user_id)
+        (value) => Number(value) !== Number(actorUser.user_id),
       ),
-      status === 'Resolved' ? 'ticket_resolved' : 'ticket_updated',
+      status === "Resolved" ? "ticket_resolved" : "ticket_updated",
       `Ticket ${updated.rows[0].ticket_number || requestId} updated`,
       `The ticket status is now ${status}.`,
       requestId,
-      { payload: { status } }
+      { payload: { status } },
     );
 
     await logAction(
       actorUser.user_id,
-      'Request status changed',
-      'service_request',
+      "Request status changed",
+      "service_request",
       requestId,
       `Status changed from ${previous.status} to ${status}`,
-      client
+      client,
     );
 
     return updated.rows[0];
@@ -616,43 +728,52 @@ async function addTicketCommentRecord(requestId, actorUser, body, isInternal) {
       `INSERT INTO ticket_comments (request_id, author_user_id, comment_body, is_internal)
        VALUES ($1,$2,$3,$4)
        RETURNING *`,
-      [requestId, actorUser.user_id, body.trim(), !!isInternal]
+      [requestId, actorUser.user_id, body.trim(), !!isInternal],
     );
 
-    if (!request.first_response_at && Number(actorUser.user_id) !== Number(request.requester_id)) {
+    if (
+      !request.first_response_at &&
+      Number(actorUser.user_id) !== Number(request.requester_id)
+    ) {
       await client.query(
         `UPDATE service_requests
          SET first_response_at = NOW()
          WHERE request_id = $1`,
-        [requestId]
+        [requestId],
       );
     }
 
-    await insertTicketHistory(client, requestId, actorUser.user_id, 'comment_added', {
-      details: isInternal ? 'Internal note added' : 'Public comment added',
-    });
+    await insertTicketHistory(
+      client,
+      requestId,
+      actorUser.user_id,
+      "comment_added",
+      {
+        details: isInternal ? "Internal note added" : "Public comment added",
+      },
+    );
 
     if (!isInternal) {
       await insertNotifications(
         client,
         [request.requester_id, request.assigned_technician_id].filter(
-          (value) => Number(value) !== Number(actorUser.user_id)
+          (value) => Number(value) !== Number(actorUser.user_id),
         ),
-        'ticket_comment',
+        "ticket_comment",
         `New comment on ${request.ticket_number || `ticket ${requestId}`}`,
-        `${actorUser.full_name || 'A user'} added a comment.`,
+        `${actorUser.full_name || "A user"} added a comment.`,
         requestId,
-        { payload: { is_internal: false } }
+        { payload: { is_internal: false } },
       );
     }
 
     await logAction(
       actorUser.user_id,
-      isInternal ? 'Internal ticket note added' : 'Ticket comment added',
-      'service_request',
+      isInternal ? "Internal ticket note added" : "Ticket comment added",
+      "service_request",
       requestId,
       body.trim().slice(0, 255),
-      client
+      client,
     );
 
     return result.rows[0];
@@ -678,34 +799,42 @@ async function addTicketAttachmentRecord(requestId, actorUser, attachment) {
         attachment.mime_type,
         attachment.buffer.length,
         !!attachment.is_internal,
-      ]
+      ],
     );
 
-    await insertTicketHistory(client, requestId, actorUser.user_id, 'comment_added', {
-      details: attachment.is_internal ? 'Internal attachment added' : `Attachment added: ${attachment.fileName}`,
-    });
+    await insertTicketHistory(
+      client,
+      requestId,
+      actorUser.user_id,
+      "comment_added",
+      {
+        details: attachment.is_internal
+          ? "Internal attachment added"
+          : `Attachment added: ${attachment.fileName}`,
+      },
+    );
 
     if (!attachment.is_internal) {
       await insertNotifications(
         client,
         [request.requester_id, request.assigned_technician_id].filter(
-          (value) => Number(value) !== Number(actorUser.user_id)
+          (value) => Number(value) !== Number(actorUser.user_id),
         ),
-        'ticket_attachment',
+        "ticket_attachment",
         `New attachment on ${request.ticket_number || `ticket ${requestId}`}`,
-        `${actorUser.full_name || 'A user'} uploaded ${attachment.fileName}.`,
+        `${actorUser.full_name || "A user"} uploaded ${attachment.fileName}.`,
         requestId,
-        { payload: { file_name: attachment.fileName } }
+        { payload: { file_name: attachment.fileName } },
       );
     }
 
     await logAction(
       actorUser.user_id,
-      'Ticket attachment added',
-      'service_request',
+      "Ticket attachment added",
+      "service_request",
       requestId,
       attachment.fileName,
-      client
+      client,
     );
 
     return inserted.rows[0];
@@ -723,9 +852,63 @@ async function loadAttachmentRecord(client, requestId, attachmentId) {
             file_size_bytes, is_internal, deleted_at
      FROM ticket_attachments
      WHERE request_id = $1 AND attachment_id = $2`,
-    [requestId, attachmentId]
+    [requestId, attachmentId],
   );
   return result.rows[0] || null;
+}
+
+async function updateServiceRequestAssetRecord(
+  requestId,
+  affectedAssetId,
+  actorUser,
+) {
+  return withTransaction(async (client) => {
+    const existing = await client.query(
+      `SELECT request_id, ticket_number, requester_id, affected_asset_id
+       FROM service_requests
+       WHERE request_id = $1
+       FOR UPDATE`,
+      [requestId],
+    );
+    if (existing.rows.length === 0) return null;
+
+    const previous = existing.rows[0];
+    const nextAssetId = affectedAssetId ? Number(affectedAssetId) : null;
+
+    const updated = await client.query(
+      `UPDATE service_requests
+       SET affected_asset_id = $1,
+           status_changed_at = NOW()
+       WHERE request_id = $2
+       RETURNING *`,
+      [nextAssetId, requestId],
+    );
+
+    await insertTicketHistory(
+      client,
+      requestId,
+      actorUser.user_id,
+      "status_changed",
+      {
+        details: nextAssetId
+          ? `Affected asset linked to asset_id ${nextAssetId}`
+          : "Affected asset link removed",
+      },
+    );
+
+    await logAction(
+      actorUser.user_id,
+      nextAssetId ? "Affected asset linked" : "Affected asset removed",
+      "service_request",
+      requestId,
+      nextAssetId
+        ? `Linked asset_id ${nextAssetId}`
+        : "Removed affected asset link",
+      client,
+    );
+
+    return updated.rows[0];
+  });
 }
 
 module.exports = {
@@ -747,6 +930,7 @@ module.exports = {
   loadAssignmentHistory,
   loadAttachmentRecord,
   loadTicketArtifacts,
+  updateServiceRequestAssetRecord,
   updateServiceRequestStatusRecord,
   validateTicketTransition,
 };

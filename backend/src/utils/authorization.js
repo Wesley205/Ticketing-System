@@ -1,17 +1,17 @@
 function isAdmin(user) {
-  return user?.role === 'admin';
+  return user?.role === "admin";
 }
 
 function isIctOfficer(user) {
-  return user?.role === 'ict_officer';
+  return user?.role === "ict_officer";
 }
 
 function isTechnician(user) {
-  return user?.role === 'technician';
+  return user?.role === "technician";
 }
 
 function isStaff(user) {
-  return user?.role === 'staff';
+  return user?.role === "staff";
 }
 
 function canViewAllOperationalData(user) {
@@ -44,7 +44,10 @@ function canViewTechnicianDirectory(user) {
 
 function canViewDepartment(user, departmentId) {
   if (canViewAllOperationalData(user)) return true;
-  return Boolean(user?.department_id) && Number(user.department_id) === Number(departmentId);
+  return (
+    Boolean(user?.department_id) &&
+    Number(user.department_id) === Number(departmentId)
+  );
 }
 
 function canCreateServiceRequest(user, departmentId) {
@@ -53,7 +56,10 @@ function canCreateServiceRequest(user, departmentId) {
   return Number(user?.department_id) === Number(departmentId);
 }
 
-function constrainServiceRequestVisibility(user, { clauses, params, alias = 'sr', mine = false }) {
+function constrainServiceRequestVisibility(
+  user,
+  { clauses, params, alias = "sr", mine = false },
+) {
   if (canViewAllOperationalData(user)) {
     if (mine) {
       params.push(user.user_id);
@@ -76,7 +82,11 @@ function canViewServiceRequest(user, request) {
   if (!request) return false;
   if (canViewAllOperationalData(user)) return true;
   if (Number(request.requester_id) === Number(user.user_id)) return true;
-  if (isTechnician(user) && Number(request.assigned_technician_id) === Number(user.user_id)) return true;
+  if (
+    isTechnician(user) &&
+    Number(request.assigned_technician_id) === Number(user.user_id)
+  )
+    return true;
   return false;
 }
 
@@ -90,11 +100,16 @@ function canManageServiceRequestAssignments(user) {
 
 function canUpdateServiceRequest(user, request) {
   if (canViewAllOperationalData(user)) return true;
-  return isTechnician(user) && Number(request?.assigned_technician_id) === Number(user.user_id);
+  return (
+    isTechnician(user) &&
+    Number(request?.assigned_technician_id) === Number(user.user_id)
+  );
 }
 
 function canCommentOnServiceRequest(user, request) {
-  return canViewServiceRequest(user, request) || canViewAllOperationalData(user);
+  return (
+    canViewServiceRequest(user, request) || canViewAllOperationalData(user)
+  );
 }
 
 function canAddInternalTicketNote(user) {
@@ -104,14 +119,17 @@ function canAddInternalTicketNote(user) {
 function canViewInternalTicketArtifacts(user, request) {
   if (!request) return false;
   if (canViewAllOperationalData(user)) return true;
-  return isTechnician(user) && Number(request.assigned_technician_id) === Number(user.user_id);
+  return (
+    isTechnician(user) &&
+    Number(request.assigned_technician_id) === Number(user.user_id)
+  );
 }
 
 function canManageTicketAttachments(user, request) {
   return canCommentOnServiceRequest(user, request);
 }
 
-function constrainAssetVisibility(user, { clauses, params, alias = 'a' }) {
+function constrainAssetVisibility(user, { clauses, params, alias = "a" }) {
   if (canViewAllOperationalData(user)) return;
 
   if (isTechnician(user)) {
@@ -119,7 +137,9 @@ function constrainAssetVisibility(user, { clauses, params, alias = 'a' }) {
     const selfParam = params.length;
     params.push(user.department_id || -1);
     const deptParam = params.length;
-    clauses.push(`(${alias}.assigned_to = $${selfParam} OR ${alias}.department_id = $${deptParam})`);
+    clauses.push(
+      `(${alias}.assigned_to = $${selfParam} OR ${alias}.department_id = $${deptParam})`,
+    );
     return;
   }
 
@@ -127,14 +147,19 @@ function constrainAssetVisibility(user, { clauses, params, alias = 'a' }) {
   const selfParam = params.length;
   params.push(user.department_id || -1);
   const deptParam = params.length;
-  clauses.push(`(${alias}.assigned_to = $${selfParam} OR ${alias}.department_id = $${deptParam})`);
+  clauses.push(
+    `(${alias}.assigned_to = $${selfParam} OR ${alias}.department_id = $${deptParam})`,
+  );
 }
 
 function canViewAsset(user, asset) {
   if (!asset) return false;
   if (canViewAllOperationalData(user)) return true;
   if (Number(asset.assigned_to) === Number(user.user_id)) return true;
-  return Boolean(user?.department_id) && Number(asset.department_id) === Number(user.department_id);
+  return (
+    Boolean(user?.department_id) &&
+    Number(asset.department_id) === Number(user.department_id)
+  );
 }
 
 function canManageAssets(user) {
@@ -146,7 +171,10 @@ function canUpdateAssetStatus(user, asset) {
   return isTechnician(user) && canViewAsset(user, asset);
 }
 
-function constrainMaintenanceVisibility(user, { clauses, params, maintenanceAlias = 'm', assetAlias = 'a' }) {
+function constrainMaintenanceVisibility(
+  user,
+  { clauses, params, maintenanceAlias = "m", assetAlias = "a" },
+) {
   if (canViewAllOperationalData(user)) return;
 
   if (isTechnician(user)) {
@@ -154,18 +182,33 @@ function constrainMaintenanceVisibility(user, { clauses, params, maintenanceAlia
     const selfParam = params.length;
     params.push(user.department_id || -1);
     const deptParam = params.length;
-    clauses.push(`(${maintenanceAlias}.technician_id = $${selfParam} OR ${assetAlias}.department_id = $${deptParam})`);
+    clauses.push(
+      `(${maintenanceAlias}.technician_id = $${selfParam} OR ${assetAlias}.department_id = $${deptParam})`,
+    );
     return;
   }
 
-  clauses.push('1 = 0');
+  if (user?.department_id) {
+    params.push(user.department_id);
+    clauses.push(`${assetAlias}.department_id = $${params.length}`);
+    return;
+  }
+
+  clauses.push("1 = 0");
 }
 
 function canViewMaintenance(user, record) {
   if (!record) return false;
   if (canViewAllOperationalData(user)) return true;
-  if (isTechnician(user) && Number(record.technician_id) === Number(user.user_id)) return true;
-  return Boolean(user?.department_id) && Number(record.department_id) === Number(user.department_id);
+  if (
+    isTechnician(user) &&
+    Number(record.technician_id) === Number(user.user_id)
+  )
+    return true;
+  return (
+    Boolean(user?.department_id) &&
+    Number(record.department_id) === Number(user.department_id)
+  );
 }
 
 function canCreateMaintenance(user, asset) {
@@ -175,7 +218,156 @@ function canCreateMaintenance(user, asset) {
 
 function canUpdateMaintenance(user, record) {
   if (canViewAllOperationalData(user)) return true;
-  return isTechnician(user) && Number(record?.technician_id) === Number(user.user_id);
+  return (
+    isTechnician(user) && Number(record?.technician_id) === Number(user.user_id)
+  );
+}
+
+function canManageKnowledgeBase(user) {
+  return isAdmin(user) || isIctOfficer(user);
+}
+
+function canViewKnowledgeBaseArticle(user, article) {
+  if (!user || !article) return false;
+  if (canManageKnowledgeBase(user)) return true;
+
+  if (article.status !== "published") {
+    return false;
+  }
+
+  if (article.visibility_scope === "all_users") {
+    return true;
+  }
+
+  if (article.visibility_scope === "operational_only") {
+    return isTechnician(user);
+  }
+
+  if (article.visibility_scope === "department") {
+    return (
+      Boolean(user.department_id) &&
+      Number(user.department_id) === Number(article.department_id)
+    );
+  }
+
+  return false;
+}
+
+function constrainKnowledgeBaseVisibility(
+  user,
+  { clauses, params, alias = "kba" },
+) {
+  if (canManageKnowledgeBase(user)) return;
+
+  params.push("published");
+  const publishedParam = params.length;
+
+  params.push("all_users");
+  const allUsersParam = params.length;
+
+  params.push("department");
+  const deptScopeParam = params.length;
+
+  params.push(user.department_id ? Number(user.department_id) : -1);
+  const deptParam = params.length;
+
+  if (isTechnician(user)) {
+    params.push("operational_only");
+    const opsParam = params.length;
+
+    clauses.push(
+      `(${alias}.status = $${publishedParam}::varchar AND (` +
+        `${alias}.visibility_scope = $${allUsersParam}::varchar OR ` +
+        `${alias}.visibility_scope = $${opsParam}::varchar OR ` +
+        `(${alias}.visibility_scope = $${deptScopeParam}::varchar AND ${alias}.department_id = $${deptParam}::integer)` +
+        `))`,
+    );
+    return;
+  }
+
+  clauses.push(
+    `(${alias}.status = $${publishedParam}::varchar AND (` +
+      `${alias}.visibility_scope = $${allUsersParam}::varchar OR ` +
+      `(${alias}.visibility_scope = $${deptScopeParam}::varchar AND ${alias}.department_id = $${deptParam}::integer)` +
+      `))`,
+  );
+}
+
+function canProvideKnowledgeBaseFeedback(user) {
+  return Boolean(user?.user_id);
+}
+
+function buildFrontendPermissions(user) {
+  return {
+    can_view_all_operational_data: canViewAllOperationalData(user),
+    can_manage_users: canManageUsers(user),
+    can_manage_departments: canManageDepartments(user),
+    can_view_reports: canViewReports(user),
+    can_view_audit_logs: canViewAuditLogs(user),
+    can_create_invitation: canCreateInvitation(user),
+    can_view_technician_directory: canViewTechnicianDirectory(user),
+    can_assign_service_request: canAssignServiceRequest(user),
+    can_manage_service_request_assignments:
+      canManageServiceRequestAssignments(user),
+    can_add_internal_ticket_note: canAddInternalTicketNote(user),
+    can_manage_assets: canManageAssets(user),
+    can_manage_maintenance:
+      canViewAllOperationalData(user) || isTechnician(user),
+    can_manage_knowledge_base: canManageKnowledgeBase(user),
+    can_provide_knowledge_base_feedback: canProvideKnowledgeBaseFeedback(user),
+    can_access_staff_portal: Boolean(user?.user_id),
+    can_access_department_portal:
+      canViewAllOperationalData(user) || Boolean(user?.department_id),
+    can_access_technician_portal: isTechnician(user),
+    can_access_admin_portal: isAdmin(user),
+    can_access_notifications: Boolean(user?.user_id),
+    can_access_dashboard: Boolean(user?.user_id),
+    can_access_service_desk: Boolean(user?.user_id),
+    can_access_assets: Boolean(user?.user_id),
+    can_access_knowledge_base: Boolean(user?.user_id),
+  };
+}
+
+function buildFrontendAccessProfile(user) {
+  const permissions = buildFrontendPermissions(user);
+  const assignedOnly = isTechnician(user);
+  const departmentScope =
+    !canViewAllOperationalData(user) && Boolean(user?.department_id);
+  const userScope = !canViewAllOperationalData(user) && !isTechnician(user);
+  const roleLabel =
+    {
+      admin: "Administrator",
+      ict_officer: "ICT Officer",
+      technician: "Technician",
+      staff: "Staff/User",
+    }[user?.role] ||
+    user?.role ||
+    "User";
+
+  const primaryPortal = isAdmin(user)
+    ? "administrator"
+    : isIctOfficer(user)
+      ? "ict_officer"
+      : isTechnician(user)
+        ? "technician"
+        : departmentScope
+          ? "department_supervisor"
+          : "staff";
+
+  return {
+    role: user?.role || null,
+    role_label: roleLabel,
+    user_type: user?.user_type || null,
+    department_id: user?.department_id || null,
+    permissions,
+    scope: {
+      organization_scope: canViewAllOperationalData(user),
+      department_scope: departmentScope,
+      assigned_only: assignedOnly,
+      user_only: userScope,
+    },
+    primary_portal: primaryPortal,
+  };
 }
 
 module.exports = {
@@ -187,9 +379,11 @@ module.exports = {
   canCreateServiceRequest,
   canManageAssets,
   canManageDepartments,
+  canManageKnowledgeBase,
   canManageServiceRequestAssignments,
   canManageTicketAttachments,
   canManageUsers,
+  canProvideKnowledgeBaseFeedback,
   canUpdateAssetStatus,
   canUpdateMaintenance,
   canUpdateServiceRequest,
@@ -197,12 +391,16 @@ module.exports = {
   canViewAsset,
   canViewAuditLogs,
   canViewDepartment,
+  canViewKnowledgeBaseArticle,
   canViewMaintenance,
   canViewReports,
   canViewServiceRequest,
   canViewTechnicianDirectory,
   canViewInternalTicketArtifacts,
+  buildFrontendAccessProfile,
+  buildFrontendPermissions,
   constrainAssetVisibility,
+  constrainKnowledgeBaseVisibility,
   constrainMaintenanceVisibility,
   constrainServiceRequestVisibility,
   isAdmin,

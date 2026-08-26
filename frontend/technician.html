@@ -31,9 +31,8 @@
   <script src="/js/api.js"></script>
   <script src="/js/layout.js"></script>
   <script>
-    requireAuthPage();
-    requireRolePage('technician');
-    renderLayout('technician', 'My Assigned Requests');
+    requireRoutePage('technician');
+    renderLayout('technician', 'My Assigned Requests', 'Assigned ticket execution and resolution workspace');
     let activeId = null;
 
     function renderContent() {

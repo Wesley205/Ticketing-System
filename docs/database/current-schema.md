@@ -170,3 +170,52 @@ Missing structural features:
 - database-backed ticket numbering
 - stronger archival fields for tickets, assets, and departments
 - normalized event history for tickets and asset assignment lifecycle
+
+## Phase 8 additions
+
+Phase 8 extends the current baseline with asset and maintenance lifecycle structures:
+
+- `asset_status_history`
+- `maintenance_schedules`
+
+Phase 8 also extends existing tables:
+
+- `asset_assignments.expected_return_at`
+- `asset_assignments.returned_condition`
+- `asset_assignments.returned_to_user_id`
+- `maintenance.maintenance_type`
+- `maintenance.related_request_id`
+- `maintenance.assigned_by_user_id`
+- `maintenance.schedule_id`
+- `maintenance.scheduled_start_at`
+- `maintenance.started_at`
+- `maintenance.completed_at`
+- `maintenance.next_due_at`
+- `maintenance.reminder_sent_at`
+- `maintenance.checklist_json`
+- `maintenance.completion_notes`
+
+Reminder and notification support also adds:
+
+- notification type `maintenance_due`
+
+## Phase 9 additions
+
+Phase 9 extends the knowledge-base data model with:
+
+- `knowledge_base_article_revisions`
+- `knowledge_base_article_relations`
+- `knowledge_base_article_feedback`
+
+Phase 9 also extends `knowledge_base_articles` with:
+
+- `category`
+- `visibility_scope`
+- `department_id`
+- `current_revision_number`
+- `last_reviewed_at`
+- `search_keywords`
+- `usefulness_score`
+- `helpful_count`
+- `not_helpful_count`
+- `view_count`

@@ -97,3 +97,7 @@ Use this checklist after setup to confirm major workflows end to end.
 - [ ] Log in as staff and confirm Staff Management, Departments, Reports, and Audit Log links do not appear.
 - [ ] Log in as technician and confirm Staff Management, Departments, Reports, and Audit Log links do not appear.
 - [ ] Attempt a restricted API call such as `DELETE /api/assets/1` while logged in as staff and confirm it returns `403`.
+- [ ] Confirm the dashboard hero and shell portal context change appropriately for administrator, ICT officer, technician, and staff accounts.
+- [ ] Confirm mobile navigation opens and closes correctly on authenticated pages.
+- [ ] Confirm direct navigation to `/reports.html`, `/staff.html`, `/departments.html`, `/audit-log.html`, `/maintenance.html`, and `/technician.html` redirects unauthorized users back to their allowed landing page.
+- [ ] Confirm ticket assignment buttons, asset-management buttons, and knowledge-base article management buttons appear only when the current access profile allows them.

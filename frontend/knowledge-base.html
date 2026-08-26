@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Knowledge Base - NSC ICT Service Desk</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  .kb-grid { display:grid; gap:18px; grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.1fr); }
+  .kb-list { display:flex; flex-direction:column; gap:12px; }
+  .kb-item { border:1px solid #e4e7ec; border-radius:12px; padding:14px; background:#fff; cursor:pointer; }
+  .kb-item.active { border-color:#0a7d3e; background:#f6fef9; }
+  .kb-meta { color:#667085; font-size:12px; display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
+  .kb-detail-body { white-space:pre-wrap; line-height:1.55; color:#344054; }
+  @media (max-width: 980px) { .kb-grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+  <div class="app-shell" id="app-shell"></div>
+
+  <div class="modal-overlay" id="article-modal">
+    <div class="modal" style="position:relative;max-width:760px;">
+      <span class="close-x" onclick="closeArticleModal()">&times;</span>
+      <h3 id="article-modal-title">New Article</h3>
+      <div class="error-box" id="article-error"></div>
+      <form id="article-form" class="form-stack">
+        <input type="hidden" id="article_id">
+        <div class="field"><label>Title *</label><input id="article_title" required></div>
+        <div class="field"><label>Slug *</label><input id="article_slug" required placeholder="reset-vpn-password"></div>
+        <div class="field"><label>Summary</label><textarea id="article_summary" rows="2"></textarea></div>
+        <div class="field"><label>Body *</label><textarea id="article_body" rows="10" required></textarea></div>
+        <div class="form-grid">
+          <div class="field"><label>Category</label><input id="article_category" value="General"></div>
+          <div class="field"><label>Status</label>
+            <select id="article_status"><option>draft</option><option>in_review</option><option>published</option><option>archived</option></select>
+          </div>
+          <div class="field"><label>Visibility</label>
+            <select id="article_visibility_scope"><option>all_users</option><option>department</option><option>operational_only</option></select>
+          </div>
+          <div class="field"><label>Department ID</label><input id="article_department_id" type="number" min="1"></div>
+          <div class="field full"><label>Search Keywords</label><input id="article_search_keywords" placeholder="vpn, password reset, remote access"></div>
+          <div class="field full"><label>Related Asset Types</label><input id="article_asset_types" placeholder="Laptop, Router"></div>
+          <div class="field full"><label>Related Ticket Categories</label><input id="article_ticket_categories" placeholder="Network, Access Request"></div>
+          <div class="field full"><label>Change Note</label><input id="article_change_note" placeholder="Summarize what changed"></div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" onclick="closeArticleModal()">Cancel</button>
+          <button type="submit" class="btn">Save Article</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/layout.js"></script>
+  <script>
+    requireRoutePage('knowledge-base');
+    renderLayout('knowledge-base', 'Knowledge Base', 'Permission-aware support articles and institutional fixes');
+
+    const user = getUser();
+    const canManage = hasPermission('can_manage_knowledge_base');
+    let articles = [];
+    let selectedArticle = null;
+
+    function renderContent() {
+      document.getElementById('page-content').innerHTML = `
+        <div class="toolbar">
+          <div class="filters">
+            <input id="kb-search" placeholder="Search knowledge articles">
+            <input id="kb-category" placeholder="Category">
+          </div>
+          ${canManage ? '<button class="btn" onclick="openArticleModal()">+ New Article</button>' : ''}
+        </div>
+        <div class="kb-grid">
+          <div class="panel">
+            <div id="kb-list" class="kb-list"></div>
+            <div id="kb-empty" class="empty-state" style="display:none;">No articles found.</div>
+          </div>
+          <div class="panel">
+            <div id="kb-detail" class="detail-empty">Select an article to view its details.</div>
+          </div>
+        </div>
+      `;
+      document.getElementById('kb-search').addEventListener('input', debounce(loadArticles, 250));
+      document.getElementById('kb-category').addEventListener('input', debounce(loadArticles, 250));
+    }
+
+    function debounce(fn, ms) {
+      let timer;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), ms);
+      };
+    }
+
+    function relationPayloadFromForm() {
+      const relations = [];
+      document.getElementById('article_asset_types').value.split(',').map((item) => item.trim()).filter(Boolean).forEach((assetType) => {
+        relations.push({ relation_type: 'asset_type', asset_type: assetType });
+      });
+      document.getElementById('article_ticket_categories').value.split(',').map((item) => item.trim()).filter(Boolean).forEach((category) => {
+        relations.push({ relation_type: 'ticket_category', ticket_category: category });
+      });
+      return relations;
+    }
+
+    async function loadArticles() {
+      const params = new URLSearchParams();
+      const search = document.getElementById('kb-search').value.trim();
+      const category = document.getElementById('kb-category').value.trim();
+      if (search) params.set('search', search);
+      if (category) params.set('category', category);
+      if (canManage) params.set('status', '');
+
+      try {
+        articles = await api(`/knowledge-base?${params.toString()}`);
+        document.getElementById('kb-empty').style.display = articles.length ? 'none' : 'block';
+        document.getElementById('kb-list').innerHTML = articles.map((article) => `
+          <div class="kb-item ${selectedArticle?.article_id === article.article_id ? 'active' : ''}" onclick="selectArticle(${article.article_id})">
+            <strong>${escapeHtml(article.title)}</strong>
+            <div>${escapeHtml(article.summary || 'No summary available.')}</div>
+            <div class="kb-meta">
+              <span>${escapeHtml(article.category || 'General')}</span>
+              <span>${escapeHtml(article.status)}</span>
+              <span>Helpful ${Number(article.helpful_count || 0)}</span>
+              <span>Views ${Number(article.view_count || 0)}</span>
+            </div>
+          </div>
+        `).join('');
+
+        const hashMatch = window.location.hash.match(/article-(\d+)/);
+        if (hashMatch && Number(hashMatch[1]) && (!selectedArticle || selectedArticle.article_id !== Number(hashMatch[1]))) {
+          await selectArticle(Number(hashMatch[1]));
+        }
+        if (selectedArticle) {
+          renderArticleDetail();
+        }
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function selectArticle(articleId) {
+      try {
+        selectedArticle = await api(`/knowledge-base/${articleId}`);
+        window.location.hash = `article-${articleId}`;
+        renderArticleDetail();
+        await loadArticles();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function renderArticleDetail() {
+      const root = document.getElementById('kb-detail');
+      if (!selectedArticle) {
+        root.className = 'detail-empty';
+        root.textContent = 'Select an article to view its details.';
+        return;
+      }
+
+      root.className = '';
+      const assetTypes = (selectedArticle.relations || []).filter((relation) => relation.relation_type === 'asset_type').map((relation) => relation.asset_type);
+      const ticketCategories = (selectedArticle.relations || []).filter((relation) => relation.relation_type === 'ticket_category').map((relation) => relation.ticket_category);
+      root.innerHTML = `
+        <div class="inline-actions" style="justify-content:space-between;align-items:flex-start;">
+          <div>
+            <h3 style="margin:0 0 8px;">${escapeHtml(selectedArticle.title)}</h3>
+            <div class="kb-meta">
+              <span>${escapeHtml(selectedArticle.category || 'General')}</span>
+              <span>${escapeHtml(selectedArticle.status)}</span>
+              <span>${escapeHtml(selectedArticle.visibility_scope)}</span>
+            </div>
+          </div>
+          ${canManage ? '<button class="btn secondary" onclick="openArticleModal(selectedArticle)">Edit</button>' : ''}
+        </div>
+        <p>${escapeHtml(selectedArticle.summary || 'No summary available.')}</p>
+        <div class="kb-detail-body">${escapeHtml(selectedArticle.body)}</div>
+        <div class="detail-block">
+          <strong>Related Context</strong>
+          <div class="kb-meta" style="margin-top:10px;">
+            <span>Asset Types: ${escapeHtml(assetTypes.join(', ') || '-')}</span>
+            <span>Ticket Categories: ${escapeHtml(ticketCategories.join(', ') || '-')}</span>
+            <span>Revision ${Number(selectedArticle.current_revision_number || 1)}</span>
+          </div>
+        </div>
+        <div class="detail-block">
+          <strong>Feedback</strong>
+          <div class="inline-actions" style="margin-top:10px;">
+            <button class="btn secondary" onclick="sendFeedback(true)">Helpful</button>
+            <button class="btn secondary" onclick="sendFeedback(false)">Not Helpful</button>
+            <span class="muted">Helpful ${Number(selectedArticle.feedback_summary?.helpful_count || 0)} | Not helpful ${Number(selectedArticle.feedback_summary?.not_helpful_count || 0)}</span>
+          </div>
+        </div>
+        <div class="detail-block">
+          <strong>Revision History</strong>
+          <div class="comment-list" style="margin-top:10px;">
+            ${(selectedArticle.revisions || []).map((revision) => `
+              <div class="comment-item">
+                <div><strong>Revision ${revision.revision_number}</strong></div>
+                <div>${escapeHtml(revision.change_note || 'No change note provided')}</div>
+                <small>${escapeHtml(revision.changed_by_name || 'System')} | ${fmtDateTime(revision.created_at)}</small>
+              </div>
+            `).join('') || '<div class="muted">No revisions recorded.</div>'}
+          </div>
+        </div>
+      `;
+    }
+
+    function openArticleModal(article = null) {
+      document.getElementById('article-error').style.display = 'none';
+      document.getElementById('article-modal').classList.add('open');
+      document.getElementById('article-modal-title').textContent = article ? `Edit Article - ${article.title}` : 'New Article';
+      document.getElementById('article_id').value = article?.article_id || '';
+      document.getElementById('article_title').value = article?.title || '';
+      document.getElementById('article_slug').value = article?.slug || '';
+      document.getElementById('article_summary').value = article?.summary || '';
+      document.getElementById('article_body').value = article?.body || '';
+      document.getElementById('article_category').value = article?.category || 'General';
+      document.getElementById('article_status').value = article?.status || 'draft';
+      document.getElementById('article_visibility_scope').value = article?.visibility_scope || 'all_users';
+      document.getElementById('article_department_id').value = article?.department_id || '';
+      document.getElementById('article_search_keywords').value = article?.search_keywords || '';
+      document.getElementById('article_asset_types').value = article ? (article.relations || []).filter((relation) => relation.relation_type === 'asset_type').map((relation) => relation.asset_type).join(', ') : '';
+      document.getElementById('article_ticket_categories').value = article ? (article.relations || []).filter((relation) => relation.relation_type === 'ticket_category').map((relation) => relation.ticket_category).join(', ') : '';
+      document.getElementById('article_change_note').value = '';
+    }
+
+    function closeArticleModal() {
+      document.getElementById('article-modal').classList.remove('open');
+    }
+
+    document.addEventListener('submit', async (event) => {
+      if (event.target.id !== 'article-form') return;
+      event.preventDefault();
+      const articleId = document.getElementById('article_id').value;
+      const body = {
+        title: document.getElementById('article_title').value.trim(),
+        slug: document.getElementById('article_slug').value.trim(),
+        summary: document.getElementById('article_summary').value.trim(),
+        body: document.getElementById('article_body').value.trim(),
+        category: document.getElementById('article_category').value.trim(),
+        status: document.getElementById('article_status').value,
+        visibility_scope: document.getElementById('article_visibility_scope').value,
+        department_id: document.getElementById('article_department_id').value || null,
+        search_keywords: document.getElementById('article_search_keywords').value.trim(),
+        change_note: document.getElementById('article_change_note').value.trim(),
+        relations: relationPayloadFromForm(),
+      };
+
+      try {
+        const result = articleId
+          ? await api(`/knowledge-base/${articleId}`, { method: 'PUT', body })
+          : await api('/knowledge-base', { method: 'POST', body });
+        selectedArticle = result;
+        closeArticleModal();
+        renderArticleDetail();
+        await loadArticles();
+      } catch (err) {
+        const errorBox = document.getElementById('article-error');
+        errorBox.textContent = err.message;
+        errorBox.style.display = 'block';
+      }
+    });
+
+    async function sendFeedback(isHelpful) {
+      if (!selectedArticle) return;
+      try {
+        await api(`/knowledge-base/${selectedArticle.article_id}/feedback`, {
+          method: 'POST',
+          body: { is_helpful: isHelpful },
+        });
+        await selectArticle(selectedArticle.article_id);
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function init() {
+      renderContent();
+      await loadArticles();
+      renderArticleDetail();
+    }
+
+    init();
+  </script>
+</body>
+</html>
