@@ -1,34 +1,95 @@
 require('dotenv').config();
 
-const { createApp } = require('./app');
-const pool = require('./config/db');
-const { isConfiguredForSecureAccess, isStrongJwtSecret } = require('./config/authPolicy');
-const { startExpirySweep } = require('./utils/accountExpiry');
-const { logAction } = require('./utils/audit');
-const { startNotificationQueue } = require('./utils/notificationProcessor');
-const { startMaintenanceMonitor } = require('./utils/maintenanceMonitor');
-const { startSlaMonitor } = require('./utils/slaMonitor');
+const { isStrongJwtSecret } = require('./config/authPolicy');
+const { loadConfig } = require('./config');
+const { logInfo } = require('./utils/logger');
 
-if (!process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET is required.');
+function createHttpServer(app, config) {
+  return app.listen(config.port, () => {
+    logInfo('server_started', {
+      port: config.port,
+      node_env: config.nodeEnv,
+    });
+  });
 }
 
-if (process.env.NODE_ENV === 'production' && !isStrongJwtSecret(process.env.JWT_SECRET)) {
-  throw new Error('JWT_SECRET must be a strong non-default value in production.');
+function startBackgroundJobs({ pool }) {
+  const { startExpirySweep } = require('./utils/accountExpiry');
+  const { logAction } = require('./utils/audit');
+  const { startNotificationQueue } = require('./utils/notificationProcessor');
+  const { startMaintenanceMonitor } = require('./utils/maintenanceMonitor');
+  const { startSlaMonitor } = require('./utils/slaMonitor');
+
+  startExpirySweep({ pool, logAction });
+  startNotificationQueue({ pool });
+  startMaintenanceMonitor({ pool, logAction });
+  startSlaMonitor({ pool, logAction });
 }
 
-if (!isConfiguredForSecureAccess()) {
-  throw new Error('ORGANIZATION_EMAIL_DOMAINS must be configured for secure internal access.');
+async function shutdownServer({ server, pool, signal, exit = false }) {
+  logInfo('server_shutdown_started', { signal });
+
+  await new Promise((resolve, reject) => {
+    server.close((err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+
+  if (pool && typeof pool.end === 'function') {
+    await pool.end();
+  }
+
+  logInfo('server_shutdown_completed', { signal });
+
+  if (exit) {
+    process.exit(0);
+  }
 }
 
-const app = createApp();
-const PORT = process.env.PORT || 5000;
+function registerSignalHandlers({ server, pool }) {
+  const handler = (signal) => {
+    shutdownServer({ server, pool, signal, exit: true }).catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
+  };
 
-app.listen(PORT, () => {
-  console.log(`NSC ICT Service Desk API running on http://localhost:${PORT}`);
-});
+  process.once('SIGTERM', () => handler('SIGTERM'));
+  process.once('SIGINT', () => handler('SIGINT'));
+}
 
-startExpirySweep({ pool, logAction });
-startNotificationQueue({ pool });
-startMaintenanceMonitor({ pool, logAction });
-startSlaMonitor({ pool, logAction });
+function startServer(options = {}) {
+  const config = options.config || loadConfig(process.env, { isStrongJwtSecret });
+  const { createApp } = options.createAppModule || require('./app');
+  const app = options.app || createApp({ config, env: process.env });
+  const pool = options.pool || require('./config/db');
+  const server = options.server || createHttpServer(app, config);
+
+  if (options.startJobs !== false) {
+    startBackgroundJobs({ pool });
+  }
+
+  if (options.registerSignals !== false) {
+    registerSignalHandlers({ server, pool });
+  }
+
+  return {
+    app,
+    config,
+    pool,
+    server,
+  };
+}
+
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = {
+  createHttpServer,
+  registerSignalHandlers,
+  shutdownServer,
+  startBackgroundJobs,
+  startServer,
+};

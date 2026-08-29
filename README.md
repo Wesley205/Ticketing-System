@@ -45,9 +45,12 @@ nsc-ict-system/
 |  |- migrations/
 |  |- seed.sql
 |  `- queries.sql
+|- deploy/
+|  `- docker-compose.example.yml
 |- docs/
 |  |- system-design/phase-1/
 |  `- system-design/phase-2/
+|- Dockerfile
 |- TESTING_CHECKLIST.md
 `- README.md
 ```
@@ -65,16 +68,17 @@ CREATE DATABASE nsc_ict_system;
 \q
 ```
 
-2. Apply schema, migrations, and seed data:
+2. Apply migrations and seed data:
 
 ```bash
-psql -U postgres -d nsc_ict_system -f database/schema.sql
 cd backend
 npm install
 npm run migrate
 cd ..
 psql -U postgres -d nsc_ict_system -f database/seed.sql
 ```
+
+`npm run migrate` is the authoritative schema setup path for new local databases. `database/schema.sql` is kept as a legacy reference and should not be run against a database that contains data.
 
 ## 4. Configure the Backend
 
@@ -117,8 +121,34 @@ Useful backend commands:
 npm run dev
 npm run migrate
 npm run expire-accounts
+npm run ci
+npm run secret-scan
+npm run smoke
+npm run release:check
 npm test
 ```
+
+Operational health endpoints:
+
+- `GET /api/health` returns a lightweight liveness payload.
+- `GET /api/health/readiness` checks database connectivity and migration tracking.
+- `GET /api/health/operations` returns migration, job, notification queue, and SLA status for authenticated operational users only.
+
+Every API request receives an `X-Request-ID` correlation value for troubleshooting.
+
+Release controls:
+
+- Pull requests and pushes to `main` or `master` run the backend GitHub Actions workflow.
+- `npm run ci` runs the backend test suite and committed-secret scan.
+- `npm run release:check` adds dependency audit and package assembly checks.
+- `npm run smoke` verifies `/api/health` and `/api/health/readiness` against a running app. Set `SMOKE_BASE_URL` to target a deployed environment.
+
+Container deployment references:
+
+- `Dockerfile` packages the backend and static frontend.
+- `deploy/docker-compose.example.yml` provides a local app plus PostgreSQL smoke environment.
+- `docs/deployment/deployment.md` documents build and runtime expectations.
+- `docs/deployment/backup-restore.md` documents PostgreSQL and attachment backup/restore steps.
 
 ## 6. Access Model
 

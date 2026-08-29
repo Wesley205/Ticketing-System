@@ -10,6 +10,10 @@
     "notification-queue": "node src/scripts/runNotificationQueue.js",
     "maintenance-monitor": "node src/scripts/runMaintenanceMonitor.js",
     "sla-monitor": "node src/scripts/runSlaMonitor.js",
+    "secret-scan": "node src/scripts/secretScan.js",
+    "smoke": "node src/scripts/smokeCheck.js",
+    "ci": "npm test && npm run secret-scan",
+    "release:check": "npm test && npm run secret-scan && npm audit --audit-level=high && npm pack --dry-run",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "test": "node test/run.js"

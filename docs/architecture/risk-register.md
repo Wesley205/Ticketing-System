@@ -1,0 +1,19 @@
+# Risk Register
+
+| ID | Area | Risk | Impact | Likelihood | Current control | Recommended mitigation |
+|---|---|---|---|---|---|---|
+| R1 | Deployment | Production hosting target is not selected, but container packaging and CI now exist. | High | Medium | `Dockerfile`, compose example, CI workflow, health checks, and release checklist. | Select final hosting platform and add platform-specific deployment manifest. |
+| R2 | CORS | Backend uses unrestricted `cors()`. | High | Medium | JWT-protected API routes. | Restrict CORS origins by environment and reject missing/unknown production origins. |
+| R3 | Sessions | JWT is stored in `localStorage`. | High | Medium | Backend re-checks account status on authenticated requests. | Add CSP/XSS hardening or migrate to secure httpOnly cookies. |
+| R4 | Login protection | No rate limiting or lockout was found. | High | Medium | bcrypt password verification and internal-only account model. | Add per-account and per-IP login throttling, lockout, and failed-login audit events. |
+| R5 | Migrations | `npm run migrate` assumes `database/schema.sql` has already been applied. | High | High | README documents manual schema-first setup. | Create one authoritative migration path that can build a database from empty state. |
+| R6 | Migration validation | Migration tests inspect SQL text instead of applying migrations to PostgreSQL. | Medium | High | Static migration tests exist. | Add disposable database migration tests and seed smoke tests. |
+| R7 | Background jobs | Account expiry, notification queue, SLA monitor, and maintenance monitor run in-process. | High | Medium | Interval toggles in environment variables. | Use external scheduler or database lock/leader election before multi-instance deployment. |
+| R8 | Attachments | Ticket attachments are stored on local disk. | High | Medium | File type, size, path validation, compose volume example, and backup/restore runbook exist. | Move to durable object/shared storage before stateless production scaling. |
+| R9 | Email | Email queue exists but delivery depends on optional SMTP configuration and runtime support. | Medium | Medium | Unconfigured delivery is deferred rather than falsely marked sent. | Add verified provider dependency/configuration and integration tests in staging. |
+| R10 | Authorization drift | Central policy exists, but permission checks are still manually called across route handlers. | High | Medium | Shared `authorization.js` and unit tests. | Introduce standardized guards/record loaders and endpoint-level authorization integration tests. |
+| R11 | Transaction consistency | Some route handlers still perform direct writes with `pool.query`. | Medium | Medium | Many critical workflows use transactional service helpers. | Move remaining write paths into service modules using `withTransaction`. |
+| R12 | Observability | No structured request logging, request IDs, or production monitoring configuration was found. | Medium | High | Console logging for startup, DB pool errors, and migration output. | Add structured logs, metrics, alerting, and job run history. |
+| R13 | Secrets | Environment template is present, but no automated secret scanning was found. | High | Medium | Real `.env` values were not inspected or printed. | Add secret scanning in CI and keep real secrets outside Git. |
+| R14 | Reports | Metrics are documented, but accuracy depends on consistent lifecycle data and seed/manual validation. | Medium | Medium | Metric definitions and reporting unit tests exist. | Add integration tests with known data sets and reconcile report totals against source tables. |
+| R15 | Frontend security | Static pages build dynamic HTML and depend on helper escaping discipline. | High | Medium | Shared `escapeHtml` helper exists and is tested. | Add CSP, avoid unsafe HTML where practical, and add E2E/XSS regression tests for user-controlled fields. |

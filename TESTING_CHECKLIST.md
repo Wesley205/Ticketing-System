@@ -92,6 +92,19 @@ Use this checklist after setup to confirm major workflows end to end.
 
 - [ ] Confirm reports still load for admin and ICT officer users.
 
+## Operations And Release Controls
+
+- [ ] Run `npm run ci` from `backend/` before opening a pull request.
+- [ ] Run `npm run release:check` from `backend/` before deployment.
+- [ ] Start the app and run `npm run smoke` from `backend/`.
+- [ ] Build the container image with `docker build -t nsc-ict-service-desk:local .`.
+- [ ] Start the compose smoke environment from `deploy/docker-compose.example.yml` with local-only secret values.
+- [ ] Apply migrations in the containerized environment with `npm run migrate`.
+- [ ] Confirm `GET /api/health/readiness` returns `200` after migrations are applied.
+- [ ] As an admin or ICT officer, call `GET /api/health/operations` and confirm migration, job, notification queue, and SLA status are visible.
+- [ ] As staff or technician, call `GET /api/health/operations` and confirm it returns `403`.
+- [ ] Confirm a PostgreSQL backup and attachment backup are captured before any production migration.
+
 ## Role-Based Access
 
 - [ ] Log in as staff and confirm Staff Management, Departments, Reports, and Audit Log links do not appear.

@@ -1,13 +1,26 @@
-const jwt = require("jsonwebtoken");
 const pool = require("../config/db");
+const AppError = require("../errors/AppError");
+const { ERROR_CODES } = require("../errors/errorCodes");
+const {
+  checkAccountStatus,
+  findUserForSession,
+  verifyToken,
+} = require("../services/auth");
 
-function currentDateIso() {
-  return new Date().toISOString().slice(0, 10);
+function authenticationError(message) {
+  return new AppError({
+    code: ERROR_CODES.AUTHENTICATION_REQUIRED,
+    statusCode: 401,
+    message,
+  });
 }
 
-function formatDateToIso(dateVal) {
-  if (!dateVal) return null;
-  return new Date(dateVal).toISOString().slice(0, 10);
+function authorizationError(message) {
+  return new AppError({
+    code: ERROR_CODES.AUTHORIZATION_FAILED,
+    statusCode: 403,
+    message,
+  });
 }
 
 async function requireAuth(req, res, next) {
@@ -15,47 +28,32 @@ async function requireAuth(req, res, next) {
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
 
   if (!token) {
-    return res
-      .status(401)
-      .json({ error: "Authentication required. Please log in." });
+    return next(authenticationError("Authentication required. Please log in."));
+  }
+
+  let payload;
+  try {
+    payload = verifyToken(token);
+  } catch (err) {
+    return next(authenticationError("Invalid or expired session. Please log in again."));
   }
 
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    const result = await pool.query(
-      `SELECT user_id, full_name, role, user_type, department_id, is_active, account_start_date, account_expiration_date
-       FROM users
-       WHERE user_id = $1`,
-      [payload.user_id],
-    );
+    const user = await findUserForSession(pool, payload.user_id);
 
-    if (result.rows.length === 0) {
-      return res
-        .status(401)
-        .json({ error: "Account not found. Please log in again." });
+    if (!user) {
+      return next(authenticationError("Account not found. Please log in again."));
     }
 
-    const user = result.rows[0];
-    const today = currentDateIso();
-
-    if (!user.is_active) {
-      return res.status(401).json({
-        error:
-          "This account is inactive. Please log in with an active account.",
-      });
+    if (!payload.session_version || Number(payload.session_version) !== Number(user.session_version)) {
+      return next(authenticationError("Session is no longer valid. Please log in again."));
     }
 
-    // Properly parse DB dates to YYYY-MM-DD format
-    const startDate = formatDateToIso(user.account_start_date);
-    if (startDate && startDate > today) {
-      return res.status(403).json({ error: "This account is not yet active." });
-    }
-
-    const expirationDate = formatDateToIso(user.account_expiration_date);
-    if (expirationDate && expirationDate < today) {
-      return res
-        .status(403)
-        .json({ error: "This account has expired. Contact an administrator." });
+    const status = checkAccountStatus(user);
+    if (!status.valid) {
+      return next(status.statusCode === 401
+        ? authenticationError(status.message)
+        : authorizationError(status.message));
     }
 
     req.user = {
@@ -67,21 +65,17 @@ async function requireAuth(req, res, next) {
     };
     next();
   } catch (err) {
-    return res
-      .status(401)
-      .json({ error: "Invalid or expired session. Please log in again." });
+    return next(err);
   }
 }
 
 function requireRole(...allowedRoles) {
   return (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({ error: "Authentication required." });
+      return next(authenticationError("Authentication required."));
     }
     if (!allowedRoles.includes(req.user.role)) {
-      return res
-        .status(403)
-        .json({ error: "You do not have permission to perform this action." });
+      return next(authorizationError("You do not have permission to perform this action."));
     }
     next();
   };

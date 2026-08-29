@@ -68,6 +68,86 @@ const phase9MigrationSql = fs.readFileSync(
   ),
   'utf8'
 );
+const bootstrapMigrationSql = fs.readFileSync(
+  path.join(
+    __dirname,
+    '..',
+    '..',
+    'database',
+    'migrations',
+    '000_bootstrap_foundation.sql'
+  ),
+  'utf8'
+);
+const authHardeningMigrationSql = fs.readFileSync(
+  path.join(
+    __dirname,
+    '..',
+    '..',
+    'database',
+    'migrations',
+    '008_auth_session_hardening.sql'
+  ),
+  'utf8'
+);
+const operationalJobsMigrationSql = fs.readFileSync(
+  path.join(
+    __dirname,
+    '..',
+    '..',
+    'database',
+    'migrations',
+    '009_operational_job_runs.sql'
+  ),
+  'utf8'
+);
+const phase6AuthHardeningMigrationSql = fs.readFileSync(
+  path.join(
+    __dirname,
+    '..',
+    '..',
+    'database',
+    'migrations',
+    '010_phase_6_authentication_hardening.sql'
+  ),
+  'utf8'
+);
+const phase10DomainIntegrityMigrationSql = fs.readFileSync(
+  path.join(
+    __dirname,
+    '..',
+    '..',
+    'database',
+    'migrations',
+    '011_phase_10_domain_integrity.sql'
+  ),
+  'utf8'
+);
+const phase10DomainIntegrityRollbackSql = fs.readFileSync(
+  path.join(
+    __dirname,
+    '..',
+    '..',
+    'database',
+    'rollbacks',
+    '011_phase_10_domain_integrity.rollback.sql'
+  ),
+  'utf8'
+);
+
+test('bootstrap migration creates the original foundation tables non-destructively', () => {
+  for (const tableName of ['departments', 'users', 'assets', 'service_requests', 'maintenance', 'audit_logs']) {
+    assert.match(
+      bootstrapMigrationSql,
+      new RegExp(`CREATE TABLE IF NOT EXISTS ${tableName}\\b`, 'i'),
+      `missing non-destructive bootstrap table for ${tableName}`
+    );
+  }
+
+  assert.doesNotMatch(bootstrapMigrationSql, /DROP TABLE|TRUNCATE/i);
+  assert.match(bootstrapMigrationSql, /CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_ci/i);
+  assert.match(bootstrapMigrationSql, /CREATE OR REPLACE FUNCTION set_updated_at/i);
+});
 
 test('phase 4 migration creates the new operational tables', () => {
   const expectedTables = [
@@ -157,4 +237,56 @@ test('phase 9 migration expands the knowledge base with revisions, relations, an
   assert.match(phase9MigrationSql, /CREATE TABLE IF NOT EXISTS knowledge_base_article_feedback/i);
   assert.match(phase9MigrationSql, /CREATE INDEX IF NOT EXISTS idx_knowledge_base_title_search/i);
   assert.match(phase9MigrationSql, /Backfilled initial revision during Phase 9 migration/i);
+});
+
+test('auth hardening migration adds lockout and session version columns', () => {
+  assert.match(authHardeningMigrationSql, /ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER NOT NULL DEFAULT 0/i);
+  assert.match(authHardeningMigrationSql, /ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP/i);
+  assert.match(authHardeningMigrationSql, /ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMP NOT NULL DEFAULT NOW\(\)/i);
+  assert.match(authHardeningMigrationSql, /ADD COLUMN IF NOT EXISTS session_version INTEGER NOT NULL DEFAULT 1/i);
+  assert.match(authHardeningMigrationSql, /CHECK \(failed_login_attempts >= 0\)/i);
+  assert.match(authHardeningMigrationSql, /CHECK \(session_version > 0\)/i);
+  assert.match(authHardeningMigrationSql, /CREATE INDEX IF NOT EXISTS idx_users_locked_until/i);
+});
+
+test('operational jobs migration adds run history table and indexes', () => {
+  assert.match(operationalJobsMigrationSql, /CREATE TABLE IF NOT EXISTS operational_job_runs/i);
+  assert.match(operationalJobsMigrationSql, /status IN \('running','succeeded','failed','skipped'\)/i);
+  assert.match(operationalJobsMigrationSql, /metadata_json JSONB NOT NULL DEFAULT '\{\}'::jsonb/i);
+  assert.match(operationalJobsMigrationSql, /CREATE INDEX IF NOT EXISTS idx_operational_job_runs_name_started/i);
+  assert.match(operationalJobsMigrationSql, /CREATE INDEX IF NOT EXISTS idx_operational_job_runs_status_started/i);
+});
+
+test('phase 6 authentication hardening migration adds account status and reset tokens', () => {
+  assert.match(phase6AuthHardeningMigrationSql, /ADD COLUMN IF NOT EXISTS account_status VARCHAR\(20\) NOT NULL DEFAULT 'active'/i);
+  assert.match(phase6AuthHardeningMigrationSql, /account_status IN \('active','deactivated','suspended'\)/i);
+  assert.match(phase6AuthHardeningMigrationSql, /CREATE TABLE IF NOT EXISTS password_reset_tokens/i);
+  assert.match(phase6AuthHardeningMigrationSql, /token_hash VARCHAR\(255\) NOT NULL UNIQUE/i);
+  assert.match(phase6AuthHardeningMigrationSql, /used_at TIMESTAMP/i);
+  assert.match(phase6AuthHardeningMigrationSql, /CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_active/i);
+  assert.doesNotMatch(phase6AuthHardeningMigrationSql, /DROP TABLE|TRUNCATE/i);
+});
+
+test('phase 10 migration enforces canonical domain integrity non-destructively', () => {
+  assert.match(phase10DomainIntegrityMigrationSql, /Phase 10 preflight failed/i);
+  assert.match(phase10DomainIntegrityMigrationSql, /ticket_number IS NOT NULL AND ticket_number ~ '\^NSC-\[0-9\]\{4\}-\[0-9\]\{5\}\$'/i);
+  assert.match(phase10DomainIntegrityMigrationSql, /chk_users_temporary_account_requirements/i);
+  assert.match(phase10DomainIntegrityMigrationSql, /chk_users_account_state_alignment/i);
+  assert.match(phase10DomainIntegrityMigrationSql, /chk_service_requests_assignment_state/i);
+  assert.match(phase10DomainIntegrityMigrationSql, /chk_service_requests_lifecycle_dates/i);
+  assert.match(phase10DomainIntegrityMigrationSql, /chk_assets_archive_state/i);
+  assert.match(phase10DomainIntegrityMigrationSql, /chk_maintenance_status_timestamps/i);
+  assert.match(phase10DomainIntegrityMigrationSql, /chk_notifications_type/i);
+  assert.match(phase10DomainIntegrityMigrationSql, /'maintenance_due'/i);
+  assert.match(phase10DomainIntegrityMigrationSql, /status IN \('draft','in_review','published','archived'\)/i);
+  assert.match(phase10DomainIntegrityMigrationSql, /chk_audit_logs_action_nonblank/i);
+  assert.doesNotMatch(phase10DomainIntegrityMigrationSql, /DROP TABLE|TRUNCATE|DELETE FROM/i);
+});
+
+test('phase 10 rollback only removes new constraints and indexes', () => {
+  const executableRollbackSql = phase10DomainIntegrityRollbackSql.replace(/--.*$/gm, '');
+  assert.match(phase10DomainIntegrityRollbackSql, /DROP CONSTRAINT IF EXISTS chk_users_account_state_alignment/i);
+  assert.match(phase10DomainIntegrityRollbackSql, /DROP CONSTRAINT IF EXISTS chk_service_requests_lifecycle_dates/i);
+  assert.match(phase10DomainIntegrityRollbackSql, /DROP INDEX IF EXISTS idx_service_requests_status_changed_at/i);
+  assert.doesNotMatch(executableRollbackSql, /DROP TABLE|TRUNCATE|DELETE FROM|UPDATE\s+\w+\s+SET|ALTER TABLE\s+\w+\s+DROP COLUMN/i);
 });

@@ -1,4 +1,6 @@
 const pool = require('../config/db');
+const { runExclusiveJob } = require('./jobRunner');
+const notificationRepository = require('../modules/notifications/notification.repository');
 
 const DEFAULT_NOTIFICATION_QUEUE_INTERVAL_MINUTES = 10;
 const DEFAULT_NOTIFICATION_MAX_ATTEMPTS = 5;
@@ -60,82 +62,38 @@ async function processNotificationQueue(executor = pool) {
   const maxAttempts = Number(process.env.NOTIFICATION_MAX_ATTEMPTS || DEFAULT_NOTIFICATION_MAX_ATTEMPTS);
   const transportConfig = getEmailTransportConfig();
 
-  const result = await executor.query(
-    `SELECT notification_delivery_id, notification_id, recipient_user_id, channel, delivery_status,
-            recipient_address, subject, body_text, attempt_count, max_attempts
-     FROM notification_deliveries
-     WHERE channel = 'email'
-       AND delivery_status IN ('pending', 'deferred', 'failed')
-       AND next_attempt_at <= NOW()
-       AND attempt_count < LEAST(max_attempts, $1)
-     ORDER BY queued_at ASC
-     LIMIT 50`,
-    [maxAttempts]
-  );
+  const deliveries = await notificationRepository.listDueEmailDeliveries(executor, maxAttempts);
 
   let processed = 0;
-  for (const delivery of result.rows) {
+  for (const delivery of deliveries) {
     processed += 1;
 
     if (!transportConfig.configured) {
-      await executor.query(
-        `UPDATE notification_deliveries
-         SET delivery_status = 'deferred',
-             attempt_count = attempt_count + 1,
-             last_attempt_at = NOW(),
-             last_error = $2,
-             next_attempt_at = $3
-         WHERE notification_delivery_id = $1`,
-        [
-          delivery.notification_delivery_id,
-          transportConfig.reason,
-          computeNextAttempt(delivery.attempt_count + 1),
-        ]
+      await notificationRepository.deferEmailDelivery(
+        executor,
+        delivery.notification_delivery_id,
+        transportConfig.reason,
+        computeNextAttempt(delivery.attempt_count + 1)
       );
       continue;
     }
 
     try {
-      await executor.query(
-        `UPDATE notification_deliveries
-         SET delivery_status = 'processing',
-             last_attempt_at = NOW()
-         WHERE notification_delivery_id = $1`,
-        [delivery.notification_delivery_id]
-      );
+      await notificationRepository.markDeliveryProcessing(executor, delivery.notification_delivery_id);
 
       const providerMessageId = await sendEmailDelivery(delivery, transportConfig);
 
-      await executor.query(
-        `UPDATE notification_deliveries
-         SET delivery_status = 'sent',
-             provider_name = 'smtp',
-             provider_message_id = $2,
-             attempt_count = attempt_count + 1,
-             sent_at = NOW(),
-             failed_at = NULL,
-             last_error = NULL
-         WHERE notification_delivery_id = $1`,
-        [delivery.notification_delivery_id, providerMessageId]
-      );
+      await notificationRepository.markDeliverySent(executor, delivery.notification_delivery_id, providerMessageId);
     } catch (err) {
       const attemptCount = delivery.attempt_count + 1;
       const exhausted = attemptCount >= Math.min(maxAttempts, delivery.max_attempts);
-      await executor.query(
-        `UPDATE notification_deliveries
-         SET delivery_status = $2,
-             attempt_count = $3,
-             failed_at = NOW(),
-             last_error = $4,
-             next_attempt_at = $5
-         WHERE notification_delivery_id = $1`,
-        [
-          delivery.notification_delivery_id,
-          exhausted ? 'failed' : 'pending',
-          attemptCount,
-          err.message,
-          computeNextAttempt(attemptCount),
-        ]
+      await notificationRepository.markDeliveryFailed(
+        executor,
+        delivery.notification_delivery_id,
+        exhausted ? 'failed' : 'pending',
+        attemptCount,
+        err.message,
+        computeNextAttempt(attemptCount)
       );
     }
   }
@@ -153,7 +111,11 @@ function startNotificationQueue({ pool: notificationPool = pool }) {
 
   const runSweep = async () => {
     try {
-      await processNotificationQueue(notificationPool);
+      await runExclusiveJob({
+        pool: notificationPool,
+        jobName: 'notification_queue',
+        task: () => processNotificationQueue(notificationPool),
+      });
     } catch (err) {
       console.error('[notifications] Failed to process notification queue:', err.message);
     }
@@ -176,5 +138,6 @@ module.exports = {
   DEFAULT_NOTIFICATION_QUEUE_INTERVAL_MINUTES,
   getEmailTransportConfig,
   processNotificationQueue,
+  runExclusiveJob,
   startNotificationQueue,
 };

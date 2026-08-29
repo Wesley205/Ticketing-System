@@ -1,6 +1,8 @@
-const USER_TYPES = ['employee', 'intern', 'corper', 'contractor', 'guest'];
-const TEMPORARY_USER_TYPES = ['intern', 'corper', 'contractor', 'guest'];
-const ROLES = ['admin', 'ict_officer', 'technician', 'staff'];
+const {
+  TEMPORARY_USER_TYPES,
+  USER_ROLES: ROLES,
+  USER_TYPES,
+} = require('../shared/constants/domain');
 
 function getOrganizationEmailDomains() {
   const raw = process.env.ORGANIZATION_EMAIL_DOMAINS || process.env.ORG_EMAIL_DOMAINS || 'nscict.local';

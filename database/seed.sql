@@ -33,7 +33,7 @@ SET description = EXCLUDED.description,
 -- role controls access. user_type controls employee/temporary lifecycle.
 INSERT INTO users
   (full_name, email, username, password_hash, role, user_type, department_id,
-   phone, is_active, sponsor_name, account_start_date, account_expiration_date,
+   phone, is_active, account_status, sponsor_name, account_start_date, account_expiration_date,
    deactivated_at, deactivation_reason)
 SELECT
   v.full_name,
@@ -45,6 +45,7 @@ SELECT
   d.department_id,
   v.phone,
   v.is_active,
+  CASE WHEN v.is_active THEN 'active' ELSE 'deactivated' END,
   v.sponsor_name,
   v.account_start_date::date,
   v.account_expiration_date::date,
@@ -76,6 +77,7 @@ ON CONFLICT (username) DO UPDATE SET
   department_id = EXCLUDED.department_id,
   phone = EXCLUDED.phone,
   is_active = EXCLUDED.is_active,
+  account_status = EXCLUDED.account_status,
   sponsor_name = EXCLUDED.sponsor_name,
   account_start_date = EXCLUDED.account_start_date,
   account_expiration_date = EXCLUDED.account_expiration_date,

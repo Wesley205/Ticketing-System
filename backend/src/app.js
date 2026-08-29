@@ -1,7 +1,11 @@
 const express = require('express');
-const cors = require('cors');
 const path = require('path');
+const { configureTrustProxy, createSecurityMiddleware } = require('./middleware/security');
+const { errorHandler } = require('./middleware/errorHandler');
+const { getStaticOptions } = require('./middleware/securityHeaders');
+const notFound = require('./middleware/notFound');
 
+const healthRoutes = require('./routes/health');
 const authRoutes = require('./routes/auth');
 const invitationRoutes = require('./routes/invitations');
 const dashboardRoutes = require('./routes/dashboard');
@@ -15,14 +19,14 @@ const departmentRoutes = require('./routes/departments');
 const auditLogRoutes = require('./routes/auditLogs');
 const reportRoutes = require('./routes/reports');
 
-function createApp() {
+function createApp(options = {}) {
   const app = express();
-  const jsonBodyLimit = process.env.JSON_BODY_LIMIT || '6mb';
 
   app.disable('x-powered-by');
-  app.use(cors());
-  app.use(express.json({ limit: jsonBodyLimit }));
+  configureTrustProxy(app, options.env);
+  app.use(createSecurityMiddleware(options.env));
 
+  app.use('/api/health', healthRoutes);
   app.use('/api/auth', authRoutes);
   app.use('/api/invitations', invitationRoutes);
   app.use('/api/dashboard', dashboardRoutes);
@@ -36,25 +40,15 @@ function createApp() {
   app.use('/api/audit-logs', auditLogRoutes);
   app.use('/api/reports', reportRoutes);
 
-  app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'NSC ICT Service Desk API is running' });
-  });
-
   const frontendPath = path.join(__dirname, '..', '..', 'frontend');
-  app.use(express.static(frontendPath));
+  app.use(express.static(frontendPath, getStaticOptions()));
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api/')) return next();
     res.sendFile(path.join(frontendPath, 'index.html'));
   });
 
-  app.use('/api', (req, res) => {
-    res.status(404).json({ error: 'API endpoint not found.' });
-  });
-
-  app.use((err, req, res, next) => {
-    console.error(err);
-    res.status(500).json({ error: 'An unexpected server error occurred.' });
-  });
+  app.use('/api', notFound);
+  app.use(errorHandler);
 
   return app;
 }

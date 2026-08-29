@@ -1,0 +1,38 @@
+const ERROR_CODES = {
+  AUTHENTICATION_REQUIRED: 'AUTHENTICATION_REQUIRED',
+  AUTHORIZATION_FAILED: 'AUTHORIZATION_FAILED',
+  BAD_REQUEST: 'BAD_REQUEST',
+  CONTENT_TYPE_UNSUPPORTED: 'CONTENT_TYPE_UNSUPPORTED',
+  DATABASE_CONSTRAINT_VIOLATION: 'DATABASE_CONSTRAINT_VIOLATION',
+  DATABASE_ERROR: 'DATABASE_ERROR',
+  DUPLICATE_RESOURCE: 'DUPLICATE_RESOURCE',
+  FOREIGN_KEY_VIOLATION: 'FOREIGN_KEY_VIOLATION',
+  INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
+  INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
+  PAYLOAD_TOO_LARGE: 'PAYLOAD_TOO_LARGE',
+  RATE_LIMITED: 'RATE_LIMITED',
+  RESOURCE_NOT_FOUND: 'RESOURCE_NOT_FOUND',
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+};
+
+const DEFAULT_ERROR_MESSAGES = {
+  [ERROR_CODES.AUTHENTICATION_REQUIRED]: 'Authentication is required.',
+  [ERROR_CODES.AUTHORIZATION_FAILED]: 'You do not have permission to perform this action.',
+  [ERROR_CODES.BAD_REQUEST]: 'The request could not be processed.',
+  [ERROR_CODES.CONTENT_TYPE_UNSUPPORTED]: 'Unsupported content type.',
+  [ERROR_CODES.DATABASE_CONSTRAINT_VIOLATION]: 'The request violates a database constraint.',
+  [ERROR_CODES.DATABASE_ERROR]: 'A database error occurred.',
+  [ERROR_CODES.DUPLICATE_RESOURCE]: 'A resource with the same unique value already exists.',
+  [ERROR_CODES.FOREIGN_KEY_VIOLATION]: 'The request references a related resource that does not exist.',
+  [ERROR_CODES.INTERNAL_SERVER_ERROR]: 'An unexpected server error occurred.',
+  [ERROR_CODES.INVALID_CREDENTIALS]: 'Invalid credentials.',
+  [ERROR_CODES.PAYLOAD_TOO_LARGE]: 'The request payload is too large.',
+  [ERROR_CODES.RATE_LIMITED]: 'Too many requests. Please try again later.',
+  [ERROR_CODES.RESOURCE_NOT_FOUND]: 'The requested resource could not be found.',
+  [ERROR_CODES.VALIDATION_ERROR]: 'The request contains invalid data.',
+};
+
+module.exports = {
+  DEFAULT_ERROR_MESSAGES,
+  ERROR_CODES,
+};

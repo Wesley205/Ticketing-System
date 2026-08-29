@@ -1,5 +1,6 @@
 const { withTransaction } = require('./transactions');
 const { emitNotificationEvent } = require('./notificationService');
+const { runExclusiveJob } = require('./jobRunner');
 
 function parseIntervalMinutes(value, fallback) {
   const parsed = Number(value);
@@ -71,8 +72,13 @@ function startMaintenanceMonitor({ pool, logAction }) {
 
   const execute = async () => {
     try {
-      const count = await runMaintenanceMonitor({ pool, logAction });
-      if (count > 0) {
+      const outcome = await runExclusiveJob({
+        pool,
+        jobName: 'maintenance_monitor',
+        task: () => runMaintenanceMonitor({ pool, logAction }),
+      });
+      const count = Number(outcome.result || 0);
+      if (!outcome.skipped && count > 0) {
         console.log(`[maintenance-monitor] Processed ${count} due maintenance reminders.`);
       }
     } catch (err) {
@@ -89,5 +95,6 @@ function startMaintenanceMonitor({ pool, logAction }) {
 
 module.exports = {
   runMaintenanceMonitor,
+  runExclusiveJob,
   startMaintenanceMonitor,
 };

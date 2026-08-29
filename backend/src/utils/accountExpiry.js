@@ -1,4 +1,5 @@
 const { TEMPORARY_USER_TYPES } = require('../config/authPolicy');
+const { runExclusiveJob } = require('./jobRunner');
 
 const AUTO_EXPIRY_REASON = 'Automatic account expiry after the approved end date';
 
@@ -33,7 +34,11 @@ function startExpirySweep({ pool, logAction }) {
 
   const runSweep = async () => {
     try {
-      await expireTemporaryAccounts(pool, logAction);
+      await runExclusiveJob({
+        pool,
+        jobName: 'account_expiry_sweep',
+        task: () => expireTemporaryAccounts(pool, logAction),
+      });
     } catch (err) {
       console.error('[accounts] Failed to process account expiry sweep:', err.message);
     }
@@ -54,5 +59,6 @@ function startExpirySweep({ pool, logAction }) {
 module.exports = {
   AUTO_EXPIRY_REASON,
   expireTemporaryAccounts,
+  runExclusiveJob,
   startExpirySweep,
 };

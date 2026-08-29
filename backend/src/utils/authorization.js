@@ -1,25 +1,34 @@
+const { PERMISSIONS } = require("../authorization/permissions");
+const { ROLES } = require("../authorization/roles");
+const {
+  getUserPermissions,
+  hasPermission,
+  hasRole,
+} = require("../authorization/policy");
+const access = require("../authorization/resourceAccess");
+
 function isAdmin(user) {
-  return user?.role === "admin";
+  return hasRole(user, ROLES.ADMIN);
 }
 
 function isIctOfficer(user) {
-  return user?.role === "ict_officer";
+  return hasRole(user, ROLES.ICT_OFFICER);
 }
 
 function isTechnician(user) {
-  return user?.role === "technician";
+  return hasRole(user, ROLES.TECHNICIAN);
 }
 
 function isStaff(user) {
-  return user?.role === "staff";
+  return hasRole(user, ROLES.STAFF);
 }
 
 function canViewAllOperationalData(user) {
-  return isAdmin(user) || isIctOfficer(user);
+  return hasPermission(user, PERMISSIONS.TICKETS_VIEW_ALL);
 }
 
 function canManageUsers(user) {
-  return isAdmin(user);
+  return access.canManageUsers(user);
 }
 
 function canManageDepartments(user) {
@@ -27,15 +36,15 @@ function canManageDepartments(user) {
 }
 
 function canViewReports(user) {
-  return canViewAllOperationalData(user);
+  return access.canViewReports(user);
 }
 
 function canViewAuditLogs(user) {
-  return canViewAllOperationalData(user);
+  return access.canViewAuditLogs(user);
 }
 
 function canCreateInvitation(user) {
-  return isAdmin(user);
+  return hasPermission(user, PERMISSIONS.USERS_CREATE);
 }
 
 function canViewTechnicianDirectory(user) {
@@ -51,16 +60,14 @@ function canViewDepartment(user, departmentId) {
 }
 
 function canCreateServiceRequest(user, departmentId) {
-  if (!departmentId) return true;
-  if (canViewAllOperationalData(user)) return true;
-  return Number(user?.department_id) === Number(departmentId);
+  return access.canCreateTicket(user, departmentId);
 }
 
 function constrainServiceRequestVisibility(
   user,
   { clauses, params, alias = "sr", mine = false },
 ) {
-  if (canViewAllOperationalData(user)) {
+  if (hasPermission(user, PERMISSIONS.TICKETS_VIEW_ALL)) {
     if (mine) {
       params.push(user.user_id);
       clauses.push(`${alias}.requester_id = $${params.length}`);
@@ -74,24 +81,25 @@ function constrainServiceRequestVisibility(
     return;
   }
 
+  if (
+    hasPermission(user, PERMISSIONS.TICKETS_VIEW_DEPARTMENT) &&
+    user?.department_id
+  ) {
+    params.push(user.department_id);
+    clauses.push(`${alias}.department_id = $${params.length}`);
+    return;
+  }
+
   params.push(user.user_id);
   clauses.push(`${alias}.requester_id = $${params.length}`);
 }
 
 function canViewServiceRequest(user, request) {
-  if (!request) return false;
-  if (canViewAllOperationalData(user)) return true;
-  if (Number(request.requester_id) === Number(user.user_id)) return true;
-  if (
-    isTechnician(user) &&
-    Number(request.assigned_technician_id) === Number(user.user_id)
-  )
-    return true;
-  return false;
+  return access.canViewTicket(user, request);
 }
 
 function canAssignServiceRequest(user) {
-  return canViewAllOperationalData(user);
+  return access.canAssignTicket(user);
 }
 
 function canManageServiceRequestAssignments(user) {
@@ -99,49 +107,27 @@ function canManageServiceRequestAssignments(user) {
 }
 
 function canUpdateServiceRequest(user, request) {
-  if (canViewAllOperationalData(user)) return true;
-  return (
-    isTechnician(user) &&
-    Number(request?.assigned_technician_id) === Number(user.user_id)
-  );
+  return access.canUpdateTicketStatus(user, request);
 }
 
 function canCommentOnServiceRequest(user, request) {
-  return (
-    canViewServiceRequest(user, request) || canViewAllOperationalData(user)
-  );
+  return access.canCommentOnTicket(user, request);
 }
 
 function canAddInternalTicketNote(user) {
-  return canViewAllOperationalData(user) || isTechnician(user);
+  return access.canAddInternalTicketContent(user);
 }
 
 function canViewInternalTicketArtifacts(user, request) {
-  if (!request) return false;
-  if (canViewAllOperationalData(user)) return true;
-  return (
-    isTechnician(user) &&
-    Number(request.assigned_technician_id) === Number(user.user_id)
-  );
+  return access.canViewInternalTicketArtifacts(user, request);
 }
 
 function canManageTicketAttachments(user, request) {
-  return canCommentOnServiceRequest(user, request);
+  return access.canManageTicketAttachments(user, request);
 }
 
 function constrainAssetVisibility(user, { clauses, params, alias = "a" }) {
   if (canViewAllOperationalData(user)) return;
-
-  if (isTechnician(user)) {
-    params.push(user.user_id);
-    const selfParam = params.length;
-    params.push(user.department_id || -1);
-    const deptParam = params.length;
-    clauses.push(
-      `(${alias}.assigned_to = $${selfParam} OR ${alias}.department_id = $${deptParam})`,
-    );
-    return;
-  }
 
   params.push(user.user_id);
   const selfParam = params.length;
@@ -153,22 +139,15 @@ function constrainAssetVisibility(user, { clauses, params, alias = "a" }) {
 }
 
 function canViewAsset(user, asset) {
-  if (!asset) return false;
-  if (canViewAllOperationalData(user)) return true;
-  if (Number(asset.assigned_to) === Number(user.user_id)) return true;
-  return (
-    Boolean(user?.department_id) &&
-    Number(asset.department_id) === Number(user.department_id)
-  );
+  return access.canViewAsset(user, asset);
 }
 
 function canManageAssets(user) {
-  return canViewAllOperationalData(user);
+  return access.canCreateAsset(user) || access.canAssignAsset(user);
 }
 
 function canUpdateAssetStatus(user, asset) {
-  if (canViewAllOperationalData(user)) return true;
-  return isTechnician(user) && canViewAsset(user, asset);
+  return access.canEditAsset(user, asset);
 }
 
 function constrainMaintenanceVisibility(
@@ -325,6 +304,7 @@ function buildFrontendPermissions(user) {
     can_access_service_desk: Boolean(user?.user_id),
     can_access_assets: Boolean(user?.user_id),
     can_access_knowledge_base: Boolean(user?.user_id),
+    permissions: getUserPermissions(user),
   };
 }
 

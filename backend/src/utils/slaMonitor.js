@@ -1,6 +1,7 @@
 const { calculateSlaState, isOpenTicketStatus } = require('./sla');
 const { emitNotificationEvent } = require('./notificationService');
 const { withTransaction } = require('./transactions');
+const { runExclusiveJob } = require('./jobRunner');
 
 const SLA_MONITOR_DEFAULT_INTERVAL_MINUTES = 15;
 
@@ -146,7 +147,11 @@ function startSlaMonitor({ pool, logAction }) {
 
   const runSweep = async () => {
     try {
-      await monitorSlaBreaches(pool, logAction);
+      await runExclusiveJob({
+        pool,
+        jobName: 'sla_monitor',
+        task: () => monitorSlaBreaches(pool, logAction),
+      });
     } catch (err) {
       console.error('[sla] Failed to process SLA monitor sweep:', err.message);
     }
@@ -167,5 +172,6 @@ function startSlaMonitor({ pool, logAction }) {
 module.exports = {
   SLA_MONITOR_DEFAULT_INTERVAL_MINUTES,
   monitorSlaBreaches,
+  runExclusiveJob,
   startSlaMonitor,
 };

@@ -4,6 +4,13 @@ const pool = require('../config/db');
 
 const migrationsDir = path.join(__dirname, '..', '..', '..', 'database', 'migrations');
 
+function listMigrationFiles(directory = migrationsDir) {
+  if (!fs.existsSync(directory)) return [];
+  return fs.readdirSync(directory)
+    .filter((filename) => filename.endsWith('.sql'))
+    .sort();
+}
+
 async function ensureMigrationsTable() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -18,8 +25,8 @@ async function getAppliedMigrations() {
   return new Set(result.rows.map((row) => row.filename));
 }
 
-async function applyMigration(filename) {
-  const fullPath = path.join(migrationsDir, filename);
+async function applyMigration(filename, directory = migrationsDir) {
+  const fullPath = path.join(directory, filename);
   const sql = fs.readFileSync(fullPath, 'utf8');
 
   await pool.query('BEGIN');
@@ -35,16 +42,15 @@ async function applyMigration(filename) {
 }
 
 async function main() {
-  if (!fs.existsSync(migrationsDir)) {
+  const files = listMigrationFiles();
+
+  if (!files.length) {
     console.log('[migrate] No migrations directory found.');
     return;
   }
 
   await ensureMigrationsTable();
   const applied = await getAppliedMigrations();
-  const files = fs.readdirSync(migrationsDir)
-    .filter((filename) => filename.endsWith('.sql'))
-    .sort();
 
   for (const filename of files) {
     if (!applied.has(filename)) {
@@ -55,11 +61,21 @@ async function main() {
   console.log('[migrate] Migration check complete.');
 }
 
-main()
-  .catch((err) => {
-    console.error('[migrate] Failed:', err);
-    process.exitCode = 1;
-  })
-  .finally(async () => {
-    await pool.end();
-  });
+if (require.main === module) {
+  main()
+    .catch((err) => {
+      console.error('[migrate] Failed:', err);
+      process.exitCode = 1;
+    })
+    .finally(async () => {
+      await pool.end();
+    });
+}
+
+module.exports = {
+  applyMigration,
+  ensureMigrationsTable,
+  getAppliedMigrations,
+  listMigrationFiles,
+  main,
+};

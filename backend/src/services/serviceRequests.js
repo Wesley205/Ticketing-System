@@ -7,37 +7,12 @@ const {
   calculateSlaState,
   selectSlaPolicy,
 } = require("../utils/sla");
-
-const TICKET_TYPES = [
-  "Incident",
-  "Service Request",
-  "Access Request",
-  "Maintenance Request",
-  "Change Request",
-];
-
-const TICKET_STATUSES = [
-  "New",
-  "Pending",
-  "Assigned",
-  "Accepted",
-  "In Progress",
-  "Waiting for User",
-  "Waiting for Parts",
-  "Resolved",
-  "Closed",
-  "Reopened",
-  "Cancelled",
-];
-
-const TICKET_PRIORITIES = ["Low", "Medium", "High", "Critical"];
-const TICKET_SOURCE_CHANNELS = [
-  "portal",
-  "email",
-  "phone",
-  "walk-in",
-  "system",
-];
+const {
+  TICKET_PRIORITIES,
+  TICKET_SOURCE_CHANNELS,
+  TICKET_STATUSES,
+  TICKET_TYPES,
+} = require("../shared/constants/domain");
 
 const STATUS_TRANSITIONS = {
   New: ["Pending", "Assigned", "Cancelled"],
