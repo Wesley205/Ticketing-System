@@ -2,7 +2,7 @@
 
 ## Scope
 
-Phase 11 turns the existing static frontend into a permission-aware application shell driven by the backend authorization model from Phase 3.
+Phase 11 turns the frontend into a permission-aware React application shell driven by the backend authorization model from Phase 3.
 
 Delivered areas:
 
@@ -39,13 +39,15 @@ This is a presentation contract only. Backend routes still enforce all real auth
 
 ## Frontend architecture
 
-Updated shared browser helpers:
+Updated shared React helpers:
 
-- [frontend/js/api.js](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/js/api.js)
-- [frontend/js/layout.js](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/js/layout.js)
-- [frontend/css/style.css](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/css/style.css)
+- [frontend/src/lib/api-client.js](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/src/lib/api-client.js)
+- [frontend/src/features/auth/hooks/useAuth.js](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/src/features/auth/hooks/useAuth.js)
+- [frontend/src/permissions/access.js](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/src/permissions/access.js)
+- [frontend/src/components/layout/AppShell.jsx](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/src/components/layout/AppShell.jsx)
+- [frontend/src/styles/components.css](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/src/styles/components.css)
 
-### `api.js` responsibilities
+### API and auth responsibilities
 
 - session storage and normalization
 - fallback access-profile derivation for old sessions
@@ -55,7 +57,7 @@ Updated shared browser helpers:
 - session refresh from `/api/auth/me`
 - shared page-state rendering helpers
 
-### `layout.js` responsibilities
+### Shell responsibilities
 
 - grouped navigation sections
 - portal and scope summary in the sidebar
@@ -88,20 +90,24 @@ Updated shared browser helpers:
 - sees only pages available to ordinary internal users
 - staff-specific visibility remains limited by backend record scope
 
-## Updated pages
+## Updated React routes
 
-- [frontend/dashboard.html](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/dashboard.html)
-- [frontend/service-requests.html](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/service-requests.html)
-- [frontend/assets.html](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/assets.html)
-- [frontend/maintenance.html](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/maintenance.html)
-- [frontend/knowledge-base.html](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/knowledge-base.html)
-- [frontend/staff.html](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/staff.html)
-- [frontend/departments.html](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/departments.html)
-- [frontend/reports.html](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/reports.html)
-- [frontend/audit-log.html](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/audit-log.html)
-- [frontend/technician.html](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/technician.html)
+- `/dashboard`
+- `/service-requests`
+- `/service-requests/:id`
+- `/technician`
+- `/technician/work/:kind/:id`
+- `/assets`
+- `/assets/:id`
+- `/maintenance`
+- `/knowledge-base`
+- `/staff`
+- `/departments`
+- `/reports`
+- `/audit-logs`
+- `/about`
 
-Each page now uses shared route guards instead of direct role-list redirects.
+Each route uses shared route guards instead of direct role-list redirects.
 
 ## Accessibility and responsiveness
 

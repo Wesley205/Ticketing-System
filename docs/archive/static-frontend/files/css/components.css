@@ -1,0 +1,153 @@
+.service-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+}
+
+.detail-panel {
+  min-height: 720px;
+}
+
+.detail-empty {
+  padding: 28px;
+  color: var(--muted);
+}
+
+.ticket-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0 18px;
+}
+
+.ticket-kpi {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+}
+
+.ticket-kpi span {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.ticket-kpi strong {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.detail-block {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+  margin-top: 14px;
+}
+
+.detail-block-reset {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.timeline-list,
+.comment-list,
+.attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.timeline-item,
+.comment-item,
+.attachment-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+}
+
+.timeline-item small,
+.comment-item small,
+.attachment-item small,
+.suggestion-card small {
+  color: var(--muted);
+  display: block;
+  margin-top: 6px;
+}
+
+.suggestion-card {
+  border: 1px solid #d0d5dd;
+  border-radius: 12px;
+  padding: 12px;
+  background: #f8fafc;
+}
+
+.suggestion-card strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.artifact-flag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #b42318;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.detail-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.detail-meta div {
+  font-size: 13px;
+  color: #344054;
+}
+
+.detail-meta strong {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inline-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.detail-copy {
+  margin-top: 8px;
+}
+
+.row-active td {
+  background: #f8fafc;
+}
+
+.text-danger {
+  color: #c0362c;
+}
+
+@media (max-width: 1100px) {
+  .service-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-panel {
+    min-height: 0;
+  }
+}

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Maintenance - NSC ICT Service Desk</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="app-shell" id="app-shell"></div>
+
+  <div class="modal-overlay" id="m-modal">
+    <div class="modal" style="position:relative;max-width:680px;">
+      <span class="close-x" onclick="closeMaintenanceModal()">&times;</span>
+      <h3>New Maintenance Record</h3>
+      <div class="error-box" id="m-error"></div>
+      <form id="m-form">
+        <div class="field"><label>Asset *</label><select id="asset_id" required></select></div>
+        <div class="field"><label>Problem *</label><textarea id="problem" rows="2" required></textarea></div>
+        <div class="field"><label>Action Taken</label><textarea id="action_taken" rows="2"></textarea></div>
+        <div class="form-grid">
+          <div class="field"><label>Maintenance Type</label>
+            <select id="maintenance_type"><option>Corrective</option><option>Preventive</option><option>Inspection</option></select>
+          </div>
+          <div class="field"><label>Maintenance Date</label><input type="date" id="maintenance_date"></div>
+          <div class="field"><label>Cost (N)</label><input type="number" id="cost" step="0.01" value="0"></div>
+          <div class="field"><label>Status</label>
+            <select id="status"><option>Scheduled</option><option>In Progress</option><option>Completed</option><option>Cancelled</option></select>
+          </div>
+          <div class="field"><label>Scheduled Start</label><input type="datetime-local" id="scheduled_start_at"></div>
+          <div class="field"><label>Next Due</label><input type="datetime-local" id="next_due_at"></div>
+          <div class="field full"><label>Checklist Items (comma-separated)</label><input id="checklist_items" placeholder="Clean fan, verify UPS, inspect ports"></div>
+          <div class="field full"><label>Notes</label><input id="notes"></div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" onclick="closeMaintenanceModal()">Cancel</button>
+          <button type="submit" class="btn" id="maintenance-save-btn">Save Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="schedule-modal">
+    <div class="modal" style="position:relative;max-width:680px;">
+      <span class="close-x" onclick="closeScheduleModal()">&times;</span>
+      <h3>New Maintenance Schedule</h3>
+      <div class="error-box" id="schedule-error"></div>
+      <form id="schedule-form">
+        <div class="field"><label>Asset *</label><select id="schedule_asset_id" required></select></div>
+        <div class="field"><label>Title *</label><input id="schedule_title" required placeholder="Quarterly laptop preventive service"></div>
+        <div class="field"><label>Description</label><textarea id="schedule_description" rows="2"></textarea></div>
+        <div class="form-grid">
+          <div class="field"><label>Schedule Type</label>
+            <select id="schedule_type"><option>Preventive</option><option>Inspection</option></select>
+          </div>
+          <div class="field"><label>Frequency Unit</label>
+            <select id="frequency_unit"><option>days</option><option>weeks</option><option>months</option></select>
+          </div>
+          <div class="field"><label>Frequency Value</label><input id="frequency_value" type="number" min="1" value="30"></div>
+          <div class="field"><label>Next Due *</label><input id="schedule_next_due_at" type="datetime-local" required></div>
+          <div class="field"><label>Reminder Days Before</label><input id="reminder_days_before" type="number" min="0" value="3"></div>
+          <div class="field full"><label>Checklist Items (comma-separated)</label><input id="schedule_checklist_items" placeholder="Check power, update firmware, clean vents"></div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" onclick="closeScheduleModal()">Cancel</button>
+          <button type="submit" class="btn" id="schedule-save-btn">Save Schedule</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/layout.js"></script>
+  <script src="/js/ui/badges.js"></script>
+  <script src="/js/ui/feedback.js"></script>
+  <script src="/js/ui/modals.js"></script>
+  <script src="/js/ui/states.js"></script>
+  <script src="/js/ui/tables.js"></script>
+  <script>
+    requireRoutePage('maintenance');
+    renderLayout('maintenance', 'Maintenance', 'Technician and operational maintenance workspace');
+
+    let assets = [];
+
+    function showPageError(message) {
+      UiFeedback.setBox('page-error', message);
+      UiFeedback.clearBox('page-success');
+    }
+
+    function showPageSuccess(message) {
+      UiFeedback.setBox('page-success', message);
+      UiFeedback.clearBox('page-error');
+    }
+
+    function clearPageError() {
+      UiFeedback.clearBox('page-error');
+    }
+
+    function renderContent() {
+      document.getElementById('page-content').innerHTML = `
+        <div class="panel">
+          <div class="error-box" id="page-error"></div>
+          <div class="success-box" id="page-success"></div>
+        </div>
+        <div class="asset-grid">
+          <div class="panel">
+            <div class="toolbar">
+              <div class="filters">
+                <select id="filter-status">
+                  <option value="">All Statuses</option>
+                  <option>Scheduled</option><option>In Progress</option><option>Completed</option><option>Cancelled</option>
+                </select>
+              </div>
+              <div class="inline-actions">
+                <button class="btn" onclick="openScheduleModal()">+ New Schedule</button>
+                <button class="btn" onclick="openMaintenanceModal()">+ New Maintenance Record</button>
+              </div>
+            </div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>Asset</th><th>Type</th><th>Problem</th><th>Technician</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="rows"></tbody>
+            </table></div>
+            <div id="empty" class="empty-state" style="display:none;">No maintenance records yet.</div>
+          </div>
+
+          <div class="panel detail-panel">
+            <div class="toolbar">
+              <strong>Preventive Schedules</strong>
+            </div>
+            <div id="schedule-list" class="comment-list"></div>
+            <div id="schedule-empty" class="empty-state" style="display:none;">No maintenance schedules yet.</div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('filter-status').addEventListener('change', loadMaintenance);
+    }
+
+    async function loadAssetOptions() {
+      try {
+        assets = await api('/assets');
+      } catch (err) {
+        assets = [];
+        showPageError(err.message);
+      }
+
+      const options = assets.map((asset) => `<option value="${asset.asset_id}">${escapeHtml(asset.asset_tag)} - ${escapeHtml(asset.asset_type)}</option>`).join('');
+      document.getElementById('asset_id').innerHTML = options;
+      document.getElementById('schedule_asset_id').innerHTML = options;
+    }
+
+    function parseChecklist(raw) {
+      return raw.split(',').map((item) => item.trim()).filter(Boolean);
+    }
+
+    function renderTableLoadState(bodyId, emptyId, columnCount, message) {
+      const body = document.getElementById(bodyId);
+      const empty = document.getElementById(emptyId);
+      if (body) body.innerHTML = `<tr><td colspan="${columnCount}">${UiStates.loading(message)}</td></tr>`;
+      if (empty) empty.style.display = 'none';
+    }
+
+    function renderMaintenanceRow(record) {
+      return `
+        <tr>
+          <td>${escapeHtml(record.asset_tag)}</td>
+          <td>${escapeHtml(record.maintenance_type || 'Corrective')}</td>
+          <td>${escapeHtml(record.problem)}</td>
+          <td>${escapeHtml(record.technician_name || '-')}</td>
+          <td>${fmtDate(record.maintenance_date)}</td>
+          <td>${UiBadges.renderStatus(record.status)}</td>
+          <td>${record.status !== 'Completed' ? `<button class="link-btn" onclick="markComplete(${record.maintenance_id})">Mark Complete</button>` : ''}</td>
+        </tr>
+      `;
+    }
+
+    function renderScheduleCard(schedule) {
+      return `
+        <div class="comment-item">
+          <div><strong>${escapeHtml(schedule.title)}</strong></div>
+          <div>${escapeHtml(schedule.asset_tag)} - ${escapeHtml(schedule.maintenance_type)}</div>
+          <small>
+            Due ${fmtDateTime(schedule.next_due_at)}
+            | Every ${Number(schedule.frequency_value || 0)} ${escapeHtml(schedule.frequency_unit)}
+            | Reminder ${Number(schedule.reminder_days_before || 0)} day(s) before
+          </small>
+        </div>
+      `;
+    }
+
+    async function loadMaintenance() {
+      const status = document.getElementById('filter-status').value;
+      const params = new URLSearchParams();
+      if (status) params.set('status', status);
+
+      renderTableLoadState('rows', 'empty', 7, 'Loading maintenance records...');
+
+      try {
+        const list = await api(`/maintenance?${params.toString()}`);
+        clearPageError();
+        UiTables.renderBody('rows', 'empty', list.map(renderMaintenanceRow).join(''), 'No maintenance records yet.');
+      } catch (err) {
+        showPageError(err.message);
+        document.getElementById('rows').innerHTML = `<tr><td colspan="7">${UiStates.error(err.message)}</td></tr>`;
+      }
+    }
+
+    async function loadSchedules() {
+      const list = document.getElementById('schedule-list');
+      const empty = document.getElementById('schedule-empty');
+      list.innerHTML = UiStates.loading('Loading maintenance schedules...');
+      empty.style.display = 'none';
+
+      try {
+        const schedules = await api('/maintenance/schedules');
+        clearPageError();
+        if (!schedules.length) {
+          list.innerHTML = '';
+          empty.style.display = 'block';
+          return;
+        }
+
+        list.innerHTML = schedules.map(renderScheduleCard).join('');
+      } catch (err) {
+        showPageError(err.message);
+        list.innerHTML = UiStates.error(err.message);
+      }
+    }
+
+    async function markComplete(id) {
+      try {
+        await api(`/maintenance/${id}`, { method: 'PUT', body: { status: 'Completed' } });
+        await loadMaintenance();
+        await loadSchedules();
+        showPageSuccess(`Maintenance record #${id} marked complete.`);
+      } catch (err) {
+        showPageError(err.message);
+      }
+    }
+
+    function openMaintenanceModal() {
+      document.getElementById('m-form').reset();
+      UiFeedback.clearBox('m-error');
+      UiModals.open('m-modal');
+    }
+
+    function closeMaintenanceModal() {
+      UiModals.close('m-modal');
+    }
+
+    function openScheduleModal() {
+      document.getElementById('schedule-form').reset();
+      UiFeedback.clearBox('schedule-error');
+      UiModals.open('schedule-modal');
+    }
+
+    function closeScheduleModal() {
+      UiModals.close('schedule-modal');
+    }
+
+    document.getElementById('m-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const saveButton = document.getElementById('maintenance-save-btn');
+      const originalLabel = saveButton.textContent;
+      const body = {
+        asset_id: document.getElementById('asset_id').value,
+        problem: document.getElementById('problem').value.trim(),
+        action_taken: document.getElementById('action_taken').value.trim(),
+        maintenance_type: document.getElementById('maintenance_type').value,
+        maintenance_date: document.getElementById('maintenance_date').value || null,
+        cost: document.getElementById('cost').value || 0,
+        status: document.getElementById('status').value,
+        notes: document.getElementById('notes').value.trim(),
+        scheduled_start_at: document.getElementById('scheduled_start_at').value || null,
+        next_due_at: document.getElementById('next_due_at').value || null,
+        checklist_items: parseChecklist(document.getElementById('checklist_items').value),
+      };
+
+      UiFeedback.clearBox('m-error');
+      saveButton.disabled = true;
+      saveButton.textContent = 'Saving...';
+
+      try {
+        await api('/maintenance', { method: 'POST', body });
+        closeMaintenanceModal();
+        await loadMaintenance();
+        await loadSchedules();
+        showPageSuccess('Maintenance record created successfully.');
+      } catch (err) {
+        UiFeedback.setBox('m-error', err.message);
+      } finally {
+        saveButton.disabled = false;
+        saveButton.textContent = originalLabel;
+      }
+    });
+
+    document.getElementById('schedule-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const saveButton = document.getElementById('schedule-save-btn');
+      const originalLabel = saveButton.textContent;
+      const body = {
+        asset_id: document.getElementById('schedule_asset_id').value,
+        title: document.getElementById('schedule_title').value.trim(),
+        description: document.getElementById('schedule_description').value.trim(),
+        maintenance_type: document.getElementById('schedule_type').value,
+        frequency_unit: document.getElementById('frequency_unit').value,
+        frequency_value: Number(document.getElementById('frequency_value').value || 30),
+        next_due_at: document.getElementById('schedule_next_due_at').value,
+        reminder_days_before: Number(document.getElementById('reminder_days_before').value || 3),
+        checklist_items: parseChecklist(document.getElementById('schedule_checklist_items').value),
+      };
+
+      UiFeedback.clearBox('schedule-error');
+      saveButton.disabled = true;
+      saveButton.textContent = 'Saving...';
+
+      try {
+        await api('/maintenance/schedules', { method: 'POST', body });
+        closeScheduleModal();
+        await loadSchedules();
+        showPageSuccess('Maintenance schedule created successfully.');
+      } catch (err) {
+        UiFeedback.setBox('schedule-error', err.message);
+      } finally {
+        saveButton.disabled = false;
+        saveButton.textContent = originalLabel;
+      }
+    });
+
+    (async () => {
+      renderContent();
+      await loadAssetOptions();
+      await loadMaintenance();
+      await loadSchedules();
+    })();
+  </script>
+</body>
+</html>

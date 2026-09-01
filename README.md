@@ -2,7 +2,7 @@
 
 A full-stack prototype web application for managing ICT assets and staff service/support requests.
 
-- Frontend: HTML5 / CSS3 / vanilla JavaScript
+- Frontend: React + Vite, served by Express in production
 - Backend: Node.js + Express
 - Database: PostgreSQL
 - Auth: JWT sessions, bcrypt password hashing, role-based access
@@ -40,6 +40,10 @@ nsc-ict-system/
 |  |- package.json
 |  `- .env.example
 |- frontend/
+|  |- src/
+|  |- dist/
+|  |- react-shell.html
+|  `- package.json
 |- database/
 |  |- schema.sql
 |  |- migrations/
@@ -108,12 +112,17 @@ INVITATION_TOKEN_BYTES=24
 
 ## 5. Run the Application
 
+For production-style local serving, build React first and then start Express:
+
 ```bash
-cd backend
+cd frontend
+npm install
+npm run build
+cd ../backend
 npm start
 ```
 
-The backend serves the frontend automatically at `http://localhost:5000`.
+The backend serves the React frontend automatically at `http://localhost:5000` and keeps `/api/*` reserved for backend routes.
 
 Useful backend commands:
 
@@ -157,7 +166,7 @@ Public self-registration is disabled.
 Users must be onboarded in one of these ways:
 
 - direct administrator-created account
-- administrator-issued invitation accepted through `/register.html`
+- administrator-issued invitation accepted through `/activate`
 
 Access rules:
 
@@ -196,4 +205,4 @@ Seeded demo accounts exist for administrator, ICT officer, technician, and staff
 - `ECONNREFUSED`: confirm PostgreSQL is running and `.env` matches your local database.
 - `password authentication failed`: check `PGUSER` and `PGPASSWORD`.
 - Port conflict: change `PORT` in `.env`.
-- Blank page or refresh 404: load the app through the Express server URL, not by opening HTML files directly.
+- Blank page or refresh 404: run `npm run build` from `frontend/`, then load the app through the Express server URL.

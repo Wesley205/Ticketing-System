@@ -18,7 +18,7 @@ test('invitation tokens are generated and hashed deterministically', () => {
 test('invitation url uses configured base url', () => {
   process.env.INTERNAL_APP_BASE_URL = 'https://service-desk.internal';
   const url = buildInvitationUrl('sample-token');
-  assert.equal(url, 'https://service-desk.internal/register.html?token=sample-token');
+  assert.equal(url, 'https://service-desk.internal/activate?token=sample-token');
 });
 
 test('temporary invitations require sponsor and expiration', () => {

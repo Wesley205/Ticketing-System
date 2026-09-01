@@ -8,7 +8,7 @@ Phase 2 implements internal-only account access for the current Node.js/Express 
 
 - Public registration disabled at `POST /api/auth/register`
 - Login page no longer links to self-registration
-- `/register.html` repurposed as invitation acceptance
+- `/activate` handles invitation acceptance
 - New invitation workflow at `/api/invitations`
 - Employee email-domain validation driven by `ORGANIZATION_EMAIL_DOMAINS`
 - New `user_type`, sponsor, start-date, expiry-date, and lifecycle fields on `users`

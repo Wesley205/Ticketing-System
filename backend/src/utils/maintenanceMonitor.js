@@ -38,7 +38,7 @@ async function runMaintenanceMonitor({ pool, logAction }) {
             asset_id: schedule.asset_id,
             next_due_at: schedule.next_due_at,
           },
-          action_url: `/maintenance.html#schedule-${schedule.schedule_id}`,
+          action_url: `/maintenance#schedule-${schedule.schedule_id}`,
         },
         client
       );

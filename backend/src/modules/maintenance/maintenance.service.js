@@ -137,7 +137,7 @@ async function createMaintenanceRecord(data, executor) {
           maintenance_type: maintenanceType,
           status,
         },
-        action_url: `/maintenance.html#maintenance-${created.maintenance_id}`,
+        action_url: `/maintenance#maintenance-${created.maintenance_id}`,
       },
       client
     );
@@ -224,7 +224,7 @@ async function updateMaintenanceRecord(maintenanceId, updates, actorUserId, exec
           status: nextStatus,
           maintenance_type: updated.maintenance_type,
         },
-        action_url: `/maintenance.html#maintenance-${maintenanceId}`,
+        action_url: `/maintenance#maintenance-${maintenanceId}`,
       },
       client
     );

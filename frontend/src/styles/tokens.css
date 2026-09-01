@@ -1,0 +1,22 @@
+:root {
+  --brand: #0a7d3e;
+  --brand-deep: #063d1f;
+  --brand-mid: #14904a;
+  --mint: #17a594;
+  --mint-deep: #128577;
+  --amber: #f5a623;
+  --amber-deep: #c9820f;
+  --bg: #f6f4ef;
+  --card-bg: #ffffff;
+  --text: #16231a;
+  --muted: #5c6b62;
+  --border: #e4e0d6;
+  --success: #1b8354;
+  --red: #c1432d;
+  --amber-text: #a9660f;
+  --radius: 12px;
+  --shadow-card: 0 18px 40px rgba(6, 31, 20, 0.08);
+  --font-display: 'Space Grotesk', 'Inter', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Consolas', monospace;
+}

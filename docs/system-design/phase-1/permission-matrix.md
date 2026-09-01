@@ -87,8 +87,8 @@ Current code enforces these role checks in backend routes:
 
 Current frontend navigation hides pages based on role, but this is not enough for security:
 
-- sidebar links are filtered in `frontend/js/layout.js`
-- page redirects use `requireRolePage(...)` in `frontend/js/api.js`
+- sidebar links are filtered through `frontend/src/components/layout/Sidebar.jsx`
+- route redirects use the React auth guard and `frontend/src/permissions/access.js`
 
 These are convenience controls, not permission guarantees.
 

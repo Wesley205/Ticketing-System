@@ -84,10 +84,10 @@ Reports:
 
 ## Frontend changes
 
-Updated pages:
+Updated React pages:
 
-- [frontend/dashboard.html](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/dashboard.html)
-- [frontend/reports.html](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/reports.html)
+- [frontend/src/features/dashboard/pages/DashboardPage.jsx](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/src/features/dashboard/pages/DashboardPage.jsx)
+- [frontend/src/features/reports/pages/ReportsPage.jsx](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/src/features/reports/pages/ReportsPage.jsx)
 
 Dashboard now includes:
 

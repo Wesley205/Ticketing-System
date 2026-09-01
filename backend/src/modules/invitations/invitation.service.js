@@ -28,7 +28,7 @@ function hashInvitationToken(token) {
 
 function buildInvitationUrl(token) {
   const baseUrl = (process.env.INTERNAL_APP_BASE_URL || 'http://localhost:5000').replace(/\/+$/, '');
-  return `${baseUrl}/register.html?token=${encodeURIComponent(token)}`;
+  return `${baseUrl}/activate?token=${encodeURIComponent(token)}`;
 }
 
 function validateInvitationRequest(payload) {

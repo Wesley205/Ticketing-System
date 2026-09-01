@@ -5,11 +5,11 @@ Use this checklist after setup to confirm major workflows end to end.
 ## Authentication
 
 - [ ] Attempt `POST /api/auth/register` and confirm it returns `403` with a public-registration-disabled message.
-- [ ] Open `/index.html` and confirm there is no public sign-up link.
-- [ ] Issue an invitation as an administrator and accept it through `/register.html`.
+- [ ] Open `/login` and confirm there is no public sign-up link.
+- [ ] Issue an invitation as an administrator and accept it through `/activate`.
 - [ ] Log out and log back in with the invited account.
 - [ ] Log in with a wrong password and confirm the UI shows an error instead of crashing.
-- [ ] Try to open `/dashboard.html` directly without logging in and confirm the app redirects to login.
+- [ ] Try to open `/dashboard` directly without logging in and confirm the app redirects to login.
 
 ## Internal Access Controls
 
@@ -112,5 +112,5 @@ Use this checklist after setup to confirm major workflows end to end.
 - [ ] Attempt a restricted API call such as `DELETE /api/assets/1` while logged in as staff and confirm it returns `403`.
 - [ ] Confirm the dashboard hero and shell portal context change appropriately for administrator, ICT officer, technician, and staff accounts.
 - [ ] Confirm mobile navigation opens and closes correctly on authenticated pages.
-- [ ] Confirm direct navigation to `/reports.html`, `/staff.html`, `/departments.html`, `/audit-log.html`, `/maintenance.html`, and `/technician.html` redirects unauthorized users back to their allowed landing page.
+- [ ] Confirm direct navigation to `/reports`, `/staff`, `/departments`, `/audit-logs`, `/maintenance`, and `/technician` redirects unauthorized users back to their allowed landing page.
 - [ ] Confirm ticket assignment buttons, asset-management buttons, and knowledge-base article management buttons appear only when the current access profile allows them.

@@ -1,8 +1,7 @@
 const express = require('express');
-const path = require('path');
 const { configureTrustProxy, createSecurityMiddleware } = require('./middleware/security');
 const { errorHandler } = require('./middleware/errorHandler');
-const { getStaticOptions } = require('./middleware/securityHeaders');
+const { configureFrontendServing } = require('./middleware/frontendServing');
 const notFound = require('./middleware/notFound');
 
 const healthRoutes = require('./routes/health');
@@ -40,12 +39,7 @@ function createApp(options = {}) {
   app.use('/api/audit-logs', auditLogRoutes);
   app.use('/api/reports', reportRoutes);
 
-  const frontendPath = path.join(__dirname, '..', '..', 'frontend');
-  app.use(express.static(frontendPath, getStaticOptions()));
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api/')) return next();
-    res.sendFile(path.join(frontendPath, 'index.html'));
-  });
+  configureFrontendServing(app, options);
 
   app.use('/api', notFound);
   app.use(errorHandler);

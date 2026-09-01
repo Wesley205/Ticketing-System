@@ -46,7 +46,7 @@ async function insertEscalationNotifications(client, recipientIds, ticket, reaso
         escalation_count: Number(ticket.escalation_count || 0) + 1,
       },
       severity: type === 'ticket_escalated' ? 'error' : 'warning',
-      action_url: `/service-requests.html#ticket-${ticket.request_id}`,
+      action_url: `/service-requests/${ticket.request_id}`,
       email_subject: `SLA alert: ${ticket.ticket_number}`,
       email_body_text: `${ticket.ticket_number}: ${reason}`,
     },

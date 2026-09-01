@@ -98,15 +98,15 @@ Feedback updates:
 
 ## Frontend
 
-New page:
+React knowledge-base page:
 
-- [frontend/knowledge-base.html](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/knowledge-base.html)
+- [frontend/src/features/knowledge-base/pages/KnowledgeBasePage.jsx](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/src/features/knowledge-base/pages/KnowledgeBasePage.jsx)
 
-Updated pages:
+Updated React integrations:
 
-- [frontend/service-requests.html](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/service-requests.html)
-- [frontend/reports.html](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/reports.html)
-- [frontend/js/layout.js](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/js/layout.js)
+- [frontend/src/features/service-requests/components/KBSuggestions.jsx](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/src/features/service-requests/components/KBSuggestions.jsx)
+- [frontend/src/features/reports/pages/ReportsPage.jsx](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/src/features/reports/pages/ReportsPage.jsx)
+- [frontend/src/app/router.jsx](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/src/app/router.jsx)
 
 ## Reporting
 

@@ -447,7 +447,8 @@ SELECT a.asset_id, tech.user_id, v.problem, v.action_taken, v.maintenance_date::
 FROM (VALUES
   ('ICT-LAP-002', 'fatima.bello', 'Laptop blue-screen failure', 'Diagnostic testing and driver inspection started.', CURRENT_DATE - INTERVAL '4 days', 15000, 'In Progress', 'Awaiting replacement SSD confirmation.', 'Corrective', 'Temporary laptop repair follow-up', NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days', NULL, NOW() + INTERVAL '1 day', '["Disk test started","Driver rollback pending"]', NULL),
   ('ICT-PRN-001', 'chinedu.obi', 'Blank pages from printer', 'Printer cartridge and drum inspected.', CURRENT_DATE - INTERVAL '2 days', 8500, 'Scheduled', 'Follow-up visit scheduled.', 'Preventive', 'Finance printer preventive service', NOW() + INTERVAL '1 day', NULL, NULL, NOW() - INTERVAL '2 days', '["Clean rollers","Check toner"]', NULL),
-  ('ICT-NET-001', 'segun.adewale', 'Preventive router inspection', 'Firmware and configuration checked.', CURRENT_DATE - INTERVAL '15 days', 0, 'Completed', 'No issue found.', 'Inspection', 'Monthly router health inspection', NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days 2 hours', NOW() + INTERVAL '5 days', '["Review logs","Backup config","Inspect ports"]', 'Router inspection completed successfully.')
+  -- FIXED: Changed 'completed_at' to be 2 hours AFTER 'started_at'
+  ('ICT-NET-001', 'segun.adewale', 'Preventive router inspection', 'Firmware and configuration checked.', CURRENT_DATE - INTERVAL '15 days', 0, 'Completed', 'No issue found.', 'Inspection', 'Monthly router health inspection', NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days' + INTERVAL '2 hours', NOW() + INTERVAL '5 days', '["Review logs","Backup config","Inspect ports"]', 'Router inspection completed successfully.')
 ) AS v(asset_tag, technician_username, problem, action_taken, maintenance_date, cost, status, notes, maintenance_type, schedule_title, scheduled_start_at, started_at, completed_at, next_due_at, checklist_json, completion_notes)
 JOIN assets a ON a.asset_tag = v.asset_tag
 JOIN users tech ON tech.username = v.technician_username
@@ -467,12 +468,17 @@ INSERT INTO notifications
 SELECT recipient.user_id, v.notification_type, v.title, v.message,
        v.related_record_type, sr.request_id, v.payload_json::jsonb,
        v.is_read, CASE WHEN v.is_read THEN NOW() - INTERVAL '2 hours' ELSE NULL END,
-       v.severity, v.action_url, v.created_at::timestamp
+       v.severity,
+       CASE
+         WHEN sr.request_id IS NOT NULL THEN '/service-requests/' || sr.request_id
+         ELSE v.action_url
+       END,
+       v.created_at::timestamp
 FROM (VALUES
-  ('chinedu.obi', 'ticket_assigned', 'Ticket assigned', 'Finance network ticket has been assigned to you.', 'service_request', 'NSC-2026-00002', '{"ticket_number":"NSC-2026-00002"}', FALSE, 'info', '/service-requests.html#ticket-NSC-2026-00002', NOW() - INTERVAL '20 hours'),
-  ('fatima.bello', 'ticket_escalated', 'Ticket escalated', 'Laptop blue-screen ticket has breached resolution SLA.', 'service_request', 'NSC-2026-00003', '{"ticket_number":"NSC-2026-00003"}', FALSE, 'warning', '/service-requests.html#ticket-NSC-2026-00003', NOW() - INTERVAL '1 day'),
-  ('ngozi.umeh', 'ticket_comment', 'New ticket comment', 'A technician commented on your network ticket.', 'service_request', 'NSC-2026-00002', '{"ticket_number":"NSC-2026-00002"}', TRUE, 'info', '/service-requests.html#ticket-NSC-2026-00002', NOW() - INTERVAL '17 hours'),
-  ('segun.adewale', 'maintenance_due', 'Maintenance due', 'Router inspection is due soon.', 'service_request', NULL, '{}', FALSE, 'warning', '/maintenance.html', NOW() - INTERVAL '6 hours')
+  ('chinedu.obi', 'ticket_assigned', 'Ticket assigned', 'Finance network ticket has been assigned to you.', 'service_request', 'NSC-2026-00002', '{"ticket_number":"NSC-2026-00002"}', FALSE, 'info', '/service-requests', NOW() - INTERVAL '20 hours'),
+  ('fatima.bello', 'ticket_escalated', 'Ticket escalated', 'Laptop blue-screen ticket has breached resolution SLA.', 'service_request', 'NSC-2026-00003', '{"ticket_number":"NSC-2026-00003"}', FALSE, 'warning', '/service-requests', NOW() - INTERVAL '1 day'),
+  ('ngozi.umeh', 'ticket_comment', 'New ticket comment', 'A technician commented on your network ticket.', 'service_request', 'NSC-2026-00002', '{"ticket_number":"NSC-2026-00002"}', TRUE, 'info', '/service-requests', NOW() - INTERVAL '17 hours'),
+  ('segun.adewale', 'maintenance_due', 'Maintenance due', 'Router inspection is due soon.', 'service_request', NULL, '{}', FALSE, 'warning', '/maintenance', NOW() - INTERVAL '6 hours')
 ) AS v(recipient_username, notification_type, title, message, related_record_type, ticket_number, payload_json, is_read, severity, action_url, created_at)
 JOIN users recipient ON recipient.username = v.recipient_username
 LEFT JOIN service_requests sr ON LOWER(sr.ticket_number) = LOWER(v.ticket_number)

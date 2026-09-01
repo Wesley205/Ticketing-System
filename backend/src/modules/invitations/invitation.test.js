@@ -19,7 +19,7 @@ test('invitation module builds acceptance URL from configured base URL', () => {
   process.env.INTERNAL_APP_BASE_URL = 'https://service-desk.internal/';
   assert.equal(
     service.buildInvitationUrl('sample-token'),
-    'https://service-desk.internal/register.html?token=sample-token'
+    'https://service-desk.internal/activate?token=sample-token'
   );
 });
 

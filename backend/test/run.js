@@ -44,3 +44,5 @@ require('./assetsMaintenance.test');
 require('./knowledgeBase.test');
 require('./reporting.test');
 require('./frontendAccess.test');
+require('./frontendServing.test');
+require('./productionReactServing.test');

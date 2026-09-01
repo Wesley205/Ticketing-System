@@ -1,0 +1,41 @@
+{
+  "name": "nsc-ict-service-desk-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --open /react-shell.html",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test src/test/lib.test.js src/test/auth-service.test.js src/test/service-requests.test.js src/test/technician.test.js src/test/assets.test.js src/test/maintenance.test.js src/test/staff.test.js src/test/departments.test.js src/test/knowledge-base.test.js src/test/dashboard.test.js src/test/reports.test.js src/test/audit-logs.test.js",
+    "test:foundation-smoke": "node src/test/foundation-smoke.mjs",
+    "test:auth-smoke": "node src/test/auth-smoke.mjs",
+    "test:assets-live": "node src/test/assets-live-check.mjs",
+    "test:assets-smoke": "node src/test/assets-smoke.mjs",
+    "test:audit-info-smoke": "node src/test/audit-info-smoke.mjs",
+    "test:dashboard-live": "node src/test/dashboard-live-check.mjs",
+    "test:dashboard-smoke": "node src/test/dashboard-smoke.mjs",
+    "test:departments-live": "node src/test/departments-live-check.mjs",
+    "test:departments-smoke": "node src/test/departments-smoke.mjs",
+    "test:knowledge-base-live": "node src/test/knowledge-base-live-check.mjs",
+    "test:knowledge-base-smoke": "node src/test/knowledge-base-smoke.mjs",
+    "test:maintenance-live": "node src/test/maintenance-live-check.mjs",
+    "test:maintenance-smoke": "node src/test/maintenance-smoke.mjs",
+    "test:reports-live": "node src/test/reports-live-check.mjs",
+    "test:reports-smoke": "node src/test/reports-smoke.mjs",
+    "test:service-requests-smoke": "node src/test/service-requests-smoke.mjs",
+    "test:staff-live": "node src/test/staff-live-check.mjs",
+    "test:staff-smoke": "node src/test/staff-smoke.mjs",
+    "test:technician-smoke": "node src/test/technician-smoke.mjs",
+    "test:technician-live": "node src/test/technician-live-check.mjs"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "vite": "^5.4.19"
+  }
+}

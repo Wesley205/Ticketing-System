@@ -110,11 +110,12 @@ Environment keys:
 
 ## Frontend changes
 
-Updated pages:
+Updated React modules:
 
-- [frontend/assets.html](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/assets.html)
-- [frontend/maintenance.html](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/maintenance.html)
-- [frontend/service-requests.html](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/service-requests.html)
+- [frontend/src/features/assets/pages/AssetsPage.jsx](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/src/features/assets/pages/AssetsPage.jsx)
+- [frontend/src/features/assets/pages/AssetDetailPage.jsx](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/src/features/assets/pages/AssetDetailPage.jsx)
+- [frontend/src/features/maintenance/pages/MaintenancePage.jsx](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/src/features/maintenance/pages/MaintenancePage.jsx)
+- [frontend/src/features/service-requests/pages/ServiceRequestsPage.jsx](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/src/features/service-requests/pages/ServiceRequestsPage.jsx)
 
 Visible user improvements:
 

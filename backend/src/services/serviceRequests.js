@@ -140,7 +140,7 @@ async function insertNotifications(
       payload: options.payload || {},
       severity: options.severity,
       action_url:
-        options.action_url || `/service-requests.html#ticket-${requestId}`,
+        options.action_url || `/service-requests/${requestId}`,
       email_subject: options.email_subject,
       email_body_text: options.email_body_text,
     },

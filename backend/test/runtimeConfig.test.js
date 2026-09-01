@@ -49,6 +49,8 @@ test('cors allowed origins include configured app and development localhost', ()
     'http://example.local',
     'http://localhost:5050',
     'http://127.0.0.1:5050',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
   ]);
 });
 

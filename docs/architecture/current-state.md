@@ -5,7 +5,7 @@ Phase 0 repository audit for the NSC ICT Service Desk application.
 ## Application shape
 
 - Runtime: Node.js 18+, Express 4, CommonJS modules.
-- Frontend: static HTML, CSS, and vanilla JavaScript served by the backend from `frontend/`.
+- Frontend: React + Vite application in `frontend/src`, built to `frontend/dist` and served by Express in production.
 - Database: PostgreSQL with a bootstrap schema in `database/schema.sql` and incremental SQL migrations in `database/migrations/`.
 - Authentication: JWT bearer tokens, bcrypt password hashes, and PostgreSQL-backed user lifecycle checks.
 - Authorization: central policy helper in `backend/src/utils/authorization.js`, consumed by route modules and the frontend access profile.
@@ -13,7 +13,7 @@ Phase 0 repository audit for the NSC ICT Service Desk application.
 
 ## Backend entry points
 
-- `backend/src/app.js` creates the Express app, mounts API route modules under `/api/*`, serves the static frontend, and has generic 404/error handlers.
+- `backend/src/app.js` creates the Express app, mounts API route modules under `/api/*`, serves the React production build, and has generic 404/error handlers.
 - `backend/src/server.js` loads environment configuration, validates security-critical settings, starts the HTTP server, and starts account expiry, notification queue, maintenance, and SLA monitors.
 - `backend/src/config/db.js` creates the shared PostgreSQL pool from `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, and `PGPASSWORD`.
 
@@ -78,11 +78,12 @@ Important constraints and indexes are present for roles, user types, ticket stat
 
 ## Frontend state
 
-- Frontend pages are standalone HTML documents that use `frontend/js/api.js` and `frontend/js/layout.js`.
+- React source lives in `frontend/src` and is built with Vite.
+- Production serving uses `frontend/dist/react-shell.html` for direct navigation and refreshes on React routes.
 - JWT and user profile are stored in `localStorage` as `nsc_token` and `nsc_user`.
 - The backend returns an `access_profile`; the frontend uses it for navigation, redirects, and control visibility.
-- Frontend route access is centralized in `ROUTE_ACCESS`.
-- Protected pages redirect unauthenticated users to `/index.html`.
+- Frontend route access is centralized in `frontend/src/permissions/access.js`.
+- Protected routes redirect unauthenticated users to `/login`.
 - Permission-aware UI exists for dashboard, tickets, technician portal, assets, maintenance, staff, departments, reports, audit logs, notifications, and knowledge base.
 - Backend authorization remains the primary security layer.
 

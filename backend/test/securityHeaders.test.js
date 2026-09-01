@@ -34,7 +34,7 @@ test('securityHeaders sets browser hardening headers', () => {
   assert.equal(nextCalled, true);
 });
 
-test('content security policy allows current static frontend requirements', () => {
+test('content security policy allows current React frontend requirements', () => {
   const policy = buildContentSecurityPolicy();
 
   assert.match(policy, /default-src 'self'/);
@@ -48,8 +48,8 @@ test('static options prevent html caching and cache assets in production', () =>
   const htmlRes = createResponse();
   const assetRes = createResponse();
 
-  options.setHeaders(htmlRes, 'C:/app/frontend/dashboard.html');
-  options.setHeaders(assetRes, 'C:/app/frontend/js/api.js');
+  options.setHeaders(htmlRes, 'C:/app/frontend/dist/react-shell.html');
+  options.setHeaders(assetRes, 'C:/app/frontend/dist/assets/app.js');
 
   assert.equal(options.etag, true);
   assert.equal(options.maxAge, `${ONE_HOUR_SECONDS}s`);
@@ -61,7 +61,7 @@ test('static options disable long cache in development', () => {
   const options = getStaticOptions({ NODE_ENV: 'development' });
   const res = createResponse();
 
-  options.setHeaders(res, 'C:/app/frontend/js/api.js');
+  options.setHeaders(res, 'C:/app/frontend/dist/assets/app.js');
 
   assert.equal(options.maxAge, 0);
   assert.equal(res.headers['Cache-Control'], undefined);
