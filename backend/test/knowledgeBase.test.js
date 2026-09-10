@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const {
   normalizeSearchText,
   scoreKnowledgeBaseSuggestion,
-} = require('../src/services/knowledgeBase');
+} = require('../src/modules/knowledgeBase/knowledgeBase.service');
 
 test('normalizeSearchText tokenizes free-form article text consistently', () => {
   assert.deepEqual(

@@ -1,13 +1,13 @@
 const express = require('express');
-const pool = require('../config/db');
-const { requireAuth } = require('../middleware/auth');
-const { requirePermission } = require('../middleware/authorize');
-const { canViewAuditLogs } = require('../utils/authorization');
+const pool = require('../../config/db');
+const { requireAuth } = require('../../middleware/auth');
+const { requirePermission } = require('../../middleware/authorize');
+const { canViewAuditLogs } = require('../../utils/authorization');
 const {
   buildAppHealth,
   buildOperationsHealth,
   buildReadiness,
-} = require('../services/health');
+} = require('./health.service');
 
 const router = express.Router();
 

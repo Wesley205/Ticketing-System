@@ -3,7 +3,7 @@ const {
   applyMaintenanceFilters,
   applyTicketFilters,
   buildWhereClause,
-} = require('../../services/reporting');
+} = require('../reports/report.service');
 
 function buildTicketScope(filters, scopeBuilder) {
   const clauses = [];

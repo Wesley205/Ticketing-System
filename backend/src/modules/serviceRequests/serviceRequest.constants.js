@@ -1,4 +1,4 @@
-const legacyServiceRequests = require("../../services/serviceRequests");
+const legacyServiceRequests = require("./serviceRequest.workflow");
 
 module.exports = {
   STATUS_TRANSITION_ERROR_MESSAGES: {

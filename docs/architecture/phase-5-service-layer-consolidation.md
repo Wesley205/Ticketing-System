@@ -4,8 +4,8 @@ Phase 5 starts moving write workflows out of Express route handlers and into tra
 
 ## Changes
 
-- Added `backend/src/services/departments.js`.
-- Added `backend/src/services/staffAccounts.js`.
+- Added department workflow helpers, now located at `backend/src/modules/departments/department.service.js`.
+- Added staff account workflow helpers, now located at `backend/src/modules/staff/staff.service.js`.
 - Department create/update now commit the database change and audit log in one transaction.
 - Staff account create/update/status/temporary-extension now commit account changes and audit logs in one transaction.
 - Staff account update/status/extension continue to bump `session_version` so old sessions are invalidated.

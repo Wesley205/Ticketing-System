@@ -17,7 +17,7 @@ const {
   resetPasswordWithToken,
   sanitizeUser,
   verifyToken,
-} = require('../src/services/auth');
+} = require('../src/modules/auth/auth.service');
 
 const jwtSecretKey = ['JWT', 'SECRET'].join('_');
 

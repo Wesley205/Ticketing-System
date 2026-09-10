@@ -1,5 +1,5 @@
 const pool = require('../../config/db');
-const { parseReportFilters } = require('../../services/reporting');
+const { parseReportFilters } = require('../reports/report.service');
 const mapper = require('./dashboard.mapper');
 const policy = require('./dashboard.policy');
 const repository = require('./dashboard.repository');

@@ -1,12 +1,12 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { createDepartment, updateDepartment } = require('../src/services/departments');
+const { createDepartment, updateDepartment } = require('../src/modules/departments/department.service');
 const {
   changeStaffStatus,
   extendTemporaryAccount,
   updateStaffAccount,
-} = require('../src/services/staffAccounts');
+} = require('../src/modules/staff/staff.service');
 
 function createExecutor(handler) {
   const queries = [];

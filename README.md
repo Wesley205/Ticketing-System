@@ -33,7 +33,7 @@ nsc-ict-system/
 |  |  |- server.js
 |  |  |- config/
 |  |  |- middleware/
-|  |  |- routes/
+|  |  |- modules/
 |  |  |- scripts/
 |  |  `- utils/
 |  |- test/

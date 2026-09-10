@@ -13,7 +13,7 @@ Phase 7 centralizes notification creation, adds a delivery queue for email-capab
 - Added the centralized service in [backend/src/utils/notificationService.js](/C:/Users/DELL/Downloads/nsc-ict-system/backend/src/utils/notificationService.js)
 - Added queue processing in [backend/src/utils/notificationProcessor.js](/C:/Users/DELL/Downloads/nsc-ict-system/backend/src/utils/notificationProcessor.js)
 - Added the one-shot queue script [backend/src/scripts/runNotificationQueue.js](/C:/Users/DELL/Downloads/nsc-ict-system/backend/src/scripts/runNotificationQueue.js)
-- Added notification APIs in [backend/src/routes/notifications.js](/C:/Users/DELL/Downloads/nsc-ict-system/backend/src/routes/notifications.js)
+- Added notification APIs in [backend/src/modules/notifications/notification.routes.js](/C:/Users/DELL/Downloads/nsc-ict-system/backend/src/modules/notifications/notification.routes.js)
 - Added a shared React topbar notification interface in [frontend/src/components/layout/Topbar.jsx](/C:/Users/DELL/Downloads/nsc-ict-system/frontend/src/components/layout/Topbar.jsx)
 
 ## Architecture

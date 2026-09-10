@@ -5,7 +5,7 @@ const {
   checkAccountStatus,
   findUserForSession,
   verifyToken,
-} = require("../services/auth");
+} = require("../modules/auth/auth.service");
 
 function authenticationError(message) {
   return new AppError({

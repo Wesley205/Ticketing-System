@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const {
   buildScheduledReportArchitecture,
   parseReportFilters,
-} = require('../src/services/reporting');
+} = require('../src/modules/reports/report.service');
 
 test('parseReportFilters normalizes pagination and common filters', () => {
   const filters = parseReportFilters({

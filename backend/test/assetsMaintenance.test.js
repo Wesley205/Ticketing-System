@@ -3,11 +3,11 @@ const assert = require('node:assert/strict');
 
 const {
   resolveReturnedAssetStatus,
-} = require('../src/services/assets');
+} = require('../src/modules/assets/asset.service');
 const {
   calculateNextMaintenanceDueAt,
   resolveAssetStatusAfterMaintenance,
-} = require('../src/services/maintenance');
+} = require('../src/modules/maintenance/maintenance.service');
 
 test('resolveReturnedAssetStatus defaults poor returns to damaged', () => {
   assert.equal(resolveReturnedAssetStatus({ returned_condition: 'Poor' }), 'Damaged');

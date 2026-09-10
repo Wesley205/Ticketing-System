@@ -5,7 +5,7 @@ const {
   canActorTransitionStatus,
   getAllowedTicketTransitions,
   validateTicketTransition,
-} = require('../src/services/serviceRequests');
+} = require('../src/modules/serviceRequests/serviceRequest.workflow');
 
 test('assigned technician can move a ticket through active work states', () => {
   const technician = { user_id: 4, role: 'technician' };

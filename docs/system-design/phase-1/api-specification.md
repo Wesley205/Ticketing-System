@@ -2,7 +2,7 @@
 
 ## Inspection summary
 
-The current API is implemented in [backend/src/server.js](/C:/Users/DELL/Downloads/nsc-ict-system/backend/src/server.js) and route files under [backend/src/routes](/C:/Users/DELL/Downloads/nsc-ict-system/backend/src/routes).
+The current API is mounted by [backend/src/app.js](/C:/Users/DELL/Downloads/nsc-ict-system/backend/src/app.js) and implemented by route files under `backend/src/modules/*`.
 
 No API versioning is implemented. All current endpoints are mounted under `/api`.
 

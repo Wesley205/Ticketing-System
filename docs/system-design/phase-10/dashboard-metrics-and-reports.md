@@ -21,7 +21,7 @@ Implemented areas:
 
 New helper:
 
-- [backend/src/services/reporting.js](/C:/Users/DELL/Downloads/nsc-ict-system/backend/src/services/reporting.js)
+- [backend/src/modules/reports/report.service.js](/C:/Users/DELL/Downloads/nsc-ict-system/backend/src/modules/reports/report.service.js)
 
 Responsibilities:
 
@@ -32,8 +32,8 @@ Responsibilities:
 
 Updated routes:
 
-- [backend/src/routes/dashboard.js](/C:/Users/DELL/Downloads/nsc-ict-system/backend/src/routes/dashboard.js)
-- [backend/src/routes/reports.js](/C:/Users/DELL/Downloads/nsc-ict-system/backend/src/routes/reports.js)
+- [backend/src/modules/dashboard/dashboard.routes.js](/C:/Users/DELL/Downloads/nsc-ict-system/backend/src/modules/dashboard/dashboard.routes.js)
+- [backend/src/modules/reports/report.routes.js](/C:/Users/DELL/Downloads/nsc-ict-system/backend/src/modules/reports/report.routes.js)
 
 New report endpoints:
 

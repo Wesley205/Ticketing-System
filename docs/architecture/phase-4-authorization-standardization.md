@@ -9,12 +9,12 @@ Phase 4 introduces reusable authorization middleware so route modules do not nee
   - `requirePermission(policyFn, message)`
   - `requireAnyPermission(policyFns, message)`
   - `assertAllowed(user, policyFn, message)`
-- Replaced repeated route-level privileged checks in:
-  - `backend/src/routes/auditLogs.js`
-  - `backend/src/routes/reports.js`
-  - `backend/src/routes/invitations.js`
-  - `backend/src/routes/departments.js`
-  - `backend/src/routes/staff.js`
+- Replaced repeated route-level privileged checks in the corresponding module route files:
+  - `backend/src/modules/auditLogs/auditLog.routes.js`
+  - `backend/src/modules/reports/report.routes.js`
+  - `backend/src/modules/invitations/invitation.routes.js`
+  - `backend/src/modules/departments/department.routes.js`
+  - `backend/src/modules/staff/staff.routes.js`
 - Added tests for authorization middleware behavior.
 
 ## Authorization model

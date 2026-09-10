@@ -19,29 +19,29 @@ Phase 0 repository audit for the NSC ICT Service Desk application.
 
 ## API modules
 
-- `auth.js`: login, disabled public registration, authenticated profile.
-- `invitations.js`: invitation listing, creation, acceptance, revocation.
-- `staff.js`: user/staff listing, technician directory, staff creation/update/status/temporary extension.
-- `departments.js`: department listing, detail, creation, update.
-- `serviceRequests.js`: ticket listing/detail/create, assignment, asset linking, status changes, comments, attachments.
-- `assets.js`: asset listing/detail/create/update/status/assignment/return/delete.
-- `maintenance.js`: maintenance listing/schedules/create/update.
-- `notifications.js`: in-app notifications, unread count, read state, preferences.
-- `knowledgeBase.js`: articles, suggestions, revisions, feedback.
-- `dashboard.js`: dashboard stats and scoped operational summary.
-- `reports.js`: filter metadata, summary, paginated reports, CSV exports.
-- `auditLogs.js`: audit-log listing.
+- `modules/auth`: login, disabled public registration, authenticated profile.
+- `modules/invitations`: invitation listing, creation, acceptance, revocation.
+- `modules/staff`: user/staff listing, technician directory, staff creation/update/status/temporary extension.
+- `modules/departments`: department listing, detail, creation, update.
+- `modules/serviceRequests`: ticket listing/detail/create, assignment, asset linking, status changes, comments, attachments.
+- `modules/assets`: asset listing/detail/create/update/status/assignment/return/delete.
+- `modules/maintenance`: maintenance listing/schedules/create/update.
+- `modules/notifications`: in-app notifications, unread count, read state, preferences.
+- `modules/knowledgeBase`: articles, suggestions, revisions, feedback.
+- `modules/dashboard`: dashboard stats and scoped operational summary.
+- `modules/reports`: filter metadata, summary, paginated reports, CSV exports.
+- `modules/auditLogs`: audit-log listing.
 
 ## Service and utility layers
 
 - Transaction helper: `backend/src/utils/transactions.js`.
 - Audit logging: `backend/src/utils/audit.js`.
 - Authorization: `backend/src/utils/authorization.js`.
-- Ticket workflow: `backend/src/services/serviceRequests.js`, `backend/src/utils/sla.js`, `backend/src/utils/ticketAttachments.js`.
-- Asset and maintenance workflows: `backend/src/services/assets.js`, `backend/src/services/maintenance.js`, `backend/src/utils/maintenanceMonitor.js`.
+- Ticket workflow: `backend/src/modules/serviceRequests/serviceRequest.workflow.js`, `backend/src/utils/sla.js`, `backend/src/utils/ticketAttachments.js`.
+- Asset and maintenance workflows: `backend/src/modules/assets/asset.service.js`, `backend/src/modules/maintenance/maintenance.service.js`, `backend/src/utils/maintenanceMonitor.js`.
 - Notifications: `backend/src/utils/notificationService.js`, `backend/src/utils/notificationProcessor.js`.
-- Invitations and account lifecycle: `backend/src/services/invitations.js`, `backend/src/utils/invitations.js`, `backend/src/utils/accountExpiry.js`.
-- Reporting: `backend/src/services/reporting.js` and `backend/src/routes/reports.js`.
+- Invitations and account lifecycle: `backend/src/modules/invitations/invitation.service.js`, `backend/src/utils/invitations.js`, `backend/src/utils/accountExpiry.js`.
+- Reporting: `backend/src/modules/reports/report.service.js` and `backend/src/modules/reports/report.routes.js`.
 
 ## Database state
 

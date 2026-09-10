@@ -2,7 +2,7 @@ const SERVICE_NAME = 'nsc-ict-service-desk-api';
 
 function getPackageVersion() {
   try {
-    return require('../../package.json').version || 'unknown';
+    return require('../../../package.json').version || 'unknown';
   } catch (err) {
     return 'unknown';
   }

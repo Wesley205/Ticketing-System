@@ -6,7 +6,7 @@ const {
   buildOperationsHealth,
   buildReadiness,
   checkDatabase,
-} = require('../src/services/health');
+} = require('../src/modules/health/health.service');
 
 function createPool({ failMigrations = false } = {}) {
   const queries = [];

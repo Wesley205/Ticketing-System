@@ -1,6 +1,6 @@
 const fs = require("fs");
 const pool = require("../../config/db");
-const legacyService = require("../../services/serviceRequests");
+const legacyService = require("./serviceRequest.workflow");
 const { resolveAttachmentPath, saveAttachmentFile } = require("../../utils/ticketAttachments");
 const policy = require("./serviceRequest.policy");
 const mapper = require("./serviceRequest.mapper");

@@ -1,18 +1,18 @@
-const { withTransaction } = require("../utils/transactions");
-const { logAction } = require("../utils/audit");
-const { emitNotificationEvent } = require("../utils/notificationService");
-const { removeAttachmentFile } = require("../utils/ticketAttachments");
+const { withTransaction } = require("../../utils/transactions");
+const { logAction } = require("../../utils/audit");
+const { emitNotificationEvent } = require("../../utils/notificationService");
+const { removeAttachmentFile } = require("../../utils/ticketAttachments");
 const {
   buildSlaDeadlinesFromPolicy,
   calculateSlaState,
   selectSlaPolicy,
-} = require("../utils/sla");
+} = require("../../utils/sla");
 const {
   TICKET_PRIORITIES,
   TICKET_SOURCE_CHANNELS,
   TICKET_STATUSES,
   TICKET_TYPES,
-} = require("../shared/constants/domain");
+} = require("../../shared/constants/domain");
 
 const STATUS_TRANSITIONS = {
   New: ["Pending", "Assigned", "Cancelled"],
