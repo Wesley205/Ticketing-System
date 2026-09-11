@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   buildDashboardStatsQuery,
+  dashboardRole,
   formatHours,
   formatPercent,
   getDashboardScope,
@@ -51,4 +52,11 @@ test('dashboard scope labels mirror frontend access profile scope', () => {
   assert.equal(getDashboardScope({ scope: { assigned_only: true } }), 'Assigned-only scope');
   assert.equal(getDashboardScope({ scope: { department_scope: true } }), 'Department scope');
   assert.equal(getDashboardScope({ scope: {} }), 'Self-service scope');
+});
+
+test('dashboard role selector maps admin and officer before staff fallback', () => {
+  assert.equal(dashboardRole({ role: 'admin' }, {}), 'admin');
+  assert.equal(dashboardRole({ role: 'ict_officer' }, {}), 'ict_officer');
+  assert.equal(dashboardRole({ role: 'technician' }, {}), 'technician');
+  assert.equal(dashboardRole({ role: 'staff' }, { role: 'admin' }), 'admin');
 });

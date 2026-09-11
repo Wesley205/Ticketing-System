@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/forms/Button.jsx';
 import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
-import { PageHero } from '../../../components/layout/PageHero.jsx';
-import { Panel } from '../../../components/layout/Panel.jsx';
+import { SecureWorkspaceLayout } from '../../../components/layout/SecureWorkspaceLayout.jsx';
 import { Pagination } from '../../../components/tables/Pagination.jsx';
 import { useToast } from '../../../hooks/useToast.js';
 import { useAuth } from '../../auth/hooks/useAuth.js';
@@ -39,71 +38,83 @@ export function AssetsPage() {
   }
 
   return (
-    <div className="ui-stack-lg">
-      <PageHero
-        eyebrow="Phase 6"
-        title="Assets"
-        description="Asset registry, assignment workflow, return processing, and lifecycle visibility now run inside the React shell."
-        meta={[
-          auth.accessProfile?.role_label || 'User',
-          `${assetsState.totalAssets} visible assets`,
-        ]}
-      />
-
-      <Panel
-        title="Asset Registry"
-        actions={(
-          <div className="ui-inline-actions">
+    <SecureWorkspaceLayout title="Asset Registry" subtitle="Service Desk">
+      <div className="secure-registry-page">
+        <div className="service-desk-secure-head">
+          <div>
+            <h2>Asset Registry</h2>
+            <p>View, edit, and manage assets across departments.</p>
+          </div>
+          <div className="service-desk-secure-actions">
             <Button variant="secondary" onClick={() => assetsState.loadAssets(assetsState.filters)}>Refresh</Button>
-            {canManage ? <Button onClick={handleOpenCreate}>Register Asset</Button> : null}
+            {canManage ? <Button onClick={handleOpenCreate}>+ Register Asset</Button> : null}
           </div>
-        )}
-      >
-        <AssetFilters
-          filters={assetsState.filters}
-          lookups={assetsState.lookups}
-          onChange={assetsState.updateFilter}
-        />
-      </Panel>
+        </div>
 
-      {assetsState.error ? (
-        <ErrorState
-          title="Asset list unavailable"
-          description={assetsState.error}
-          onRetry={() => assetsState.loadAssets(assetsState.filters)}
-        />
-      ) : null}
-
-      <Panel title="Assets">
-        {assetsState.isLoading ? (
-          <LoadingState description="Loading assets..." />
-        ) : (
-          <div className="ui-stack-md">
-            <AssetList
-              assets={assetsState.assets}
-              canManage={canManage}
-              canDelete={canDelete}
-              onEdit={handleEdit}
-              onAssign={(asset) => {
-                setAssignmentAsset(asset);
-                setAssignmentOpen(true);
-              }}
-              onReturn={(asset) => navigate(`/assets/${asset.asset_id}?return=1`)}
-              onDelete={async (asset) => {
-                await removeAsset(asset.asset_id);
-                await assetsState.loadAssets(assetsState.filters);
-                showToast({ tone: 'success', title: 'Asset deleted' });
-              }}
-            />
-            <Pagination
-              page={assetsState.pagination.page}
-              totalPages={assetsState.pagination.totalPages}
-              onPrevious={() => assetsState.setPage(assetsState.pagination.page - 1)}
-              onNext={() => assetsState.setPage(assetsState.pagination.page + 1)}
-            />
+        <div className="secure-filter-bar">
+          <AssetFilters
+            filters={assetsState.filters}
+            lookups={assetsState.lookups}
+            onChange={assetsState.updateFilter}
+          />
+          <div className="secure-filter-meta">
+            <span>{assetsState.totalAssets} Total Assets</span>
+            <button type="button" onClick={() => {
+              assetsState.updateFilter('search', '');
+              assetsState.updateFilter('status', '');
+              assetsState.updateFilter('asset_type', '');
+              assetsState.updateFilter('department_id', '');
+            }}>
+              Clear filters
+            </button>
           </div>
-        )}
-      </Panel>
+        </div>
+
+        {assetsState.error ? (
+          <ErrorState
+            title="Asset list unavailable"
+            description={assetsState.error}
+            onRetry={() => assetsState.loadAssets(assetsState.filters)}
+          />
+        ) : null}
+
+        <section className="secure-data-panel">
+          {assetsState.isLoading ? (
+            <LoadingState variant="table" description="Loading assets..." />
+          ) : (
+            <div className="ui-stack-md">
+              <AssetList
+                assets={assetsState.assets}
+                canManage={canManage}
+                canDelete={canDelete}
+                onCreate={handleOpenCreate}
+                onEdit={handleEdit}
+                onAssign={(asset) => {
+                  setAssignmentAsset(asset);
+                  setAssignmentOpen(true);
+                }}
+                onReturn={(asset) => navigate(`/assets/${asset.asset_id}?return=1`)}
+                onDelete={async (asset) => {
+                  await removeAsset(asset.asset_id);
+                  await assetsState.loadAssets(assetsState.filters);
+                  showToast({ tone: 'success', title: 'Asset deleted' });
+                }}
+              />
+              <div className="secure-table-footer">
+                <span>
+                  Showing {assetsState.assets.length ? '1' : '0'}-{assetsState.assets.length} of {assetsState.totalAssets} assets
+                </span>
+                <Pagination
+                  page={assetsState.pagination.page}
+                  totalPages={assetsState.pagination.totalPages}
+                  onPrevious={() => assetsState.setPage(assetsState.pagination.page - 1)}
+                  onNext={() => assetsState.setPage(assetsState.pagination.page + 1)}
+                />
+              </div>
+            </div>
+          )}
+        </section>
+      </div>
 
       <AssetFormModal
         open={formOpen}
@@ -134,6 +145,6 @@ export function AssetsPage() {
           showToast({ tone: 'success', title: 'Assignment saved' });
         }}
       />
-    </div>
+    </SecureWorkspaceLayout>
   );
 }

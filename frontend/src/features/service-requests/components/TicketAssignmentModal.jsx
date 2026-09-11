@@ -3,6 +3,7 @@ import { Button } from '../../../components/forms/Button.jsx';
 import { FormField } from '../../../components/forms/FormField.jsx';
 import { Modal } from '../../../components/modals/Modal.jsx';
 import { normalizeApiError } from '../../../lib/error-handling.js';
+import { technicianAvailability } from '../services/service-requests-api.js';
 
 function toInputDateTime(value) {
   if (!value) return '';
@@ -14,11 +15,13 @@ function toInputDateTime(value) {
 export function TicketAssignmentModal({
   open,
   ticket,
-  technicians,
+  technicians = [],
+  workloadCounts = {},
   onClose,
   onSubmit,
 }) {
   const [assignedTechnicianId, setAssignedTechnicianId] = useState('');
+  const [search, setSearch] = useState('');
   const [expectedCompletionAt, setExpectedCompletionAt] = useState('');
   const [assignmentNote, setAssignmentNote] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -27,6 +30,7 @@ export function TicketAssignmentModal({
   useEffect(() => {
     if (!ticket) return;
     setAssignedTechnicianId(ticket.assigned_technician_id || '');
+    setSearch('');
     setExpectedCompletionAt(toInputDateTime(ticket.expected_completion_at));
     setAssignmentNote('');
     setErrorMessage('');
@@ -36,6 +40,12 @@ export function TicketAssignmentModal({
     event.preventDefault();
     setIsSubmitting(true);
     setErrorMessage('');
+
+    if (!assignedTechnicianId) {
+      setErrorMessage('Please select a technician to continue.');
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       await onSubmit({
@@ -51,36 +61,63 @@ export function TicketAssignmentModal({
     }
   }
 
+  const visibleTechnicians = technicians.filter((technician) =>
+    [technician.full_name, technician.email, technician.username]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+      .includes(search.trim().toLowerCase())
+  );
+
   return (
     <Modal
       open={open}
-      title={ticket?.assigned_technician_id ? 'Reassign Technician' : 'Assign Technician'}
+      title={ticket?.assigned_technician_id ? 'Reassign Ticket' : 'Assign Ticket'}
       onClose={onClose}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
           <Button type="submit" form="ticket-assignment-form" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save Assignment'}
+            {isSubmitting ? 'Assigning...' : 'Assign Ticket'}
           </Button>
         </>
       }
     >
-      <form id="ticket-assignment-form" className="ui-stack-md" onSubmit={handleSubmit}>
-        <FormField label="Technician" htmlFor="assign-technician">
-          <select
-            id="assign-technician"
+      <form id="ticket-assignment-form" className="assignment-secure-form" onSubmit={handleSubmit}>
+        <div className="assignment-ticket-head">
+          <strong>{ticket?.ticket_number || `#${ticket?.request_id || ''}`}</strong>
+          <p>Choose a technician, set expected completion, and add handoff notes.</p>
+        </div>
+
+        <FormField label="Search technician" htmlFor="assign-technician-search" error={errorMessage}>
+          <input
+            id="assign-technician-search"
             className="ui-input"
-            value={assignedTechnicianId}
-            onChange={(event) => setAssignedTechnicianId(event.target.value)}
-          >
-            <option value="">Unassigned</option>
-            {technicians.map((technician) => (
-              <option key={technician.user_id} value={technician.user_id}>
-                {technician.full_name}
-              </option>
-            ))}
-          </select>
+            value={search}
+            placeholder="Search and select technician name..."
+            onChange={(event) => setSearch(event.target.value)}
+          />
         </FormField>
+
+        <section className="assignment-technician-list" aria-label="Available technicians">
+          {visibleTechnicians.map((technician) => {
+            const availability = technicianAvailability(technician, workloadCounts);
+            const selected = String(assignedTechnicianId) === String(technician.user_id);
+            return (
+              <button
+                type="button"
+                key={technician.user_id}
+                className={selected ? 'assignment-technician-option active' : 'assignment-technician-option'}
+                onClick={() => setAssignedTechnicianId(technician.user_id)}
+              >
+                <span aria-hidden="true" />
+                <strong>{technician.full_name}</strong>
+                <small>{availability.label}</small>
+                <b>{availability.state}</b>
+              </button>
+            );
+          })}
+        </section>
 
         <FormField label="Expected Completion" htmlFor="assign-expected">
           <input
@@ -92,7 +129,7 @@ export function TicketAssignmentModal({
           />
         </FormField>
 
-        <FormField label="Assignment Note" htmlFor="assign-note" error={errorMessage}>
+        <FormField label="Assignment Note" htmlFor="assign-note">
           <textarea
             id="assign-note"
             className="ui-input"

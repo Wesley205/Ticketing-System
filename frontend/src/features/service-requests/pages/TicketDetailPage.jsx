@@ -1,20 +1,27 @@
-import { useParams } from 'react-router-dom';
-import { Button } from '../../../components/forms/Button.jsx';
+import { useState } from 'react';
+import { Navigate, useParams } from 'react-router-dom';
 import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
-import { PageHero } from '../../../components/layout/PageHero.jsx';
+import { SecureWorkspaceLayout } from '../../../components/layout/SecureWorkspaceLayout.jsx';
 import { useToast } from '../../../hooks/useToast.js';
-import { useTicketDetail } from '../hooks/useTicketDetail.js';
+import { useAuth } from '../../auth/hooks/useAuth.js';
 import { TicketAssignmentModal } from '../components/TicketAssignmentModal.jsx';
-import { TicketDetail } from '../components/TicketDetail.jsx';
-import { useState } from 'react';
-import { assignTicket as saveAssignment } from '../services/service-requests-api.js';
+import { OperationalTicketDetail } from '../components/OperationalTicketDetail.jsx';
+import { RequesterTicketDetail } from '../components/RequesterTicketDetail.jsx';
+import { useTicketDetail } from '../hooks/useTicketDetail.js';
+import { assignTicket as saveAssignment, isOperationalServiceDeskRole } from '../services/service-requests-api.js';
 
 export function TicketDetailPage() {
   const { ticketId } = useParams();
+  const auth = useAuth();
   const detailState = useTicketDetail(ticketId);
   const { showToast } = useToast();
   const [assignmentOpen, setAssignmentOpen] = useState(false);
+  const isOperational = isOperationalServiceDeskRole(auth.user?.role);
+
+  if (auth.user?.role === 'technician') {
+    return <Navigate to={`/technician/work/ticket/${ticketId}`} replace />;
+  }
 
   async function handleDownloadAttachment(attachmentId, fileName) {
     const blob = await detailState.downloadAttachment(attachmentId);
@@ -29,27 +36,15 @@ export function TicketDetailPage() {
   }
 
   return (
-    <div className="ui-stack-lg">
-      <PageHero
-        eyebrow="Phase 4"
-        title="Ticket Detail"
-        description="Standalone React ticket view for deep links, comments, attachments, assignment, and history."
-        meta={[detailState.ticket?.ticket_number || `#${ticketId}`]}
-      />
-
+    <SecureWorkspaceLayout title={isOperational ? 'ICT Service Desk Operations Control' : 'Staff Access Portal'} subtitle={isOperational ? 'Tactical Secure Control' : 'ICT Service Hub'}>
       {detailState.error ? (
         <ErrorState title="Ticket detail unavailable" description={detailState.error} onRetry={detailState.refresh} />
       ) : detailState.isLoading ? (
-        <LoadingState description="Loading ticket detail..." />
-      ) : (
-        <TicketDetail
+        <LoadingState variant="detail" description="Loading ticket detail..." />
+      ) : isOperational ? (
+        <OperationalTicketDetail
           ticket={detailState.ticket}
-          suggestions={detailState.suggestions}
-          assets={detailState.assets}
-          onAssetSave={async (payload) => {
-            await detailState.updateAsset(payload);
-            showToast({ tone: 'success', title: 'Asset link updated' });
-          }}
+          isAdmin={auth.user?.role === 'admin'}
           onAssignOpen={() => setAssignmentOpen(true)}
           onStatusSubmit={async (payload) => {
             await detailState.updateStatus(payload);
@@ -57,14 +52,21 @@ export function TicketDetailPage() {
           }}
           onCommentSubmit={async (payload) => {
             await detailState.addComment(payload);
-            showToast({ tone: 'success', title: 'Comment posted' });
+            showToast({ tone: 'success', title: 'Internal note posted' });
           }}
-          onAttachmentUpload={async (payload) => {
-            await detailState.uploadAttachment(payload);
-            showToast({ tone: 'success', title: 'Attachment uploaded' });
+        />
+      ) : (
+        <RequesterTicketDetail
+          ticket={detailState.ticket}
+          onStatusSubmit={async (payload) => {
+            await detailState.updateStatus(payload);
+            showToast({ tone: 'success', title: 'Request updated' });
+          }}
+          onCommentSubmit={async (payload) => {
+            await detailState.addComment(payload);
+            showToast({ tone: 'success', title: 'Message sent' });
           }}
           onAttachmentDownload={handleDownloadAttachment}
-          isMutating={detailState.isMutating}
         />
       )}
 
@@ -79,10 +81,6 @@ export function TicketDetailPage() {
           showToast({ tone: 'success', title: 'Assignment saved' });
         }}
       />
-
-      <a href="/service-requests">
-        <Button variant="secondary">Back to service desk</Button>
-      </a>
-    </div>
+    </SecureWorkspaceLayout>
   );
 }

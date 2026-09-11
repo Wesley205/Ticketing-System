@@ -2,7 +2,7 @@ import { EmptyState } from '../../../components/feedback/EmptyState.jsx';
 
 export function ArticleList({ articles = [], selectedArticleId = null, onSelect }) {
   if (!articles.length) {
-    return <EmptyState title="No articles found" description="No knowledge-base articles match the current filters or visibility scope." />;
+    return <EmptyState variant="search" title="No articles found" description="No knowledge-base articles match the current filters or visibility scope." />;
   }
 
   return (

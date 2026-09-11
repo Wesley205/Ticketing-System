@@ -7,7 +7,7 @@ import {
   fetchDashboardStats,
 } from '../services/dashboard-api.js';
 
-export function useDashboard({ canUseGlobalFilters = false } = {}) {
+export function useDashboard({ canUseGlobalFilters = false, enabled = true } = {}) {
   const [filters, setFilters] = useState(DEFAULT_DASHBOARD_FILTERS);
   const [draftFilters, setDraftFilters] = useState(DEFAULT_DASHBOARD_FILTERS);
   const [filterOptions, setFilterOptions] = useState({
@@ -22,6 +22,7 @@ export function useDashboard({ canUseGlobalFilters = false } = {}) {
   const [error, setError] = useState('');
 
   async function loadFilterOptions() {
+    if (!enabled) return;
     if (!canUseGlobalFilters) return;
 
     setIsFilterLoading(true);
@@ -46,6 +47,7 @@ export function useDashboard({ canUseGlobalFilters = false } = {}) {
   }
 
   async function loadDashboard(nextFilters = filters) {
+    if (!enabled) return null;
     setIsLoading(true);
     setError('');
 
@@ -64,11 +66,11 @@ export function useDashboard({ canUseGlobalFilters = false } = {}) {
 
   useEffect(() => {
     loadFilterOptions();
-  }, [canUseGlobalFilters]);
+  }, [canUseGlobalFilters, enabled]);
 
   useEffect(() => {
     loadDashboard(filters);
-  }, [filters]);
+  }, [filters, enabled]);
 
   function updateDraftFilter(key, value) {
     setDraftFilters((current) => ({

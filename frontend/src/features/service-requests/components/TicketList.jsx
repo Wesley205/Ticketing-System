@@ -13,7 +13,7 @@ export function TicketList({
   detailBasePath = '/service-requests',
 }) {
   if (!tickets.length) {
-    return <EmptyState title="No tickets found." description="Try adjusting your filters or create a new request." />;
+    return <EmptyState variant="search" title="No tickets found." description="Try adjusting your filters or create a new request." actionLabel="Create Ticket" actionTo="/service-requests" />;
   }
 
   return (

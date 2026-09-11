@@ -3,12 +3,12 @@ import { Button } from '../../../components/forms/Button.jsx';
 import { EmptyState } from '../../../components/feedback/EmptyState.jsx';
 import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
-import { PageHero } from '../../../components/layout/PageHero.jsx';
 import { Panel } from '../../../components/layout/Panel.jsx';
 import { useToast } from '../../../hooks/useToast.js';
 import { formatDateTime } from '../../../lib/formatting.js';
-import { TicketDetail } from '../../service-requests/components/TicketDetail.jsx';
 import { TicketHistoryTimeline } from '../../service-requests/components/TicketHistoryTimeline.jsx';
+import { TechnicianDashboardLayout } from '../components/TechnicianDashboardLayout.jsx';
+import { TechnicianTicketExecution } from '../components/TechnicianTicketExecution.jsx';
 import { WorkExecutionPanel } from '../components/WorkExecutionPanel.jsx';
 import { useWorkExecution } from '../hooks/useWorkExecution.js';
 
@@ -31,41 +31,23 @@ export function TechnicianWorkItemPage() {
   }
 
   return (
-    <div className="ui-stack-lg">
-      <PageHero
-        eyebrow="Phase 5"
-        title={workType === 'maintenance' ? 'Maintenance Work Item' : 'Technician Ticket Detail'}
-        description="Focused execution workspace for assigned work only."
-        meta={[workType, workState.item?.ticket_number || workState.item?.maintenance_id || itemId]}
-      />
+    <TechnicianDashboardLayout>
+      <section className="technician-workitem-title">
+        <h2>{workType === 'maintenance' ? 'Maintenance Work Item' : 'Ticket Execution'}</h2>
+        <p>{workState.item?.ticket_number || workState.item?.maintenance_id || itemId}</p>
+      </section>
 
       {workState.error ? (
         <ErrorState title="Work item unavailable" description={workState.error} onRetry={workState.refresh} />
       ) : null}
 
       {workState.isLoading ? (
-        <LoadingState description="Loading assigned work item..." />
+        <LoadingState variant="detail" description="Loading assigned work item..." />
       ) : !workState.item ? (
-        <EmptyState title="Work item not found" description="The selected ticket or maintenance record is not available in your assigned queue." />
+        <EmptyState variant="search" title="Work item not found" description="The selected ticket or maintenance record is not available in your assigned queue." actionLabel="Assigned Work" actionTo="/technician/assigned-work" />
       ) : workType === 'ticket' ? (
-        <div className="ui-stack-lg">
-          <WorkExecutionPanel
-            type="ticket"
-            item={workState.item}
-            onSubmit={async (payload) => {
-              await workState.submitTicketStatus(payload);
-              showToast({ tone: 'success', title: 'Ticket workflow updated' });
-            }}
-            isSubmitting={workState.isMutating}
-          />
-          <TicketDetail
+        <TechnicianTicketExecution
             ticket={workState.item}
-            suggestions={[]}
-            assets={[]}
-            allowAssetEditing={false}
-            showWorkflow={false}
-            onAssetSave={async () => {}}
-            onAssignOpen={() => {}}
             onStatusSubmit={async (payload) => {
               await workState.submitTicketStatus(payload);
               showToast({ tone: 'success', title: 'Ticket status updated' });
@@ -81,7 +63,6 @@ export function TechnicianWorkItemPage() {
             onAttachmentDownload={handleDownloadAttachment}
             isMutating={workState.isMutating}
           />
-        </div>
       ) : (
         <div className="ui-stack-lg">
           <WorkExecutionPanel
@@ -148,9 +129,8 @@ export function TechnicianWorkItemPage() {
       )}
 
       <div className="ui-inline-actions">
-        <Link to="/technician"><Button variant="secondary">Back to technician workspace</Button></Link>
-        <a href="/technician"><Button variant="secondary">Back to technician workspace</Button></a>
+        <Link to="/technician/assigned-work"><Button variant="secondary">Back to assigned work</Button></Link>
       </div>
-    </div>
+    </TechnicianDashboardLayout>
   );
 }

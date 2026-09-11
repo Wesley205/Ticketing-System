@@ -5,7 +5,7 @@ import { getChecklistItems } from '../services/maintenance-api.js';
 
 export function ScheduleList({ schedules = [], canManage = false, onEdit }) {
   if (!schedules.length) {
-    return <EmptyState title="No maintenance schedules" description="No schedules matched the current filters." />;
+    return <EmptyState variant="search" title="No maintenance schedules" description="No schedules matched the current filters." />;
   }
 
   return (

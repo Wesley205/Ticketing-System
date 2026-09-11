@@ -5,7 +5,7 @@ import { getStorageKeys, setSession, getSession, clearSession } from '../lib/aut
 import { normalizeApiError, normalizeErrorMessage } from '../lib/error-handling.js';
 import { formatDate, formatDateTime, humanizeStatus, statusClassName } from '../lib/formatting.js';
 import { buildQueryParams } from '../lib/query-params.js';
-import { buildAccessProfile, hasPermission } from '../permissions/access.js';
+import { buildAccessProfile, getSecureWorkspaceLinks, hasPermission } from '../permissions/access.js';
 
 function createStorage() {
   const data = new Map();
@@ -74,4 +74,17 @@ test('query and permission helpers stay deterministic', () => {
   const profile = buildAccessProfile({ user_id: 5, role: 'ict_officer', department_id: 3 });
   assert.equal(hasPermission(profile, 'can_view_reports'), true);
   assert.equal(hasPermission(profile, 'can_manage_users'), false);
+});
+
+test('secure workspace links are standardized by role and permissions', () => {
+  const staffProfile = buildAccessProfile({ user_id: 6, role: 'staff', department_id: 2 });
+  const technicianProfile = buildAccessProfile({ user_id: 7, role: 'technician', department_id: 2 });
+  const adminProfile = buildAccessProfile({ user_id: 1, role: 'admin', department_id: 1 });
+
+  assert.deepEqual(
+    getSecureWorkspaceLinks(staffProfile).map((link) => link.to),
+    ['/dashboard', '/service-requests?mine=1', '/knowledge-base']
+  );
+  assert.ok(getSecureWorkspaceLinks(technicianProfile).some((link) => link.to === '/technician/assigned-work'));
+  assert.ok(getSecureWorkspaceLinks(adminProfile).some((link) => link.to === '/audit-logs'));
 });

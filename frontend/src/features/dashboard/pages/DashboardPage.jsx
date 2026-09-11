@@ -1,89 +1,41 @@
-import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
-import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
-import { PageHero } from '../../../components/layout/PageHero.jsx';
-import { Panel } from '../../../components/layout/Panel.jsx';
+import { Navigate } from 'react-router-dom';
+import { SecureWorkspaceLayout } from '../../../components/layout/SecureWorkspaceLayout.jsx';
 import { useAuth } from '../../auth/hooks/useAuth.js';
-import { DashboardChart } from '../components/DashboardChart.jsx';
-import { DashboardFilters } from '../components/DashboardFilters.jsx';
-import { DashboardMetricCards } from '../components/DashboardMetricCards.jsx';
-import { TechnicianWorkloadTable } from '../components/TechnicianWorkloadTable.jsx';
-import { getDashboardHeading, getDashboardScope } from '../services/dashboard-api.js';
+import { dashboardRole } from '../services/dashboard-api.js';
 import { useDashboard } from '../hooks/useDashboard.js';
+import { AdminDashboardPage } from './AdminDashboardPage.jsx';
+import { IctOfficerDashboardPage } from './IctOfficerDashboardPage.jsx';
+import { StaffDashboardPage } from './StaffDashboardPage.jsx';
+
+function secureTitle(role) {
+  if (role === 'admin') return 'Admin Dashboard';
+  if (role === 'ict_officer') return 'ICT Officer Dashboard';
+  if (role === 'technician') return 'Technician Dashboard';
+  return 'Staff dashboard';
+}
 
 export function DashboardPage() {
   const auth = useAuth();
+  const role = dashboardRole(auth.user, auth.accessProfile);
   const canUseGlobalFilters = auth.accessProfile?.permissions?.can_view_reports === true;
-  const dashboard = useDashboard({ canUseGlobalFilters });
-  const scopeLabel = getDashboardScope(auth.accessProfile);
+  const dashboard = useDashboard({ canUseGlobalFilters, enabled: role !== 'technician' });
+
+  if (role === 'technician') {
+    return <Navigate to="/technician/assigned-work" replace />;
+  }
 
   return (
-    <div className="ui-stack-lg">
-      <PageHero
-        eyebrow="Phase 9"
-        title={getDashboardHeading(auth.accessProfile)}
-        description="Role-aware operational metrics are calculated by the existing backend dashboard endpoint and scoped by server authorization policy."
-        meta={[
-          auth.accessProfile?.role_label || 'User',
-          scopeLabel,
-          auth.user?.user_type || 'internal user',
-        ]}
-      />
-
-      <Panel
-        title="Dashboard Filters"
-        actions={dashboard.isFilterLoading ? <span className="ui-chip">Loading filter options</span> : null}
-      >
-        <DashboardFilters
-          filters={dashboard.draftFilters}
-          filterOptions={dashboard.filterOptions}
-          canUseGlobalFilters={canUseGlobalFilters}
-          isLoading={dashboard.isLoading}
-          onChange={dashboard.updateDraftFilter}
-          onApply={dashboard.applyFilters}
-          onReset={dashboard.resetFilters}
-        />
-      </Panel>
-
-      {dashboard.error ? (
-        <ErrorState
-          title="Dashboard unavailable"
-          description={dashboard.error}
-          onRetry={() => dashboard.loadDashboard(dashboard.filters)}
-        />
-      ) : null}
-
-      {dashboard.isLoading ? (
-        <LoadingState description="Loading scoped dashboard metrics..." />
+    <SecureWorkspaceLayout
+      title={secureTitle(role)}
+      subtitle={role === 'staff' ? 'ICT Service Hub' : 'Admin Portal'}
+    >
+      {role === 'admin' ? (
+        <AdminDashboardPage dashboard={dashboard} />
+      ) : role === 'ict_officer' ? (
+        <IctOfficerDashboardPage dashboard={dashboard} />
       ) : (
-        <>
-          <DashboardMetricCards stats={dashboard.stats} />
-
-          <div className="dashboard-chart-grid">
-            <DashboardChart
-              title="Tickets by Status"
-              rows={dashboard.stats?.tickets_by_status || []}
-              labelKey="status"
-            />
-            <DashboardChart
-              title="Tickets by Priority"
-              rows={dashboard.stats?.tickets_by_priority || []}
-              labelKey="priority"
-            />
-            <DashboardChart
-              title="Assets by Status"
-              rows={dashboard.stats?.assets_by_status || []}
-              labelKey="status"
-            />
-            <section className="react-panel dashboard-chart-panel">
-              <div className="ui-panel-head">
-                <h3>Technician Workload</h3>
-                <span className="ui-chip">{canUseGlobalFilters ? 'Visible' : 'Scoped out'}</span>
-              </div>
-              <TechnicianWorkloadTable rows={dashboard.stats?.technician_workload || []} />
-            </section>
-          </div>
-        </>
+        <StaffDashboardPage user={auth.user} />
       )}
-    </div>
+    </SecureWorkspaceLayout>
   );
 }

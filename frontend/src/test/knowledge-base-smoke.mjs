@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
+import { StaticRouter } from 'react-router-dom/server.js';
 
 async function main() {
   const vite = await createServer({
@@ -17,16 +18,19 @@ async function main() {
     const authValue = {
       isReady: true,
       isAuthenticated: true,
-      user: { role: 'staff', user_id: 9 },
+      user: { role: 'staff', user_id: 9, full_name: 'Staff User' },
       accessProfile: {
         role: 'staff',
         role_label: 'Staff/User',
         permissions: {
+          can_access_dashboard: true,
           can_access_knowledge_base: true,
           can_manage_knowledge_base: false,
           can_provide_knowledge_base_feedback: true,
+          can_access_notifications: true,
         },
       },
+      logout: async () => {},
     };
 
     const html = renderToStaticMarkup(
@@ -34,16 +38,21 @@ async function main() {
         ToastProvider,
         null,
         createElement(
-          AuthContext.Provider,
-          { value: authValue },
-          createElement(KnowledgeBasePage),
+          StaticRouter,
+          { location: '/knowledge-base' },
+          createElement(
+            AuthContext.Provider,
+            { value: authValue },
+            createElement(KnowledgeBasePage),
+          ),
         ),
       ),
     );
 
     assert.match(html, /Knowledge Base/i);
+    assert.match(html, /Standard Operating Procedures/i);
     assert.match(html, /Loading knowledge-base articles/i);
-    assert.doesNotMatch(html, /New Article/i);
+    assert.doesNotMatch(html, /Edit Library/i);
     console.log('Knowledge Base page smoke check passed.');
   } finally {
     await vite.close();

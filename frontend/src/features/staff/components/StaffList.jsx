@@ -13,7 +13,7 @@ export function StaffList({
   onExtend,
 }) {
   if (!rows.length) {
-    return <EmptyState title="No staff found." description="Adjust your directory filters or create an approved account." />;
+    return <EmptyState variant="search" title="No staff found." description="Adjust your directory filters or create an approved account." />;
   }
 
   return (
@@ -21,14 +21,15 @@ export function StaffList({
       columns={[
         {
           key: 'full_name',
-          label: 'Name',
+          label: 'Name & Title',
           render: (row) => (
             <button type="button" className="ticket-link-button" onClick={() => onSelect(row)}>
-              {row.full_name}
+              <strong>{row.full_name}</strong>
+              <small className="maintenance-subtext">{row.username || row.email || '-'}</small>
             </button>
           ),
         },
-        { key: 'email', label: 'Email' },
+        { key: 'staff_code', label: 'Staff ID', render: (row) => row.staff_code || `NSC-${String(row.user_id).padStart(4, '0')}` },
         {
           key: 'user_type',
           label: 'User Type',
@@ -41,13 +42,13 @@ export function StaffList({
         },
         {
           key: 'department_name',
-          label: 'Department',
+          label: 'Dept',
           render: (row) => row.department_name || '-',
         },
         {
           key: 'account_expiration_date',
-          label: 'Expiry',
-          render: (row) => formatDate(row.account_expiration_date),
+          label: 'Joined',
+          render: (row) => formatDate(row.created_at || row.account_start_date),
         },
         {
           key: 'status',
@@ -58,16 +59,16 @@ export function StaffList({
           key: 'actions',
           label: 'Actions',
           render: (row) => (
-            <div className="ui-inline-actions">
-              <button type="button" className="ticket-link-button" onClick={() => onSelect(row)}>Open</button>
+            <div className="secure-row-actions">
+              <button type="button" onClick={() => onSelect(row)}>Open</button>
               {canManage ? (
                 <>
-                  <button type="button" className="ticket-link-button" onClick={() => onEdit(row)}>Edit</button>
-                  <button type="button" className="ticket-link-button" onClick={() => onToggleActive(row)}>
+                  <button type="button" onClick={() => onEdit(row)}>Edit</button>
+                  <button type="button" onClick={() => onToggleActive(row)}>
                     {row.is_active ? 'Deactivate' : 'Activate'}
                   </button>
                   {isTemporaryUser(row.user_type) ? (
-                    <button type="button" className="ticket-link-button" onClick={() => onExtend(row)}>Extend</button>
+                    <button type="button" onClick={() => onExtend(row)}>Extend</button>
                   ) : null}
                 </>
               ) : null}

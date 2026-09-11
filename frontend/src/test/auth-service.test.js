@@ -144,6 +144,23 @@ test('guest-route decisions send authenticated users to the default landing rout
   assert.deepEqual(decision, { redirectTo: '/dashboard' });
 });
 
+test('guest-route decisions send technicians to assigned work', () => {
+  const decision = resolveGuestRoute({
+    isReady: true,
+    isAuthenticated: true,
+    accessProfile: {
+      role: 'technician',
+      primary_portal: 'technician',
+      permissions: {
+        can_access_dashboard: true,
+        can_access_technician_portal: true,
+      },
+    },
+  });
+
+  assert.deepEqual(decision, { redirectTo: '/technician/assigned-work' });
+});
+
 test('hydrateStoredSession normalizes missing access profile data from legacy storage', () => {
   const storage = createStorage();
   storage.setItem('nsc_token', 'legacy-token');

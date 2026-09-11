@@ -16,6 +16,7 @@ export const ROUTE_PERMISSIONS = Object.freeze({
   '/knowledge-base': 'can_access_knowledge_base',
   '/reports': 'can_view_reports',
   '/audit-logs': 'can_view_audit_logs',
+  '/notifications': 'can_access_notifications',
 });
 
 export function getRoleLabel(role) {
@@ -122,12 +123,67 @@ export function hasPermission(profile, permissionKey) {
   return profile?.permissions?.[permissionKey] === true;
 }
 
+function normalizeRoutePath(route) {
+  const path = route?.path || route || '';
+  const cleanPath = String(path).split('?')[0].split('#')[0];
+  if (cleanPath.startsWith('/technician/')) return '/technician';
+  return cleanPath;
+}
+
 export function canAccessRoute(profile, route) {
-  const permissionKey = route?.permissionKey || ROUTE_PERMISSIONS[route?.path] || ROUTE_PERMISSIONS[route];
+  const routePath = normalizeRoutePath(route);
+  const permissionKey = route?.permissionKey || ROUTE_PERMISSIONS[routePath];
   return hasPermission(profile, permissionKey);
 }
 
 export function getDefaultAuthenticatedRoute(profile) {
+  if (profile?.role === ROLES.TECHNICIAN || profile?.primary_portal === 'technician') {
+    return hasPermission(profile, 'can_access_technician_portal') ? '/technician/assigned-work' : '/dashboard';
+  }
   if (hasPermission(profile, 'can_access_dashboard')) return '/dashboard';
   return '/login';
+}
+
+export const SECURE_WORKSPACE_LINKS = Object.freeze({
+  staff: [
+    { to: '/dashboard', label: 'Dashboard', icon: 'grid' },
+    { to: '/service-requests?mine=1', label: 'My requests', icon: 'ticket' },
+    { to: '/knowledge-base', label: 'Knowledge base', icon: 'book' },
+  ],
+  technician: [
+    { to: '/dashboard', label: 'Dashboard', icon: 'grid' },
+    { to: '/technician/assigned-work', label: 'Assigned Work', icon: 'ticket' },
+    { to: '/knowledge-base', label: 'Knowledge Base', icon: 'book' },
+    { to: '/assets', label: 'Assets', icon: 'grid' },
+    { to: '/maintenance', label: 'Maintenance', icon: 'ticket' },
+  ],
+  ict_officer: [
+    { to: '/dashboard', label: 'Dashboard', icon: 'grid' },
+    { to: '/service-requests', label: 'Service Desk', icon: 'ticket' },
+    { to: '/assets', label: 'Assets', icon: 'grid' },
+    { to: '/maintenance', label: 'Maintenance', icon: 'ticket' },
+    { to: '/staff', label: 'Staff Directory', icon: 'book' },
+    { to: '/departments', label: 'Departments', icon: 'grid' },
+    { to: '/knowledge-base', label: 'Knowledge Base', icon: 'book' },
+    { to: '/reports', label: 'Reports', icon: 'ticket' },
+    { to: '/audit-logs', label: 'Audit Logs', icon: 'info' },
+  ],
+  admin: [
+    { to: '/dashboard', label: 'Dashboard', icon: 'grid' },
+    { to: '/service-requests', label: 'Service Desk', icon: 'ticket' },
+    { to: '/assets', label: 'Assets', icon: 'grid' },
+    { to: '/maintenance', label: 'Maintenance', icon: 'ticket' },
+    { to: '/staff', label: 'Staff & Access', icon: 'book' },
+    { to: '/departments', label: 'Departments', icon: 'grid' },
+    { to: '/knowledge-base', label: 'Knowledge Base', icon: 'book' },
+    { to: '/reports', label: 'Reports', icon: 'ticket' },
+    { to: '/audit-logs', label: 'Audit Logs', icon: 'info' },
+  ],
+});
+
+export function getSecureWorkspaceLinks(profile = {}) {
+  const role = profile.role || profile.primary_portal || ROLES.STAFF;
+  const normalizedRole = role === 'administrator' ? ROLES.ADMIN : role;
+  return (SECURE_WORKSPACE_LINKS[normalizedRole] || SECURE_WORKSPACE_LINKS.staff)
+    .filter((link) => canAccessRoute(profile, link));
 }

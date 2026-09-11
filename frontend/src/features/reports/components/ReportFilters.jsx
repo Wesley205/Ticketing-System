@@ -10,11 +10,12 @@ export function ReportFilters({
   isLoading = false,
 }) {
   return (
-    <section className="react-panel report-filters" aria-label="Report filters">
+    <section className="report-filters" aria-label="Report filters">
       <FormField label="From" htmlFor="report-date-from">
         <input
           id="report-date-from"
           type="date"
+          className="ui-input"
           value={filters.date_from}
           onChange={(event) => onChange('date_from', event.target.value)}
         />
@@ -24,6 +25,7 @@ export function ReportFilters({
         <input
           id="report-date-to"
           type="date"
+          className="ui-input"
           value={filters.date_to}
           onChange={(event) => onChange('date_to', event.target.value)}
         />
@@ -32,6 +34,7 @@ export function ReportFilters({
       <FormField label="Department" htmlFor="report-department">
         <select
           id="report-department"
+          className="ui-input"
           value={filters.department_id}
           onChange={(event) => onChange('department_id', event.target.value)}
         >
@@ -47,6 +50,7 @@ export function ReportFilters({
       <FormField label="Technician" htmlFor="report-technician">
         <select
           id="report-technician"
+          className="ui-input"
           value={filters.technician_id}
           onChange={(event) => onChange('technician_id', event.target.value)}
         >
@@ -62,6 +66,7 @@ export function ReportFilters({
       <FormField label="Category" htmlFor="report-category">
         <select
           id="report-category"
+          className="ui-input"
           value={filters.category}
           onChange={(event) => onChange('category', event.target.value)}
         >
@@ -75,6 +80,7 @@ export function ReportFilters({
       <FormField label="Ticket Type" htmlFor="report-ticket-type">
         <select
           id="report-ticket-type"
+          className="ui-input"
           value={filters.ticket_type}
           onChange={(event) => onChange('ticket_type', event.target.value)}
         >

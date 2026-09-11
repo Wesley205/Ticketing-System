@@ -3,19 +3,40 @@ import { DataTable } from '../../../components/tables/DataTable.jsx';
 import { formatDateTime } from '../../../lib/formatting.js';
 
 const columns = [
-  { key: 'user_name', label: 'User' },
-  { key: 'user_role', label: 'Role' },
-  { key: 'action', label: 'Action' },
+  {
+    key: 'created_at',
+    label: 'Time',
+    render: (row) => formatDateTime(row.created_at),
+  },
+  {
+    key: 'actor',
+    label: 'Actor',
+    render: (row) => (
+      <div className="audit-actor-cell">
+        <strong>{row.user_name}</strong>
+        <span>{row.user_role}</span>
+      </div>
+    ),
+  },
+  {
+    key: 'action',
+    label: 'Action',
+    render: (row) => <span className="audit-action-pill">{row.action}</span>,
+  },
   {
     key: 'record',
-    label: 'Record',
-    render: (row) => `${row.record_type || '-'}${row.record_id ? ` #${row.record_id}` : ''}`,
+    label: 'Entity',
+    render: (row) => (
+      <span className="audit-entity-link">
+        {row.record_type || '-'}{row.record_id ? ` #${row.record_id}` : ''}
+      </span>
+    ),
   },
   { key: 'details', label: 'Details' },
   {
-    key: 'created_at',
-    label: 'Date & Time',
-    render: (row) => formatDateTime(row.created_at),
+    key: 'ip',
+    label: 'IP',
+    render: (row) => row.ip_address || row.ip || '-',
   },
 ];
 
@@ -24,7 +45,7 @@ export function AuditLogTable({ rows = [] }) {
     <DataTable
       columns={columns}
       rows={rows.map((row) => ({ ...row, key: row.log_id }))}
-      emptyState={<EmptyState title="No audit records found" description="No records match the current audit filters or authorized scope." />}
+      emptyState={<EmptyState variant="search" title="No audit records found" description="No records match the current audit filters or authorized scope." />}
     />
   );
 }

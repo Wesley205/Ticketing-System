@@ -6,7 +6,7 @@ import { formatDateTime } from '../../../lib/formatting.js';
 
 export function AssignedMaintenanceList({ records = [] }) {
   if (!records.length) {
-    return <EmptyState title="No maintenance work found." description="Assigned preventive and corrective work will appear here." />;
+    return <EmptyState title="No maintenance work found." description="Assigned preventive and corrective work will appear here." actionLabel="View Maintenance" actionTo="/maintenance" />;
   }
 
   return (

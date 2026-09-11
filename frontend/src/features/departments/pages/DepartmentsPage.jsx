@@ -3,8 +3,7 @@ import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
 import { Button } from '../../../components/forms/Button.jsx';
 import { FormField } from '../../../components/forms/FormField.jsx';
-import { PageHero } from '../../../components/layout/PageHero.jsx';
-import { Panel } from '../../../components/layout/Panel.jsx';
+import { SecureWorkspaceLayout } from '../../../components/layout/SecureWorkspaceLayout.jsx';
 import { useToast } from '../../../hooks/useToast.js';
 import { hasPermission } from '../../../permissions/access.js';
 import { useAuth } from '../../auth/hooks/useAuth.js';
@@ -22,6 +21,7 @@ export function DepartmentsPage() {
   const departments = useDepartments({ enabled: auth.isReady && auth.isAuthenticated });
   const [formOpen, setFormOpen] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState(null);
+  const [departmentView, setDepartmentView] = useState('all');
 
   function openCreate() {
     setEditingDepartment(null);
@@ -34,28 +34,21 @@ export function DepartmentsPage() {
   }
 
   return (
-    <div className="ui-stack-lg">
-      <PageHero
-        eyebrow="Phase 8"
-        title="Departments"
-        description="Department records, membership, linked assets, and department-scoped service requests."
-        meta={[
-          auth.accessProfile?.role_label || 'User',
-          `${departments.departments.length} visible department(s)`,
-          canManage ? 'Administrator controls available' : 'Read-only scoped visibility',
-        ]}
-      />
+    <SecureWorkspaceLayout title="NSC Departments Hub" subtitle="ICT Service Hub">
+      <div className="secure-registry-page">
+        <div className="service-desk-secure-head">
+          <div>
+            <h2>Departments Directory</h2>
+            <p>Department records, membership, linked assets, and department-scoped service requests.</p>
+          </div>
+          <div className="service-desk-secure-actions">
+            <Button variant="secondary" onClick={departments.loadDepartments}>Refresh</Button>
+            {canManage ? <Button onClick={openCreate}>+ New Department</Button> : null}
+          </div>
+        </div>
 
-      <div className="department-layout">
-        <Panel
-          title="Department Directory"
-          actions={(
-            <div className="ui-inline-actions">
-              <Button variant="secondary" onClick={departments.loadDepartments}>Refresh</Button>
-              {canManage ? <Button onClick={openCreate}>Add Department</Button> : null}
-            </div>
-          )}
-        >
+        <div className="department-secure-layout">
+        <section className="secure-data-panel">
           <FormField label="Search Departments" htmlFor="department-search">
             <input
               id="department-search"
@@ -65,22 +58,33 @@ export function DepartmentsPage() {
               onChange={(event) => departments.setSearch(event.target.value)}
             />
           </FormField>
+          <div className="secure-segmented-control">
+            {['all', 'staff', 'assets', 'tickets'].map((item) => (
+              <button
+                key={item}
+                type="button"
+                className={departmentView === item ? 'active' : ''}
+                onClick={() => setDepartmentView(item)}
+              >
+                {item === 'all' ? 'All' : item[0].toUpperCase() + item.slice(1)}
+              </button>
+            ))}
+          </div>
 
           {departments.error ? (
             <ErrorState title="Departments unavailable" description={departments.error} onRetry={departments.loadDepartments} />
           ) : null}
 
           {departments.isLoading ? (
-            <LoadingState description="Loading departments..." />
+            <LoadingState variant="table" description="Loading departments..." />
           ) : (
             <DepartmentList
               departments={departments.departments}
-              canManage={canManage}
+              selectedDepartmentId={departments.selectedDepartment?.department_id}
               onView={(department) => departments.loadDepartmentDetail(department.department_id)}
-              onEdit={openEdit}
             />
           )}
-        </Panel>
+        </section>
 
         <DepartmentDetailPanel
           department={departments.selectedDepartment}
@@ -88,11 +92,8 @@ export function DepartmentsPage() {
           error={departments.detailError}
           canManage={canManage}
           onEdit={openEdit}
+          view={departmentView}
         />
-      </div>
-
-      <div className="ui-inline-actions">
-        <a href="/departments"><Button variant="secondary">Refresh departments</Button></a>
       </div>
 
       <DepartmentFormModal
@@ -108,6 +109,7 @@ export function DepartmentsPage() {
           }
         }}
       />
-    </div>
+      </div>
+    </SecureWorkspaceLayout>
   );
 }

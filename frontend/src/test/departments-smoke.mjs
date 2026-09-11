@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
+import { StaticRouter } from 'react-router-dom/server.js';
 
 async function main() {
   const vite = await createServer({
@@ -21,23 +22,32 @@ async function main() {
         role: 'staff',
         role_label: 'Staff/User',
         permissions: {
+          can_access_dashboard: true,
           can_access_departments: true,
           can_manage_departments: false,
+          can_access_knowledge_base: true,
+          can_access_notifications: true,
         },
       },
+      logout: async () => {},
     };
 
     const html = renderToStaticMarkup(
       createElement(
-        AuthContext.Provider,
-        { value: authValue },
-        createElement(DepartmentsPage),
+        StaticRouter,
+        { location: '/departments' },
+        createElement(
+          AuthContext.Provider,
+          { value: authValue },
+          createElement(DepartmentsPage),
+        ),
       ),
     );
 
-    assert.match(html, /Departments/i);
+    assert.match(html, /NSC Departments Hub/i);
+    assert.match(html, /Departments Directory/i);
     assert.match(html, /Loading departments/i);
-    assert.doesNotMatch(html, /Add Department/i);
+    assert.doesNotMatch(html, /New Department/i);
     console.log('Departments page smoke check passed.');
   } finally {
     await vite.close();

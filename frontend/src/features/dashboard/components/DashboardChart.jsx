@@ -40,7 +40,7 @@ export function DashboardChart({
           })}
         </div>
       ) : (
-        <EmptyState title="No chart data" description="No records matched the current dashboard scope." />
+        <EmptyState variant="search" title="No chart data" description="No records matched the current dashboard scope." />
       )}
     </section>
   );

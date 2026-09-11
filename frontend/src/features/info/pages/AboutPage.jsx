@@ -1,5 +1,6 @@
 import { PageHero } from '../../../components/layout/PageHero.jsx';
 import { Panel } from '../../../components/layout/Panel.jsx';
+import { SecureWorkspaceLayout } from '../../../components/layout/SecureWorkspaceLayout.jsx';
 
 const problemItems = [
   'Manual or spreadsheet-based ICT equipment tracking that is hard to search and audit.',
@@ -46,13 +47,14 @@ function InfoList({ items }) {
 
 export function AboutPage() {
   return (
-    <div className="ui-stack-lg about-page-react">
-      <PageHero
-        eyebrow="Phase 10"
-        title="About the System"
-        description="The NSC ICT Service Desk centralizes internal ICT support, asset tracking, maintenance, knowledge sharing, and operational oversight."
-        meta={['Internal system', 'React frontend', 'Express API', 'PostgreSQL']}
-      />
+    <SecureWorkspaceLayout title="About the System" subtitle="ICT Service Hub">
+      <div className="ui-stack-lg about-page-react">
+        <PageHero
+          eyebrow="System"
+          title="About the System"
+          description="The NSC ICT Service Desk centralizes internal ICT support, asset tracking, maintenance, knowledge sharing, and operational oversight."
+          meta={['Internal system', 'React frontend', 'Express API', 'PostgreSQL']}
+        />
 
       <Panel title="Purpose">
         <p className="react-copy">
@@ -87,6 +89,7 @@ export function AboutPage() {
           files for rollback and verification during the migration window.
         </p>
       </Panel>
-    </div>
+      </div>
+    </SecureWorkspaceLayout>
   );
 }

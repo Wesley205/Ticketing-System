@@ -1,33 +1,25 @@
 import { EmptyState } from '../../../components/feedback/EmptyState.jsx';
-import { Button } from '../../../components/forms/Button.jsx';
-import { DataTable } from '../../../components/tables/DataTable.jsx';
 
-export function DepartmentList({ departments = [], canManage = false, onView, onEdit }) {
-  const columns = [
-    { key: 'name', label: 'Name', render: (department) => <strong>{department.name}</strong> },
-    { key: 'description', label: 'Description', render: (department) => department.description || '-' },
-    { key: 'staff_count', label: 'Staff' },
-    { key: 'asset_count', label: 'Assets' },
-    { key: 'request_count', label: 'Requests' },
-    {
-      key: 'actions',
-      label: 'Actions',
-      render: (department) => (
-        <div className="ui-inline-actions">
-          <Button variant="ghost" size="sm" onClick={() => onView(department)}>View</Button>
-          {canManage ? (
-            <Button variant="secondary" size="sm" onClick={() => onEdit(department)}>Edit</Button>
-          ) : null}
-        </div>
-      ),
-    },
-  ];
-
+export function DepartmentList({ departments = [], selectedDepartmentId = null, onView }) {
+  if (!departments.length) {
+    return <EmptyState variant="search" title="No departments found" description="No department records match your current scope or search." />;
+  }
   return (
-    <DataTable
-      columns={columns}
-      rows={departments.map((department) => ({ ...department, key: department.department_id }))}
-      emptyState={<EmptyState title="No departments found" description="No department records match your current scope or search." />}
-    />
+    <div className="department-secure-list">
+      {departments.map((department) => (
+        <button
+          key={department.department_id}
+          type="button"
+          className={`department-secure-row ${Number(selectedDepartmentId) === Number(department.department_id) ? 'active' : ''}`}
+          onClick={() => onView(department)}
+        >
+          <span>
+            <strong>{department.name}</strong>
+            <small>{department.code || department.description || `DPT-${String(department.department_id).padStart(4, '0')}`}</small>
+          </span>
+          <b>{Number(department.staff_count || 0)} staff</b>
+        </button>
+      ))}
+    </div>
   );
 }

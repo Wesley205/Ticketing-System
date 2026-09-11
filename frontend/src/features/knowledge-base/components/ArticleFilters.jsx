@@ -4,7 +4,7 @@ import { ARTICLE_STATUSES } from '../services/knowledge-base-api.js';
 
 export function ArticleFilters({ filters, canManage = false, onChange, onCreate }) {
   return (
-    <section className="react-panel kb-filters" aria-label="Knowledge-base filters">
+    <section className="kb-filters" aria-label="Knowledge-base filters">
       <FormField label="Search" htmlFor="kb-search-react">
         <input
           id="kb-search-react"

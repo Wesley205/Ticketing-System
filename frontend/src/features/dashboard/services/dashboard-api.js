@@ -108,3 +108,29 @@ export function getDashboardHeading(profile = {}) {
     staff: 'Self-service workspace',
   }[profile.primary_portal] || 'Operational workspace';
 }
+
+export function dashboardRole(user = {}, profile = {}) {
+  const role = profile.role || user.role;
+  if (role === 'admin') return 'admin';
+  if (role === 'ict_officer') return 'ict_officer';
+  if (role === 'technician') return 'technician';
+  return 'staff';
+}
+
+export function fallbackDashboardTickets(role = 'staff') {
+  if (role === 'ict_officer') {
+    return [
+      { request_id: 4911, ticket_number: 'NSC-ICT-4911', subject: 'Level 4 crypto key validation failure', status: 'Unassigned', priority: 'Critical', requester_name: 'Col. Vance', sla: { resolutionOverdue: true } },
+      { request_id: 4909, ticket_number: 'NSC-ICT-4909', subject: 'Secure briefing link cannot authenticate', status: 'Unassigned', priority: 'High', requester_name: 'A. Khasa', sla: { resolutionOverdue: true } },
+      { request_id: 4905, ticket_number: 'NSC-ICT-4905', subject: 'Firewall egress policy bypass exception', status: 'Escalated', priority: 'Critical', requester_name: 'Sec-Office' },
+      { request_id: 4902, ticket_number: 'NSC-ICT-4902', subject: 'SIP terminal configuration alignment', status: 'In Progress', priority: 'High', requester_name: 'Marcus A.' },
+    ];
+  }
+
+  return [
+    { request_id: 4902, ticket_number: 'NSC-ICT-4902', subject: 'Secure SIP terminal configuration alignment', status: 'In Progress', priority: 'High', updated_at: new Date().toISOString() },
+    { request_id: 4891, ticket_number: 'NSC-ICT-4891', subject: 'Hardware cryptographic key renewal', status: 'New', priority: 'High', updated_at: new Date(Date.now() - 2 * 3600000).toISOString() },
+    { request_id: 4877, ticket_number: 'NSC-ICT-4877', subject: 'Provision secure mail alias for communications directorate', status: 'In Progress', priority: 'Medium', updated_at: new Date(Date.now() - 24 * 3600000).toISOString() },
+    { request_id: 4850, ticket_number: 'NSC-ICT-4850', subject: 'Meeting room 4-B encrypted video link failure diagnostics', status: 'Resolved', priority: 'Low', updated_at: new Date(Date.now() - 3 * 24 * 3600000).toISOString() },
+  ];
+}

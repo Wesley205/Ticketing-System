@@ -80,45 +80,63 @@ export function ScheduleFormModal({
   return (
     <Modal
       open={open}
-      title={schedule ? `Edit Schedule - ${schedule.title}` : 'New Maintenance Schedule'}
+      title={schedule ? `Edit Schedule - ${schedule.title}` : 'Create Preventive Schedule'}
       onClose={onClose}
       footer={(
         <>
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
           <Button onClick={() => document.getElementById('schedule-form-submit')?.click()} disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save Schedule'}
+            {isSubmitting ? 'Saving...' : 'Commit Schedule'}
           </Button>
         </>
       )}
     >
-      <form className="ui-stack-md" onSubmit={handleSubmit}>
-        <FormField label="Asset *" htmlFor="schedule-form-asset" error={error}>
-          <select
-            id="schedule-form-asset"
-            className="ui-input"
-            value={form.asset_id}
-            onChange={(event) => updateField('asset_id', event.target.value)}
-            disabled={Boolean(schedule)}
-            required
-          >
-            <option value="">Choose asset</option>
-            {assets.map((asset) => (
-              <option key={asset.asset_id} value={asset.asset_id}>
-                {asset.asset_tag} - {asset.asset_type}
-              </option>
-            ))}
-          </select>
-        </FormField>
+      <form className="secure-modal-form" onSubmit={handleSubmit}>
+        <section className="secure-modal-section">
+          <h3>Asset / node tag</h3>
+          <p>Search asset tag or serial to link this schedule.</p>
+          <FormField label="Asset" htmlFor="schedule-form-asset" error={error}>
+            <select
+              id="schedule-form-asset"
+              className="ui-input"
+              value={form.asset_id}
+              onChange={(event) => updateField('asset_id', event.target.value)}
+              disabled={Boolean(schedule)}
+              required
+            >
+              <option value="">Search Asset Tag or Serial</option>
+              {assets.map((asset) => (
+                <option key={asset.asset_id} value={asset.asset_id}>
+                  {asset.asset_tag} - {asset.asset_type}
+                </option>
+              ))}
+            </select>
+          </FormField>
+        </section>
 
-        <FormField label="Title *" htmlFor="schedule-form-title">
-          <input id="schedule-form-title" className="ui-input" value={form.title} onChange={(event) => updateField('title', event.target.value)} required />
-        </FormField>
+        <section className="secure-modal-section">
+          <h3>Schedule details</h3>
+          <FormField label="Schedule Title" htmlFor="schedule-form-title">
+            <input id="schedule-form-title" className="ui-input" value={form.title} onChange={(event) => updateField('title', event.target.value)} required />
+          </FormField>
+          <div className="ui-grid-2">
+            <FormField label="Next Due Date" htmlFor="schedule-form-next-due">
+              <input id="schedule-form-next-due" type="datetime-local" className="ui-input" value={form.next_due_at} onChange={(event) => updateField('next_due_at', event.target.value)} required />
+            </FormField>
+            <FormField label="Assigned Technician" htmlFor="schedule-form-technician">
+              <select id="schedule-form-technician" className="ui-input" value={form.assigned_technician_id} onChange={(event) => updateField('assigned_technician_id', event.target.value)}>
+                <option value="">Select Specialist</option>
+                {staff.filter((user) => user.role === 'technician').map((user) => (
+                  <option key={user.user_id} value={user.user_id}>{user.full_name}</option>
+                ))}
+              </select>
+            </FormField>
+          </div>
+        </section>
 
-        <FormField label="Description" htmlFor="schedule-form-description">
-          <textarea id="schedule-form-description" className="ui-input" rows={3} value={form.description} onChange={(event) => updateField('description', event.target.value)} />
-        </FormField>
-
-        <div className="ui-grid-2">
+        <section className="secure-modal-section">
+          <h3>Recurrence</h3>
+          <div className="ui-grid-2">
           <FormField label="Schedule Type" htmlFor="schedule-form-type">
             <select id="schedule-form-type" className="ui-input" value={form.maintenance_type} onChange={(event) => updateField('maintenance_type', event.target.value)}>
               {MAINTENANCE_SCHEDULE_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
@@ -135,19 +153,6 @@ export function ScheduleFormModal({
             <input id="schedule-form-frequency-value" type="number" min="1" className="ui-input" value={form.frequency_value} onChange={(event) => updateField('frequency_value', event.target.value)} />
           </FormField>
 
-          <FormField label="Next Due *" htmlFor="schedule-form-next-due">
-            <input id="schedule-form-next-due" type="datetime-local" className="ui-input" value={form.next_due_at} onChange={(event) => updateField('next_due_at', event.target.value)} required />
-          </FormField>
-
-          <FormField label="Assigned Technician" htmlFor="schedule-form-technician">
-            <select id="schedule-form-technician" className="ui-input" value={form.assigned_technician_id} onChange={(event) => updateField('assigned_technician_id', event.target.value)}>
-              <option value="">Unassigned</option>
-              {staff.filter((user) => user.role === 'technician').map((user) => (
-                <option key={user.user_id} value={user.user_id}>{user.full_name}</option>
-              ))}
-            </select>
-          </FormField>
-
           <FormField label="Reminder Days Before" htmlFor="schedule-form-reminder">
             <input id="schedule-form-reminder" type="number" min="0" className="ui-input" value={form.reminder_days_before} onChange={(event) => updateField('reminder_days_before', event.target.value)} />
           </FormField>
@@ -159,10 +164,17 @@ export function ScheduleFormModal({
             </select>
           </FormField>
         </div>
+        </section>
 
-        <FormField label="Checklist Items" htmlFor="schedule-form-checklist" hint="Comma-separated, preserved as backend checklist_items array.">
-          <input id="schedule-form-checklist" className="ui-input" value={form.checklist_items} onChange={(event) => updateField('checklist_items', event.target.value)} />
-        </FormField>
+        <section className="secure-modal-section">
+          <h3>Routine scope and checklist guidelines</h3>
+          <FormField label="Description" htmlFor="schedule-form-description">
+            <textarea id="schedule-form-description" className="ui-input" rows={3} value={form.description} onChange={(event) => updateField('description', event.target.value)} />
+          </FormField>
+          <FormField label="Checklist Items" htmlFor="schedule-form-checklist">
+            <input id="schedule-form-checklist" className="ui-input" value={form.checklist_items} onChange={(event) => updateField('checklist_items', event.target.value)} />
+          </FormField>
+        </section>
 
         <button id="schedule-form-submit" type="submit" hidden />
       </form>

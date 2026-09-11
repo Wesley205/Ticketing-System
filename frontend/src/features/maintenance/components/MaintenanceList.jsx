@@ -7,21 +7,30 @@ import { getChecklistItems } from '../services/maintenance-api.js';
 
 export function MaintenanceList({ records = [], canManage = false, onEdit, onComplete }) {
   const columns = [
-    { key: 'asset_tag', label: 'Asset', render: (record) => record.asset_tag || '-' },
-    { key: 'maintenance_type', label: 'Type', render: (record) => record.maintenance_type || 'Corrective' },
+    { key: 'maintenance_id', label: 'ID', render: (record) => `MNT-${String(record.maintenance_id).padStart(4, '0')}` },
+    {
+      key: 'asset_tag',
+      label: 'Asset',
+      render: (record) => (
+        <div>
+          <strong>{record.asset_tag || '-'}</strong>
+          <small className="maintenance-subtext">{record.asset_type || record.model || '-'}</small>
+        </div>
+      ),
+    },
     { key: 'problem', label: 'Problem' },
-    { key: 'technician_name', label: 'Technician', render: (record) => record.technician_name || '-' },
-    { key: 'maintenance_date', label: 'Date', render: (record) => formatDate(record.maintenance_date) },
+    { key: 'maintenance_type', label: 'Type', render: (record) => record.maintenance_type || 'Corrective' },
     { key: 'status', label: 'Status', render: (record) => <StatusBadge value={record.status} /> },
-    { key: 'cost', label: 'Cost', render: (record) => formatCurrency(record.cost) },
+    { key: 'technician_name', label: 'Technician', render: (record) => record.technician_name || '-' },
+    { key: 'maintenance_date', label: 'Due', render: (record) => formatDate(record.next_due_at || record.scheduled_start_at || record.maintenance_date) },
     {
       key: 'actions',
       label: 'Actions',
       render: (record) => (
-        <div className="ui-inline-actions">
-          <Button variant="ghost" size="sm" onClick={() => onEdit(record)}>Details</Button>
+        <div className="secure-row-actions">
+          <Button variant="ghost" size="sm" onClick={() => onEdit(record)}>Edit</Button>
           {canManage && record.status !== 'Completed' && record.status !== 'Cancelled' ? (
-            <Button variant="secondary" size="sm" onClick={() => onComplete(record)}>Mark Complete</Button>
+            <Button variant="secondary" size="sm" onClick={() => onComplete(record)}>Complete</Button>
           ) : null}
         </div>
       ),
@@ -37,6 +46,7 @@ export function MaintenanceList({ records = [], canManage = false, onEdit, onCom
         {getChecklistItems(record).length ? (
           <small className="maintenance-subtext">{getChecklistItems(record).length} checklist item(s)</small>
         ) : null}
+        {record.cost ? <small className="maintenance-subtext">{formatCurrency(record.cost)}</small> : null}
       </div>
     ),
   }));
@@ -45,7 +55,7 @@ export function MaintenanceList({ records = [], canManage = false, onEdit, onCom
     <DataTable
       columns={columns}
       rows={rows}
-      emptyState={<EmptyState title="No maintenance records" description="No records matched the current maintenance filters." />}
+      emptyState={<EmptyState variant="search" title="No maintenance records" description="No records matched the current maintenance filters." />}
     />
   );
 }

@@ -9,41 +9,69 @@ const vite = await createServer({
   appType: 'custom',
 });
 
-try {
-  const { AuthContext } = await vite.ssrLoadModule('/src/features/auth/hooks/useAuth.js');
-  const { DashboardPage } = await vite.ssrLoadModule('/src/features/dashboard/pages/DashboardPage.jsx');
-
-  const authValue = {
+function authValue(role) {
+  const isAdmin = role === 'admin';
+  const isOfficer = role === 'ict_officer';
+  return {
     isReady: true,
     isAuthenticated: true,
-    user: { user_id: 38, full_name: 'Admin User', role: 'admin', user_type: 'employee' },
+    user: { user_id: 38, full_name: isAdmin ? 'Dr. C. Eze' : isOfficer ? 'A. Nwosu' : 'Marcus Andrew', role, user_type: 'employee' },
     accessProfile: {
-      role_label: 'Administrator',
-      primary_portal: 'administrator',
-      scope: { organization_scope: true },
+      role,
+      role_label: isAdmin ? 'Administrator' : isOfficer ? 'ICT Officer' : 'Staff/User',
+      primary_portal: isAdmin ? 'administrator' : isOfficer ? 'ict_officer' : 'staff',
+      scope: { organization_scope: isAdmin || isOfficer },
       permissions: {
         can_access_dashboard: true,
-        can_view_reports: true,
+        can_access_service_desk: true,
+        can_access_assets: true,
+        can_manage_maintenance: isAdmin || isOfficer,
+        can_access_staff_portal: isAdmin || isOfficer,
+        can_access_departments: isAdmin || isOfficer,
+        can_access_knowledge_base: true,
+        can_view_reports: isAdmin || isOfficer,
+        can_view_audit_logs: isAdmin || isOfficer,
+        can_access_notifications: true,
       },
     },
   };
+}
 
-  const html = renderToStaticMarkup(
+function renderDashboard(AuthContext, DashboardPage, role) {
+  return renderToStaticMarkup(
     createElement(
       StaticRouter,
       { location: '/dashboard' },
       createElement(
         AuthContext.Provider,
-        { value: authValue },
+        { value: authValue(role) },
         createElement(DashboardPage)
       )
     )
   );
+}
 
-  assert.match(html, /Administrator command view/i);
-  assert.match(html, /Dashboard Filters/i);
+try {
+  const { AuthContext } = await vite.ssrLoadModule('/src/features/auth/hooks/useAuth.js');
+  const { DashboardPage } = await vite.ssrLoadModule('/src/features/dashboard/pages/DashboardPage.jsx');
 
-  console.log('Dashboard page smoke check passed.');
+  const staffHtml = renderDashboard(AuthContext, DashboardPage, 'staff');
+  const officerHtml = renderDashboard(AuthContext, DashboardPage, 'ict_officer');
+  const adminHtml = renderDashboard(AuthContext, DashboardPage, 'admin');
+
+  assert.match(staffHtml, /Staff dashboard/i);
+  assert.match(staffHtml, /Welcome back/i);
+  assert.match(staffHtml, /Your recent requests/i);
+
+  assert.match(officerHtml, /ICT Officer Dashboard/i);
+  assert.match(officerHtml, /ICT Operations/i);
+  assert.match(officerHtml, /Technician Workload/i);
+
+  assert.match(adminHtml, /Admin Dashboard/i);
+  assert.match(adminHtml, /Administrator Command Dashboard/i);
+  assert.match(adminHtml, /Recent Audit Activity/i);
+
+  console.log('Dashboard role-aware smoke check passed.');
 } finally {
   await vite.close();
 }

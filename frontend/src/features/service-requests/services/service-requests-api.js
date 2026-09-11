@@ -1,6 +1,50 @@
 import { apiClient, apiDownload } from '../../../lib/api-client.js';
 import { buildQueryParams } from '../../../lib/query-params.js';
 
+export function mapSimplifiedTicketPayload(form) {
+  const [category, subcategory] = String(form.classification || '').split('|');
+  const severity = form.severity || 'Medium';
+
+  return {
+    ticket_type: form.ticket_type,
+    category: category || 'Other',
+    subcategory: subcategory || '',
+    priority: severity,
+    impact: severity,
+    urgency: severity,
+    subject: form.subject,
+    description: form.description,
+    affected_asset_id: form.affected_asset_id || null,
+    closure_confirmation_required: Boolean(form.closure_confirmation_required),
+  };
+}
+
+export function technicianWorkloadCounts(tickets = []) {
+  return tickets.reduce((counts, ticket) => {
+    const technicianId = ticket.assigned_technician_id;
+    if (!technicianId || ['Resolved', 'Closed', 'Cancelled'].includes(ticket.status)) return counts;
+    counts[technicianId] = (counts[technicianId] || 0) + 1;
+    return counts;
+  }, {});
+}
+
+export function technicianAvailability(technician = {}, workloadCounts = {}, capacityLimit = 8) {
+  const activeCount = Number(workloadCounts[technician.user_id] || technician.open_requests || 0);
+  const ratio = activeCount / capacityLimit;
+  const state = ratio >= 1 ? 'Near capacity' : ratio >= 0.65 ? 'Busy' : 'Available';
+
+  return {
+    activeCount,
+    state,
+    isAvailable: ratio < 1,
+    label: `${activeCount} active${activeCount === 1 ? '' : 's'} - ${state.toLowerCase()}`,
+  };
+}
+
+export function isOperationalServiceDeskRole(role) {
+  return role === 'admin' || role === 'ict_officer';
+}
+
 export function buildTicketListQuery(filters = {}) {
   return buildQueryParams({
     status: filters.status || '',

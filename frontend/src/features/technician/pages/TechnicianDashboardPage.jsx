@@ -3,122 +3,160 @@ import { Button } from '../../../components/forms/Button.jsx';
 import { EmptyState } from '../../../components/feedback/EmptyState.jsx';
 import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
-import { PageHero } from '../../../components/layout/PageHero.jsx';
-import { Panel } from '../../../components/layout/Panel.jsx';
-import { useAuth } from '../../auth/hooks/useAuth.js';
-import { AssignedMaintenanceList } from '../components/AssignedMaintenanceList.jsx';
-import { AssignedTicketList } from '../components/AssignedTicketList.jsx';
+import { PriorityBadge } from '../../../components/status/PriorityBadge.jsx';
+import { StatusBadge } from '../../../components/status/StatusBadge.jsx';
+import { formatDateTime } from '../../../lib/formatting.js';
+import { TechnicianDashboardLayout } from '../components/TechnicianDashboardLayout.jsx';
 import { useTechnicianWork } from '../hooks/useTechnicianWork.js';
 
-function QueueKpi({ label, value }) {
+function workSubject(ticket) {
+  return ticket.subject || ticket.description || 'Assigned ticket';
+}
+
+function maintenanceTitle(record) {
+  return record.problem || record.maintenance_type || 'Scheduled maintenance';
+}
+
+function WorkSummaryCard({ tone, eyebrow, value, description }) {
   return (
-    <div className="ticket-kpi-card">
-      <span>{label}</span>
+    <article className={`technician-dashboard-summary-card technician-dashboard-summary-card-${tone}`}>
+      <div className="technician-dashboard-card-dot" aria-hidden="true" />
+      <span>{eyebrow}</span>
       <strong>{value}</strong>
+      <p>{description}</p>
+    </article>
+  );
+}
+
+function PriorityQueue({ rows }) {
+  if (!rows.length) {
+    return <EmptyState variant="requests" title="No priority work queued." description="Assigned tickets that need technician action will appear here." actionLabel="View Assigned Work" actionTo="/technician/assigned-work" />;
+  }
+
+  return (
+    <div className="technician-dashboard-table-wrap">
+      <table className="technician-dashboard-table">
+        <thead>
+          <tr>
+            <th>Ticket ID</th>
+            <th>Subject</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>SLA Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((ticket) => (
+            <tr key={ticket.request_id}>
+              <td>
+                <Link to={`/technician/work/ticket/${ticket.request_id}`}>
+                  {ticket.ticket_number || `#${ticket.request_id}`}
+                </Link>
+              </td>
+              <td>{workSubject(ticket)}</td>
+              <td><PriorityBadge value={ticket.priority} /></td>
+              <td><StatusBadge value={ticket.status} /></td>
+              <td className={ticket.isOverdue ? 'technician-dashboard-overdue-text' : ''}>{ticket.slaLabel}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function MaintenanceDueList({ rows }) {
+  if (!rows.length) {
+    return <EmptyState title="No maintenance due today." description="Due preventive and corrective maintenance tasks will appear here." actionLabel="View Maintenance" actionTo="/maintenance" />;
+  }
+
+  return (
+    <div className="technician-dashboard-maintenance-list">
+      {rows.slice(0, 4).map((record) => (
+        <article className="technician-dashboard-maintenance-card" key={record.maintenance_id}>
+          <div className="technician-dashboard-maintenance-head">
+            <strong>{record.asset_tag || `Asset #${record.asset_id || '-'}`}</strong>
+            <span>{record.maintenance_type || 'Maintenance'}</span>
+          </div>
+          <h3>{maintenanceTitle(record)}</h3>
+          <p>{record.notes || `Scheduled ${formatDateTime(record.scheduled_start_at || record.maintenance_date)}.`}</p>
+          <div className="technician-dashboard-maintenance-footer">
+            <small>Est: {record.estimated_duration_minutes || record.estimated_minutes || 30} min</small>
+            <Link to={`/technician/work/maintenance/${record.maintenance_id}`}>
+              <Button size="sm">Start</Button>
+            </Link>
+          </div>
+        </article>
+      ))}
     </div>
   );
 }
 
 export function TechnicianDashboardPage() {
-  const auth = useAuth();
   const workState = useTechnicianWork();
+  const dashboard = workState.dashboard;
+  const nextAction = dashboard.nextAction;
 
   return (
-    <div className="ui-stack-lg">
-      <PageHero
-        eyebrow="Phase 5"
-        title="Technician Workspace"
-        description="Assigned ticket execution, resolution logging, and maintenance work now run inside the React shell."
-        meta={[
-          auth.accessProfile?.role_label || 'Technician',
-          `${workState.queues.activeTickets.length} active tickets`,
-          `${workState.queues.activeMaintenance.length} active maintenance items`,
-        ]}
-      />
-
-      <Panel
-        title="Assigned Queues"
-        actions={(
-          <div className="ui-inline-actions">
-            <Button variant={workState.filters.tab === 'active' ? 'primary' : 'secondary'} onClick={() => workState.updateFilter('tab', 'active')}>Active</Button>
-            <Button variant={workState.filters.tab === 'pending_resolution' ? 'primary' : 'secondary'} onClick={() => workState.updateFilter('tab', 'pending_resolution')}>Pending Resolution</Button>
-            <Button variant={workState.filters.tab === 'completed' ? 'primary' : 'secondary'} onClick={() => workState.updateFilter('tab', 'completed')}>Completed</Button>
-            <Button variant="secondary" onClick={() => workState.refresh(workState.filters)}>Refresh</Button>
-          </div>
-        )}
-      >
-        <div className="ticket-kpi-grid">
-          <QueueKpi label="Open Tickets" value={workState.queues.activeTickets.length} />
-          <QueueKpi label="Completed Tickets" value={workState.queues.completedTickets.length} />
-          <QueueKpi label="Open Maintenance" value={workState.queues.activeMaintenance.length} />
-          <QueueKpi label="Completed Maintenance" value={workState.queues.completedMaintenance.length} />
+    <TechnicianDashboardLayout>
+      <section className="technician-dashboard-hero">
+        <div>
+          <h2>Next Actionable Work</h2>
+          <p>Focus on the most urgent tickets first, then complete today&apos;s scheduled maintenance.</p>
         </div>
-      </Panel>
+        {nextAction ? (
+          <Link to={nextAction.href}>
+            <Button className="technician-dashboard-continue">Continue work</Button>
+          </Link>
+        ) : null}
+      </section>
 
       {workState.error ? (
-        <ErrorState title="Technician workspace unavailable" description={workState.error} onRetry={() => workState.refresh(workState.filters)} />
+        <ErrorState title="Technician dashboard unavailable" description={workState.error} onRetry={() => workState.refresh(workState.filters)} />
       ) : null}
 
-      {workState.isLoading ? <LoadingState description="Loading technician queues..." /> : null}
+      {workState.isLoading ? <LoadingState variant="table" description="Loading technician dashboard..." /> : null}
 
-      <div className="service-grid-react">
-        <Panel title="Assigned Tickets">
-          <div className="ui-stack-md">
-            <input
-              className="ui-input"
-              placeholder="Search ticket number, subject, status, requester..."
-              value={workState.filters.ticketSearch}
-              onChange={(event) => workState.updateFilter('ticketSearch', event.target.value)}
-            />
-            {workState.visibleTickets.length ? (
-              <AssignedTicketList tickets={workState.visibleTickets} />
-            ) : (
-              <EmptyState title="No assigned tickets in this queue." description="Adjust the workspace tab or wait for new assignments." />
-            )}
-          </div>
-        </Panel>
+      <section className="technician-dashboard-summary-grid" aria-label="Technician work summary">
+        <WorkSummaryCard
+          tone="danger"
+          eyebrow="Overdue Tickets"
+          value={dashboard.overdueTickets.length}
+          description={
+            dashboard.overdueTickets.length
+              ? `${dashboard.overdueTickets.length} ticket${dashboard.overdueTickets.length === 1 ? '' : 's'} overdue. Resolve it first to protect SLA compliance.`
+              : 'No overdue assigned tickets.'
+          }
+        />
+        <WorkSummaryCard
+          tone="warning"
+          eyebrow="Maintenance Due Today"
+          value={dashboard.todayMaintenance.length}
+          description={
+            dashboard.todayMaintenance.length
+              ? `${dashboard.todayMaintenance.length} scheduled task${dashboard.todayMaintenance.length === 1 ? '' : 's'} are due today.`
+              : 'No maintenance tasks are due today.'
+          }
+        />
+      </section>
 
-        <Panel title="Assigned Maintenance">
-          <div className="ui-stack-md">
-            <div className="ui-inline-actions technician-filter-row">
-              <input
-                className="ui-input"
-                placeholder="Search asset, issue, status..."
-                value={workState.filters.maintenanceSearch}
-                onChange={(event) => workState.updateFilter('maintenanceSearch', event.target.value)}
-              />
-              <select
-                className="ui-input technician-filter-select"
-                value={workState.filters.maintenanceStatus}
-                onChange={(event) => workState.updateFilter('maintenanceStatus', event.target.value)}
-              >
-                <option value="">All maintenance statuses</option>
-                <option value="Scheduled">Scheduled</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-                <option value="Cancelled">Cancelled</option>
-              </select>
-            </div>
-            {workState.visibleMaintenance.length ? (
-              <AssignedMaintenanceList records={workState.visibleMaintenance} />
-            ) : (
-              <EmptyState title="No maintenance work in this queue." description="Assigned preventive and corrective tasks will appear here." />
-            )}
+      <section className="technician-dashboard-work-grid">
+        <div className="technician-dashboard-section">
+          <div className="technician-dashboard-section-head">
+            <h2>Priority queue</h2>
+            <span>{dashboard.overdueTickets.length} overdue</span>
           </div>
-        </Panel>
-      </div>
-
-      <Panel title="Technician Constraints">
-        <div className="ui-stack-md">
-          <p className="react-copy">
-            Assignment and reassignment remain intentionally absent from this workspace. Ticket ownership stays controlled by the backend and by ICT officer or administrator workflows.
-          </p>
-          <div className="ui-inline-actions">
-            <Link to="/service-requests"><Button variant="secondary">Open service desk workspace</Button></Link>
-            <a href="/technician"><Button variant="secondary">Refresh technician workspace</Button></a>
-          </div>
+          <PriorityQueue rows={dashboard.priorityQueue} />
         </div>
-      </Panel>
-    </div>
+
+        <div className="technician-dashboard-section">
+          <div className="technician-dashboard-section-head">
+            <h2>Maintenance Due Today</h2>
+            <span>{dashboard.todayMaintenance.length} today</span>
+          </div>
+          <MaintenanceDueList rows={dashboard.todayMaintenance} />
+        </div>
+      </section>
+    </TechnicianDashboardLayout>
   );
 }

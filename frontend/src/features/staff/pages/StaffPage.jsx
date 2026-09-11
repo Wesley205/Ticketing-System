@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react';
 import { Button } from '../../../components/forms/Button.jsx';
 import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
-import { PageHero } from '../../../components/layout/PageHero.jsx';
 import { Panel } from '../../../components/layout/Panel.jsx';
+import { SecureWorkspaceLayout } from '../../../components/layout/SecureWorkspaceLayout.jsx';
 import { Pagination } from '../../../components/tables/Pagination.jsx';
 import { useToast } from '../../../hooks/useToast.js';
 import { formatDate } from '../../../lib/formatting.js';
@@ -34,26 +34,18 @@ export function StaffPage() {
   );
 
   return (
-    <div className="ui-stack-lg">
-      <PageHero
-        eyebrow="Phase 7"
-        title="Staff Management"
-        description="Account lifecycle, internal directory visibility, and administrator-issued invitations now run inside the React shell."
-        meta={[
-          auth.accessProfile?.role_label || 'User',
-          `${staffState.totalStaff} visible accounts`,
-          canManage ? 'Admin controls enabled' : 'Read-only directory access',
-        ]}
-      />
-
-      <Panel
-        title="Directory"
-        actions={(
-          <div className="ui-inline-actions">
+    <SecureWorkspaceLayout title="Staff & Access Control Hub" subtitle="ICT Service Hub">
+      <div className="staff-secure-page secure-registry-page">
+        <div className="service-desk-secure-head">
+          <div>
+            <h2>Staff Directory</h2>
+            <p>Account lifecycle, internal directory visibility, and administrator-issued invitations.</p>
+          </div>
+          <div className="service-desk-secure-actions">
             <Button variant="secondary" onClick={() => staffState.loadStaff(staffState.filters)}>Refresh</Button>
             {canManage ? (
               <>
-                <Button variant="secondary" onClick={() => setInviteOpen(true)}>Issue Invitation</Button>
+                <Button variant="secondary" onClick={() => setInviteOpen(true)}>Invite Staff</Button>
                 <Button onClick={() => {
                   setEditingUser(null);
                   setFormOpen(true);
@@ -64,9 +56,11 @@ export function StaffPage() {
               </>
             ) : null}
           </div>
-        )}
-      >
-        <div className="ui-grid-2 asset-filter-grid">
+        </div>
+
+      <div className="staff-secure-layout">
+        <section className="secure-data-panel">
+        <div className="staff-filter-row">
           <input
             className="ui-input"
             placeholder="Search name, email, username..."
@@ -103,17 +97,15 @@ export function StaffPage() {
               <option key={department.department_id} value={department.department_id}>{department.name}</option>
             ))}
           </select>
+          <span className="secure-count-chip">{staffState.totalStaff} Active Profiles</span>
         </div>
-      </Panel>
 
       {staffState.error ? (
         <ErrorState title="Staff directory unavailable" description={staffState.error} onRetry={() => staffState.loadStaff(staffState.filters)} />
       ) : null}
 
-      <div className="service-grid-react">
-        <Panel title="Staff Directory">
           {staffState.isLoading ? (
-            <LoadingState description="Loading staff directory..." />
+            <LoadingState variant="table" description="Loading staff directory..." />
           ) : (
             <div className="ui-stack-md">
               <StaffList
@@ -147,9 +139,25 @@ export function StaffPage() {
               />
             </div>
           )}
-        </Panel>
+        </section>
 
-        <StaffDetailPanel user={selectedUser} />
+        <StaffDetailPanel
+          user={selectedUser}
+          canManage={canManage}
+          invitations={invitationsState.invitations}
+          onEdit={(row) => {
+            setEditingUser(row);
+            setFormOpen(true);
+          }}
+          onToggleActive={async (row) => {
+            await updateStaffStatus(row.user_id, {
+              is_active: !row.is_active,
+              deactivation_reason: row.is_active ? 'Deactivated during React admin verification' : null,
+            });
+            await staffState.loadStaff(staffState.filters);
+            showToast({ tone: 'success', title: row.is_active ? 'Account deactivated' : 'Account activated' });
+          }}
+        />
       </div>
 
       {canManage ? (
@@ -174,7 +182,7 @@ export function StaffPage() {
           {invitationsState.error ? (
             <ErrorState title="Invitations unavailable" description={invitationsState.error} onRetry={() => invitationsState.loadInvitations(invitationsState.statusFilter)} />
           ) : invitationsState.isLoading ? (
-            <LoadingState description="Loading invitations..." />
+            <LoadingState variant="table" description="Loading invitations..." />
           ) : (
             <InvitationList
               rows={invitationsState.invitations}
@@ -218,6 +226,7 @@ export function StaffPage() {
           return created;
         }}
       />
-    </div>
+      </div>
+    </SecureWorkspaceLayout>
   );
 }

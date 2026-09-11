@@ -2,7 +2,7 @@ import { EmptyState } from '../../../components/feedback/EmptyState.jsx';
 
 export function KBSuggestions({ suggestions = [] }) {
   if (!suggestions.length) {
-    return <EmptyState title="No matching articles yet." description="Knowledge-base suggestions will appear when the ticket text matches known solutions." />;
+    return <EmptyState variant="search" title="No matching articles yet." description="Knowledge-base suggestions will appear when the ticket text matches known solutions." />;
   }
 
   return (

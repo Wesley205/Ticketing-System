@@ -1,9 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '../../../components/forms/Button.jsx';
 import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
-import { PageHero } from '../../../components/layout/PageHero.jsx';
-import { Panel } from '../../../components/layout/Panel.jsx';
+import { SecureWorkspaceLayout } from '../../../components/layout/SecureWorkspaceLayout.jsx';
 import { useToast } from '../../../hooks/useToast.js';
 import { hasPermission } from '../../../permissions/access.js';
 import { useAuth } from '../../auth/hooks/useAuth.js';
@@ -24,18 +23,6 @@ export function KnowledgeBasePage() {
   });
   const [formOpen, setFormOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState(null);
-
-  const meta = useMemo(() => {
-    const selectedLabel = kb.selectedArticle?.title
-      ? `Selected: ${kb.selectedArticle.title}`
-      : 'No article selected';
-    return [
-      auth.accessProfile?.role_label || auth.user?.role || 'User',
-      `${kb.articles.length} visible articles`,
-      canManage ? 'Article management enabled' : 'Read-only article access',
-      selectedLabel,
-    ];
-  }, [auth.accessProfile?.role_label, auth.user?.role, canManage, kb.articles.length, kb.selectedArticle?.title]);
 
   async function handleSubmit(payload) {
     const saved = await kb.submitArticle(payload, editingArticle?.article_id || null);
@@ -59,70 +46,70 @@ export function KnowledgeBasePage() {
   }
 
   return (
-    <div className="kb-page-react ui-stack-lg">
-      <PageHero
-        eyebrow="Phase 8"
-        title="Knowledge Base"
-        description="Search support articles, review article history, submit usefulness feedback, and manage published ICT guidance where permitted."
-        meta={meta}
-      />
-
-      <Panel
-        title="Article Search"
-        actions={(
-          <div className="ui-inline-actions">
-            <Button variant="secondary" onClick={() => kb.loadArticles(kb.filters)}>Refresh</Button>
-            <a href="/knowledge-base">
-              <Button variant="secondary">Refresh Knowledge Base</Button>
-            </a>
+    <SecureWorkspaceLayout title="Knowledge Base" subtitle="ICT Service Hub">
+      <div className="kb-page-react secure-registry-page">
+        <div className="service-desk-secure-head">
+          <div>
+            <h2>Standard Operating Procedures</h2>
+            <p>Find step-by-step guides for secure operations, hardware setup, and network troubleshooting.</p>
           </div>
-        )}
-      >
-        <ArticleFilters
-          filters={kb.filters}
-          canManage={canManage}
-          onChange={kb.updateFilter}
-          onCreate={() => {
-            setEditingArticle(null);
-            setFormOpen(true);
-          }}
-        />
-      </Panel>
+          <div className="service-desk-secure-actions">
+            <Button variant="secondary" onClick={() => kb.loadArticles(kb.filters)}>Refresh</Button>
+            {canManage ? (
+              <Button onClick={() => {
+                setEditingArticle(null);
+                setFormOpen(true);
+              }}>
+                Edit Library
+              </Button>
+            ) : null}
+          </div>
+        </div>
 
-      {kb.error ? (
-        <ErrorState
-          title="Knowledge base unavailable"
-          description={kb.error}
-          onRetry={() => kb.loadArticles(kb.filters)}
-        />
-      ) : null}
+        {kb.error ? (
+          <ErrorState
+            title="Knowledge base unavailable"
+            description={kb.error}
+            onRetry={() => kb.loadArticles(kb.filters)}
+          />
+        ) : null}
 
-      <div className="kb-layout-react">
-        <Panel title="Articles">
-          {kb.isLoading ? (
-            <LoadingState description="Loading knowledge-base articles..." />
-          ) : (
-            <ArticleList
-              articles={kb.articles}
-              selectedArticleId={kb.selectedArticle?.article_id}
-              onSelect={(articleId) => kb.selectArticle(articleId)}
+        <div className="kb-layout-react">
+          <section className="secure-data-panel">
+            <ArticleFilters
+              filters={kb.filters}
+              canManage={canManage}
+              onChange={kb.updateFilter}
+              onCreate={() => {
+                setEditingArticle(null);
+                setFormOpen(true);
+              }}
             />
-          )}
-        </Panel>
+            {kb.isLoading ? (
+              <LoadingState variant="table" description="Loading knowledge-base articles..." />
+            ) : (
+              <ArticleList
+                articles={kb.articles}
+                selectedArticleId={kb.selectedArticle?.article_id}
+                onSelect={(articleId) => kb.selectArticle(articleId)}
+              />
+            )}
+          </section>
 
-        <ArticleDetail
-          article={kb.selectedArticle}
-          isLoading={kb.isDetailLoading}
-          error={kb.detailError}
-          canManage={canManage}
-          canFeedback={canFeedback}
-          onRetry={() => kb.selectedArticle?.article_id && kb.selectArticle(kb.selectedArticle.article_id)}
-          onEdit={() => {
-            setEditingArticle(kb.selectedArticle);
-            setFormOpen(true);
-          }}
-          onFeedback={handleFeedback}
-        />
+          <ArticleDetail
+            article={kb.selectedArticle}
+            isLoading={kb.isDetailLoading}
+            error={kb.detailError}
+            canManage={canManage}
+            canFeedback={canFeedback}
+            onRetry={() => kb.selectedArticle?.article_id && kb.selectArticle(kb.selectedArticle.article_id)}
+            onEdit={() => {
+              setEditingArticle(kb.selectedArticle);
+              setFormOpen(true);
+            }}
+            onFeedback={handleFeedback}
+          />
+        </div>
       </div>
 
       {canManage ? (
@@ -137,6 +124,6 @@ export function KnowledgeBasePage() {
           onSubmit={handleSubmit}
         />
       ) : null}
-    </div>
+    </SecureWorkspaceLayout>
   );
 }

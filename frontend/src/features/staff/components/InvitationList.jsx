@@ -6,7 +6,7 @@ import { getRoleLabel, getUserTypeLabel } from '../services/staff-api.js';
 
 export function InvitationList({ rows = [], onRevoke }) {
   if (!rows.length) {
-    return <EmptyState title="No invitations found." description="Pending, accepted, revoked, and expired invitations will appear here." />;
+    return <EmptyState variant="search" title="No invitations found." description="Pending, accepted, revoked, and expired invitations will appear here." />;
   }
 
   return (

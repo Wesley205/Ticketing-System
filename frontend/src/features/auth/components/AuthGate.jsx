@@ -15,7 +15,7 @@ export function ProtectedRoute({ children, permissionKey = null }) {
   });
 
   if (decision.reason === 'loading') {
-    return <LoadingState title="Loading session..." description="Validating your account access." />;
+    return <LoadingState variant="overlay" title="Loading session..." description="Validating your account access." />;
   }
 
   if (!decision.allowed) {
@@ -40,7 +40,7 @@ export function GuestRoute({ children }) {
   });
 
   if (!auth.isReady) {
-    return <LoadingState title="Loading session..." description="Checking whether you already have an active session." />;
+    return <LoadingState variant="overlay" title="Loading session..." description="Checking whether you already have an active session." />;
   }
 
   if (decision.redirectTo) {

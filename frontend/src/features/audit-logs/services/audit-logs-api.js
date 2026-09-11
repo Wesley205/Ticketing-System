@@ -37,3 +37,42 @@ export async function fetchAuditLogs(filters = {}) {
   const rows = await apiClient(`/audit-logs${suffix}`);
   return Array.isArray(rows) ? rows.map(normalizeAuditLogRow) : [];
 }
+
+function escapeCsvCell(value) {
+  const text = value == null ? '' : String(value);
+  return `"${text.replaceAll('"', '""')}"`;
+}
+
+export function buildAuditLogCsv(rows = []) {
+  const headers = ['Time', 'Actor', 'Role', 'Action', 'Entity', 'Details', 'IP'];
+  const body = rows.map((row) => [
+    row.created_at,
+    row.user_name,
+    row.user_role,
+    row.action,
+    `${row.record_type || '-'}${row.record_id ? ` #${row.record_id}` : ''}`,
+    row.details,
+    row.ip_address || row.ip || '-',
+  ]);
+
+  return [headers, ...body]
+    .map((cells) => cells.map(escapeCsvCell).join(','))
+    .join('\n');
+}
+
+export function downloadAuditLogCsv(rows = [], filename = 'audit-log-report.csv') {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return false;
+  }
+
+  const blob = new Blob([buildAuditLogCsv(rows)], { type: 'text/csv;charset=utf-8' });
+  const url = window.URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.URL.revokeObjectURL(url);
+  return true;
+}

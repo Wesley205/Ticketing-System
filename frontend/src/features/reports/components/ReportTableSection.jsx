@@ -29,7 +29,7 @@ export function ReportTableSection({
       <DataTable
         columns={columns}
         rows={rows}
-        emptyState={<EmptyState title="No report rows" description="No rows matched the current report filters." />}
+        emptyState={<EmptyState variant="search" title="No report rows" description="No rows matched the current report filters." />}
       />
       <div className="report-table-footer">
         <span>{Number(total || 0).toLocaleString()} total rows</span>

@@ -19,12 +19,15 @@ try {
     user: { user_id: 38, full_name: 'Admin User', role: 'admin' },
     accessProfile: {
       role_label: 'Administrator',
-      permissions: {
-        can_access_staff_portal: true,
-        can_manage_users: true,
-        can_create_invitation: true,
+        permissions: {
+          can_access_dashboard: true,
+          can_access_staff_portal: true,
+          can_manage_users: true,
+          can_create_invitation: true,
+          can_access_notifications: true,
+        },
       },
-    },
+      logout: async () => {},
   };
 
   const html = renderToStaticMarkup(
@@ -39,8 +42,9 @@ try {
     )
   );
 
-  assert.match(html, /Staff Management/i);
-  assert.match(html, /Directory/i);
+  assert.match(html, /Staff &amp; Access Control Hub/i);
+  assert.match(html, /Staff Directory/i);
+  assert.match(html, /Invite Staff/i);
   assert.match(html, /Pending Invitations/i);
 
   console.log('Staff page smoke check passed.');

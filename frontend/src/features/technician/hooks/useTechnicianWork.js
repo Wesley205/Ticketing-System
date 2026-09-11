@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   fetchAssignedMaintenance,
   fetchTechnicianAssignedTickets,
+  buildTechnicianDashboard,
   filterMaintenanceBySearch,
   filterWorkByTab,
   splitTechnicianWorkItems,
@@ -50,6 +51,7 @@ export function useTechnicianWork() {
   }
 
   const queues = useMemo(() => splitTechnicianWorkItems(tickets, maintenance), [tickets, maintenance]);
+  const dashboard = useMemo(() => buildTechnicianDashboard(tickets, maintenance), [tickets, maintenance]);
 
   const visibleTickets = useMemo(() => {
     const filtered = filterWorkByTab(tickets, filters.tab);
@@ -78,6 +80,7 @@ export function useTechnicianWork() {
 
   return {
     error,
+    dashboard,
     filters,
     isLoading,
     maintenance,

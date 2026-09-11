@@ -19,10 +19,12 @@ import { DepartmentsPage } from '../features/departments/pages/DepartmentsPage.j
 import { ReportsPage } from '../features/reports/pages/ReportsPage.jsx';
 import { MaintenancePage } from '../features/maintenance/pages/MaintenancePage.jsx';
 import { KnowledgeBasePage } from '../features/knowledge-base/pages/KnowledgeBasePage.jsx';
+import { NotificationInboxPage } from '../features/notifications/pages/NotificationInboxPage.jsx';
 import { ServiceRequestsPage } from '../features/service-requests/pages/ServiceRequestsPage.jsx';
 import { StaffPage } from '../features/staff/pages/StaffPage.jsx';
 import { TicketDetailPage } from '../features/service-requests/pages/TicketDetailPage.jsx';
 import { TechnicianDashboardPage } from '../features/technician/pages/TechnicianDashboardPage.jsx';
+import { TechnicianAssignedWorkPage } from '../features/technician/pages/TechnicianAssignedWorkPage.jsx';
 import { TechnicianWorkItemPage } from '../features/technician/pages/TechnicianWorkItemPage.jsx';
 
 const protectedRoutes = [
@@ -102,7 +104,7 @@ function AuthenticatedLanding() {
   const auth = useAuth();
 
   if (!auth.isReady) {
-    return <LoadingState title="Loading session..." description="Checking for an active authenticated session." />;
+    return <LoadingState variant="overlay" title="Loading session..." description="Checking for an active authenticated session." />;
   }
 
   if (!auth.isAuthenticated) {
@@ -144,123 +146,57 @@ function ProtectedAppRoute({ route }) {
   }
   if (route.path === '/dashboard') {
     content = (
-      <AppShell
-        title="Dashboard"
-        subtitle="Role-aware operational metrics and scoped dashboard filters."
-        eyebrow="Phase 9"
-      >
-        <DashboardPage />
-      </AppShell>
+      <DashboardPage />
     );
   }
   if (route.path === '/reports') {
     content = (
-      <AppShell
-        title="Reports"
-        subtitle="Permission-aware metrics, filters, paginated detail rows, and CSV exports."
-        eyebrow="Phase 9"
-      >
-        <ReportsPage />
-      </AppShell>
+      <ReportsPage />
     );
   }
   if (route.path === '/service-requests') {
     content = (
-      <AppShell
-        title="Service Desk"
-        subtitle="Ticket workflows, assignment, comments, attachments, and history."
-        eyebrow="Phase 4"
-      >
-        <ServiceRequestsPage />
-      </AppShell>
+      <ServiceRequestsPage />
     );
   }
   if (route.path === '/technician') {
     content = (
-      <AppShell
-        title="Technician Workspace"
-        subtitle="Assigned ticket execution, resolution logging, and maintenance work."
-        eyebrow="Phase 5"
-      >
-        <TechnicianDashboardPage />
-      </AppShell>
+      <TechnicianDashboardPage />
     );
   }
   if (route.path === '/assets') {
     content = (
-      <AppShell
-        title="Assets"
-        subtitle="Asset registry, assignment workflow, return processing, and lifecycle visibility."
-        eyebrow="Phase 6"
-      >
-        <AssetsPage />
-      </AppShell>
+      <AssetsPage />
     );
   }
   if (route.path === '/maintenance') {
     content = (
-      <AppShell
-        title="Maintenance"
-        subtitle="Maintenance records, preventive schedules, checklist tracking, and technician assignment."
-        eyebrow="Phase 7"
-      >
-        <MaintenancePage />
-      </AppShell>
+      <MaintenancePage />
     );
   }
   if (route.path === '/departments') {
     content = (
-      <AppShell
-        title="Departments"
-        subtitle="Department records, membership, linked assets, and operational context."
-        eyebrow="Phase 8"
-      >
-        <DepartmentsPage />
-      </AppShell>
+      <DepartmentsPage />
     );
   }
   if (route.path === '/staff') {
     content = (
-      <AppShell
-        title="Staff Management"
-        subtitle="Account lifecycle, directory access, and administrator-issued invitations."
-        eyebrow="Phase 7"
-      >
-        <StaffPage />
-      </AppShell>
+      <StaffPage />
     );
   }
   if (route.path === '/knowledge-base') {
     content = (
-      <AppShell
-        title="Knowledge Base"
-        subtitle="Searchable ICT guidance, article feedback, and permission-aware article management."
-        eyebrow="Phase 8"
-      >
-        <KnowledgeBasePage />
-      </AppShell>
+      <KnowledgeBasePage />
     );
   }
   if (route.path === '/audit-logs') {
     content = (
-      <AppShell
-        title="Audit Logs"
-        subtitle="Read-only oversight trail for authorized system activity."
-        eyebrow="Phase 10"
-      >
-        <AuditLogsPage />
-      </AppShell>
+      <AuditLogsPage />
     );
   }
   if (route.path === '/about') {
     content = (
-      <AppShell
-        title="About the System"
-        subtitle="System purpose, scope, technology stack, and operational limitations."
-        eyebrow="Phase 10"
-      >
-        <AboutPage />
-      </AppShell>
+      <AboutPage />
     );
   }
 
@@ -295,6 +231,14 @@ export function AppRouter() {
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
         <Route path="/forbidden" element={<ForbiddenPage />} />
         <Route path="/help" element={<AccountHelpPage />} />
+        <Route
+          path="/notifications"
+          element={(
+            <ProtectedRoute permissionKey="can_access_notifications">
+              <NotificationInboxPage />
+            </ProtectedRoute>
+          )}
+        />
         {protectedRoutes.map((route) => (
           <Route
             key={route.path}
@@ -306,13 +250,15 @@ export function AppRouter() {
           path="/service-requests/:ticketId"
           element={(
             <ProtectedRoute permissionKey="can_access_service_desk">
-              <AppShell
-                title="Service Desk"
-                subtitle="Ticket workflows, assignment, comments, attachments, and history."
-                eyebrow="Phase 4"
-              >
-                <TicketDetailPage />
-              </AppShell>
+              <TicketDetailPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/technician/assigned-work"
+          element={(
+            <ProtectedRoute permissionKey="can_access_technician_portal">
+              <TechnicianAssignedWorkPage />
             </ProtectedRoute>
           )}
         />
@@ -320,13 +266,7 @@ export function AppRouter() {
           path="/technician/work/:itemType/:itemId"
           element={(
             <ProtectedRoute permissionKey="can_access_technician_portal">
-              <AppShell
-                title="Technician Workspace"
-                subtitle="Focused execution workspace for assigned tickets and maintenance."
-                eyebrow="Phase 5"
-              >
-                <TechnicianWorkItemPage />
-              </AppShell>
+              <TechnicianWorkItemPage />
             </ProtectedRoute>
           )}
         />
@@ -334,13 +274,7 @@ export function AppRouter() {
           path="/assets/:assetId"
           element={(
             <ProtectedRoute permissionKey="can_access_assets">
-              <AppShell
-                title="Assets"
-                subtitle="Asset registry, assignment workflow, return processing, and lifecycle visibility."
-                eyebrow="Phase 6"
-              >
-                <AssetDetailPage />
-              </AppShell>
+              <AssetDetailPage />
             </ProtectedRoute>
           )}
         />

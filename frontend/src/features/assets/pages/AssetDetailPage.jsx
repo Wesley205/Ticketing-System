@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../../../components/forms/Button.jsx';
 import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
-import { PageHero } from '../../../components/layout/PageHero.jsx';
+import { SecureWorkspaceLayout } from '../../../components/layout/SecureWorkspaceLayout.jsx';
 import { useToast } from '../../../hooks/useToast.js';
 import { useAuth } from '../../auth/hooks/useAuth.js';
 import { AssetAssignmentModal } from '../components/AssetAssignmentModal.jsx';
@@ -125,34 +125,58 @@ export function AssetDetailPage() {
   const canDelete = auth.user?.role === 'admin' || auth.accessProfile?.permissions?.can_access_admin_portal === true;
 
   return (
-    <div className="ui-stack-lg">
-      <PageHero
-        eyebrow="Phase 6"
-        title="Asset Detail"
-        description="Standalone asset lifecycle view for deep links, assignment history, linked tickets, and maintenance context."
-        meta={[detailState.asset?.asset_tag || `#${assetId}`]}
-      />
+    <SecureWorkspaceLayout title="ICT Service Desk Workspace" subtitle="Service Desk" activePath="/assets">
+      <div className="secure-registry-page">
+        <div className="asset-detail-secure-head">
+          <Button variant="secondary" size="sm" onClick={() => navigate('/assets')}>Back</Button>
+          <div>
+            <h2>{detailState.asset?.model || detailState.asset?.asset_tag || 'Asset Detail'}</h2>
+            <p>
+              Asset tag: <strong>{detailState.asset?.asset_tag || `#${assetId}`}</strong>
+              {detailState.asset?.status ? <span className="secure-status-inline">{detailState.asset.status}</span> : null}
+            </p>
+          </div>
+          {canManage && detailState.asset ? (
+            <div className="service-desk-secure-actions">
+              <Button variant="secondary" size="sm" onClick={() => setFormOpen(true)} disabled={detailState.isMutating}>Edit Asset</Button>
+              <Button variant="secondary" size="sm" onClick={() => setAssignmentOpen(true)} disabled={detailState.isMutating}>Reassign / Transfer</Button>
+              {detailState.asset.assigned_to ? (
+                <Button size="sm" onClick={() => setReturnOpen(true)} disabled={detailState.isMutating}>Return Asset</Button>
+              ) : null}
+              {canDelete ? (
+                <Button variant="danger" size="sm" onClick={async () => {
+                  await detailState.remove();
+                  showToast({ tone: 'success', title: 'Asset deleted' });
+                  navigate('/assets', { replace: true });
+                }} disabled={detailState.isMutating}>
+                  More actions
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
 
-      {detailState.error ? (
-        <ErrorState title="Asset detail unavailable" description={detailState.error} onRetry={detailState.refresh} />
-      ) : detailState.isLoading ? (
-        <LoadingState description="Loading asset detail..." />
-      ) : (
-        <AssetDetail
-          asset={detailState.asset}
-          canManage={canManage}
-          canDelete={canDelete}
-          onEdit={() => setFormOpen(true)}
-          onAssign={() => setAssignmentOpen(true)}
-          onReturn={() => setReturnOpen(true)}
-          onDelete={async () => {
-            await detailState.remove();
-            showToast({ tone: 'success', title: 'Asset deleted' });
-            navigate('/assets', { replace: true });
-          }}
-          isMutating={detailState.isMutating}
-        />
-      )}
+        {detailState.error ? (
+          <ErrorState title="Asset detail unavailable" description={detailState.error} onRetry={detailState.refresh} />
+        ) : detailState.isLoading ? (
+          <LoadingState variant="detail" description="Loading asset detail..." />
+        ) : (
+          <AssetDetail
+            asset={detailState.asset}
+            canManage={canManage}
+            canDelete={canDelete}
+            onEdit={() => setFormOpen(true)}
+            onAssign={() => setAssignmentOpen(true)}
+            onReturn={() => setReturnOpen(true)}
+            onDelete={async () => {
+              await detailState.remove();
+              showToast({ tone: 'success', title: 'Asset deleted' });
+              navigate('/assets', { replace: true });
+            }}
+            isMutating={detailState.isMutating}
+          />
+        )}
+      </div>
 
       <AssetFormModal
         open={formOpen}
@@ -188,10 +212,6 @@ export function AssetDetailPage() {
         isSubmitting={detailState.isMutating}
       />
 
-      <div className="ui-inline-actions">
-        <Link to="/assets"><Button variant="secondary">Back to assets</Button></Link>
-        <a href="/assets"><Button variant="secondary">Back to assets</Button></a>
-      </div>
-    </div>
+    </SecureWorkspaceLayout>
   );
 }

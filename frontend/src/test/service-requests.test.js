@@ -4,7 +4,11 @@ import assert from 'node:assert/strict';
 import {
   buildTicketListQuery,
   filterTicketsBySearch,
+  isOperationalServiceDeskRole,
+  mapSimplifiedTicketPayload,
   paginateTickets,
+  technicianAvailability,
+  technicianWorkloadCounts,
 } from '../features/service-requests/services/service-requests-api.js';
 
 test('service-request query builder preserves supported backend filters only', () => {
@@ -48,4 +52,50 @@ test('service-request pagination stays deterministic for array-backed responses'
     totalPages: 3,
     items: [{ id: 3 }, { id: 4 }],
   });
+});
+
+test('simplified ticket creation maps classification and severity to backend fields', () => {
+  const payload = mapSimplifiedTicketPayload({
+    ticket_type: 'Incident',
+    classification: 'Network|Uplink Failure',
+    severity: 'Critical',
+    subject: 'Secure uplink down',
+    description: 'Primary uplink is not responding.',
+    affected_asset_id: '',
+    closure_confirmation_required: true,
+  });
+
+  assert.deepEqual(payload, {
+    ticket_type: 'Incident',
+    category: 'Network',
+    subcategory: 'Uplink Failure',
+    priority: 'Critical',
+    impact: 'Critical',
+    urgency: 'Critical',
+    subject: 'Secure uplink down',
+    description: 'Primary uplink is not responding.',
+    affected_asset_id: null,
+    closure_confirmation_required: true,
+  });
+});
+
+test('service desk role helper separates operational users from requesters', () => {
+  assert.equal(isOperationalServiceDeskRole('admin'), true);
+  assert.equal(isOperationalServiceDeskRole('ict_officer'), true);
+  assert.equal(isOperationalServiceDeskRole('staff'), false);
+  assert.equal(isOperationalServiceDeskRole('technician'), false);
+});
+
+test('technician availability is derived from active workload counts', () => {
+  const counts = technicianWorkloadCounts([
+    { request_id: 1, assigned_technician_id: 4, status: 'Assigned' },
+    { request_id: 2, assigned_technician_id: 4, status: 'In Progress' },
+    { request_id: 3, assigned_technician_id: 4, status: 'Closed' },
+  ]);
+
+  assert.deepEqual(counts, { 4: 2 });
+  assert.deepEqual(
+    technicianAvailability({ user_id: 4 }, counts, 3),
+    { activeCount: 2, state: 'Busy', isAvailable: true, label: '2 actives - busy' }
+  );
 });

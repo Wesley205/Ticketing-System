@@ -88,70 +88,83 @@ export function MaintenanceFormModal({
   return (
     <Modal
       open={open}
-      title={record ? `Edit Maintenance #${record.maintenance_id}` : 'New Maintenance Record'}
+      title={record ? `Edit Maintenance #${record.maintenance_id}` : 'Create Maintenance Record'}
       onClose={onClose}
       footer={(
         <>
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
           <Button onClick={() => document.getElementById('maintenance-form-submit')?.click()} disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save Record'}
+            {isSubmitting ? 'Saving...' : 'Save Maintenance Log'}
           </Button>
         </>
       )}
     >
-      <form className="ui-stack-md" onSubmit={handleSubmit}>
-        <FormField label="Asset *" htmlFor="maintenance-form-asset" error={error}>
-          <select
-            id="maintenance-form-asset"
-            className="ui-input"
-            value={form.asset_id}
-            onChange={(event) => updateField('asset_id', event.target.value)}
-            disabled={Boolean(record)}
-            required
-          >
-            <option value="">Choose asset</option>
-            {assets.map((asset) => (
-              <option key={asset.asset_id} value={asset.asset_id}>
-                {asset.asset_tag} - {asset.asset_type}
-              </option>
-            ))}
-          </select>
-        </FormField>
+      <form className="secure-modal-form" onSubmit={handleSubmit}>
+        <section className="secure-modal-section">
+          <h3>Asset scope</h3>
+          <p>Identify the asset and the nature of the maintenance.</p>
+          <FormField label="Asset Tag" htmlFor="maintenance-form-asset" error={error}>
+            <select
+              id="maintenance-form-asset"
+              className="ui-input"
+              value={form.asset_id}
+              onChange={(event) => updateField('asset_id', event.target.value)}
+              disabled={Boolean(record)}
+              required
+            >
+              <option value="">Search Asset Tag or Serial</option>
+              {assets.map((asset) => (
+                <option key={asset.asset_id} value={asset.asset_id}>
+                  {asset.asset_tag} - {asset.asset_type}
+                </option>
+              ))}
+            </select>
+          </FormField>
 
-        <FormField label="Problem *" htmlFor="maintenance-form-problem">
-          <textarea
-            id="maintenance-form-problem"
-            className="ui-input"
-            rows={3}
-            value={form.problem}
-            onChange={(event) => updateField('problem', event.target.value)}
-            required
-          />
-        </FormField>
+          <div className="ui-grid-2">
+            <FormField label="Maintenance Type" htmlFor="maintenance-form-type">
+              <select id="maintenance-form-type" className="ui-input" value={form.maintenance_type} onChange={(event) => updateField('maintenance_type', event.target.value)}>
+                {MAINTENANCE_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+              </select>
+            </FormField>
+            <FormField label="Status" htmlFor="maintenance-form-status">
+              <select id="maintenance-form-status" className="ui-input" value={form.status} onChange={(event) => updateField('status', event.target.value)}>
+                {MAINTENANCE_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
+              </select>
+            </FormField>
+          </div>
 
-        <FormField label="Action Taken" htmlFor="maintenance-form-action">
-          <textarea
-            id="maintenance-form-action"
-            className="ui-input"
-            rows={3}
-            value={form.action_taken}
-            onChange={(event) => updateField('action_taken', event.target.value)}
-          />
-        </FormField>
+          <FormField label="Problem Description" htmlFor="maintenance-form-problem">
+            <textarea
+              id="maintenance-form-problem"
+              className="ui-input"
+              rows={3}
+              value={form.problem}
+              onChange={(event) => updateField('problem', event.target.value)}
+              required
+            />
+          </FormField>
+        </section>
 
+        <section className="secure-modal-section">
+          <h3>Checklist and evidence</h3>
+          <FormField label="Checklist Items" htmlFor="maintenance-form-checklist">
+            <input id="maintenance-form-checklist" className="ui-input" value={form.checklist_items} onChange={(event) => updateField('checklist_items', event.target.value)} />
+          </FormField>
+          <FormField label="Action Taken" htmlFor="maintenance-form-action">
+            <textarea
+              id="maintenance-form-action"
+              className="ui-input"
+              rows={3}
+              value={form.action_taken}
+              onChange={(event) => updateField('action_taken', event.target.value)}
+            />
+          </FormField>
+        </section>
+
+        <section className="secure-modal-section">
+          <h3>Operational details</h3>
         <div className="ui-grid-2">
-          <FormField label="Maintenance Type" htmlFor="maintenance-form-type">
-            <select id="maintenance-form-type" className="ui-input" value={form.maintenance_type} onChange={(event) => updateField('maintenance_type', event.target.value)}>
-              {MAINTENANCE_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
-            </select>
-          </FormField>
-
-          <FormField label="Status" htmlFor="maintenance-form-status">
-            <select id="maintenance-form-status" className="ui-input" value={form.status} onChange={(event) => updateField('status', event.target.value)}>
-              {MAINTENANCE_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
-            </select>
-          </FormField>
-
           <FormField label="Technician" htmlFor="maintenance-form-technician">
             <select id="maintenance-form-technician" className="ui-input" value={form.technician_id} onChange={(event) => updateField('technician_id', event.target.value)}>
               <option value="">Automatic / current user</option>
@@ -197,18 +210,18 @@ export function MaintenanceFormModal({
             </select>
           </FormField>
         </div>
+        </section>
 
-        <FormField label="Checklist Items" htmlFor="maintenance-form-checklist" hint="Comma-separated, preserved as backend checklist_items array.">
-          <input id="maintenance-form-checklist" className="ui-input" value={form.checklist_items} onChange={(event) => updateField('checklist_items', event.target.value)} />
-        </FormField>
+        <section className="secure-modal-section">
+          <h3>Outcome and follow-up</h3>
+          <FormField label="Completion Notes" htmlFor="maintenance-form-completion">
+            <textarea id="maintenance-form-completion" className="ui-input" rows={2} value={form.completion_notes} onChange={(event) => updateField('completion_notes', event.target.value)} />
+          </FormField>
 
-        <FormField label="Completion Notes" htmlFor="maintenance-form-completion">
-          <textarea id="maintenance-form-completion" className="ui-input" rows={2} value={form.completion_notes} onChange={(event) => updateField('completion_notes', event.target.value)} />
-        </FormField>
-
-        <FormField label="Notes" htmlFor="maintenance-form-notes">
-          <input id="maintenance-form-notes" className="ui-input" value={form.notes} onChange={(event) => updateField('notes', event.target.value)} />
-        </FormField>
+          <FormField label="Notes" htmlFor="maintenance-form-notes">
+            <input id="maintenance-form-notes" className="ui-input" value={form.notes} onChange={(event) => updateField('notes', event.target.value)} />
+          </FormField>
+        </section>
 
         <button id="maintenance-form-submit" type="submit" hidden />
       </form>

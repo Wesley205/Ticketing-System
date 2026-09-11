@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Button } from '../../../components/forms/Button.jsx';
 import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
-import { PageHero } from '../../../components/layout/PageHero.jsx';
-import { Panel } from '../../../components/layout/Panel.jsx';
+import { SecureWorkspaceLayout } from '../../../components/layout/SecureWorkspaceLayout.jsx';
 import { useToast } from '../../../hooks/useToast.js';
 import { hasPermission } from '../../../permissions/access.js';
 import { useAuth } from '../../auth/hooks/useAuth.js';
@@ -37,6 +36,7 @@ export function MaintenancePage() {
   const [editingRecord, setEditingRecord] = useState(null);
   const [editingSchedule, setEditingSchedule] = useState(null);
   const [actionError, setActionError] = useState('');
+  const [activeTab, setActiveTab] = useState('records');
 
   function openRecordModal(record = null) {
     setEditingRecord(record);
@@ -90,45 +90,54 @@ export function MaintenancePage() {
   }
 
   return (
-    <div className="ui-stack-lg">
-      <PageHero
-        eyebrow="Phase 7"
-        title="Maintenance"
-        description="Maintenance records, preventive schedules, technician assignment, status updates, and checklist tracking."
-        meta={[
-          auth.accessProfile?.role_label || 'User',
-          `${maintenance.records.length} visible records`,
-          `${maintenance.schedules.length} schedules`,
-        ]}
-      />
-
-      <Panel
-        title="Maintenance Controls"
-        actions={(
-          <div className="ui-inline-actions">
-            <Button variant="secondary" onClick={() => maintenance.refresh()}>Refresh</Button>
-            {canManageMaintenance ? <Button onClick={() => openRecordModal()}>New Maintenance Record</Button> : null}
-            {canEditSchedules ? <Button variant="secondary" onClick={() => openScheduleModal()}>New Schedule</Button> : null}
+    <SecureWorkspaceLayout title="Maintenance Desk" subtitle="ICT Security Hub">
+      <div className="secure-registry-page">
+        <div className="service-desk-secure-head">
+          <div>
+            <h2>Maintenance Records</h2>
+            <p>View completed and in-progress maintenance tasks, and manage upcoming preventive schedules.</p>
           </div>
-        )}
-      >
-        <MaintenanceFilters
-          filters={maintenance.filters}
-          assets={maintenance.lookups.assets}
-          onChange={maintenance.updateFilter}
-        />
-      </Panel>
+          <div className="service-desk-secure-actions">
+            <Button variant="secondary" onClick={() => maintenance.refresh()}>Refresh</Button>
+            {canManageMaintenance ? <Button onClick={() => openRecordModal()}>+ New Maintenance</Button> : null}
+            {canEditSchedules ? <Button variant="secondary" onClick={() => openScheduleModal()}>+ Create Schedule</Button> : null}
+          </div>
+        </div>
 
-      {maintenance.error ? (
-        <ErrorState title="Maintenance data unavailable" description={maintenance.error} onRetry={() => maintenance.refresh()} />
-      ) : null}
-      {actionError ? <ErrorState title="Maintenance action failed" description={actionError} /> : null}
+        <div className="secure-tab-row">
+          <button type="button" className={activeTab === 'records' ? 'active' : ''} onClick={() => setActiveTab('records')}>
+            Records
+          </button>
+          <button type="button" className={activeTab === 'schedules' ? 'active' : ''} onClick={() => setActiveTab('schedules')}>
+            Schedules
+          </button>
+        </div>
 
-      <div className="maintenance-layout">
-        <Panel title="Maintenance Records">
-          {maintenance.isLoading ? (
-            <LoadingState description="Loading maintenance records..." />
+        <div className="secure-filter-bar">
+          {activeTab === 'records' ? (
+            <MaintenanceFilters
+              filters={maintenance.filters}
+              assets={maintenance.lookups.assets}
+              onChange={maintenance.updateFilter}
+            />
           ) : (
+            <ScheduleFilters
+              filters={maintenance.scheduleFilters}
+              assets={maintenance.lookups.assets}
+              onChange={maintenance.updateScheduleFilter}
+            />
+          )}
+        </div>
+
+        {maintenance.error ? (
+          <ErrorState title="Maintenance data unavailable" description={maintenance.error} onRetry={() => maintenance.refresh()} />
+        ) : null}
+        {actionError ? <ErrorState title="Maintenance action failed" description={actionError} /> : null}
+
+        <section className="secure-data-panel">
+          {maintenance.isLoading ? (
+            <LoadingState variant="table" description="Loading maintenance workspace..." />
+          ) : activeTab === 'records' ? (
             <MaintenanceList
               records={maintenance.records}
               canManage={canManageMaintenance}
@@ -143,20 +152,6 @@ export function MaintenancePage() {
                 }
               }}
             />
-          )}
-        </Panel>
-
-        <Panel
-          title="Preventive Schedules"
-          actions={canEditSchedules ? <Button variant="secondary" size="sm" onClick={() => openScheduleModal()}>Add Schedule</Button> : null}
-        >
-          <ScheduleFilters
-            filters={maintenance.scheduleFilters}
-            assets={maintenance.lookups.assets}
-            onChange={maintenance.updateScheduleFilter}
-          />
-          {maintenance.isLoading ? (
-            <LoadingState description="Loading maintenance schedules..." />
           ) : (
             <ScheduleList
               schedules={maintenance.schedules}
@@ -164,11 +159,7 @@ export function MaintenancePage() {
               onEdit={openScheduleModal}
             />
           )}
-        </Panel>
-      </div>
-
-      <div className="ui-inline-actions">
-        <a href="/maintenance"><Button variant="secondary">Refresh maintenance</Button></a>
+        </section>
       </div>
 
       <MaintenanceFormModal
@@ -191,6 +182,6 @@ export function MaintenancePage() {
         onSubmit={handleScheduleSubmit}
         isSubmitting={maintenance.isSubmitting}
       />
-    </div>
+    </SecureWorkspaceLayout>
   );
 }

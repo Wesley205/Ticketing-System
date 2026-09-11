@@ -7,13 +7,22 @@ export function AssetList({
   assets = [],
   canManage = false,
   canDelete = false,
+  onCreate,
   onEdit,
   onAssign,
   onReturn,
   onDelete,
 }) {
   if (!assets.length) {
-    return <EmptyState title="No assets found." description="Adjust your filters or register a new asset." />;
+    return (
+      <EmptyState
+        variant={canManage ? 'assets' : 'search'}
+        title={canManage ? 'No assets registered' : 'No assets found.'}
+        description={canManage ? 'Register your first asset to get started.' : 'Adjust your filters or request access to the asset registry.'}
+        actionLabel={canManage ? 'Register Asset' : ''}
+        onAction={canManage ? onCreate : undefined}
+      />
+    );
   }
 
   return (
@@ -54,24 +63,24 @@ export function AssetList({
           key: 'actions',
           label: 'Actions',
           render: (asset) => (
-            <div className="ui-inline-actions">
+            <div className="secure-row-actions">
+              <Link className="secure-action-button" to={`/assets/${asset.asset_id}`}>Actions</Link>
               {canManage ? (
                 <>
-                  <button type="button" className="ticket-link-button" onClick={() => onEdit(asset)}>Edit</button>
-                  <button type="button" className="ticket-link-button" onClick={() => onAssign(asset)}>
+                  <button type="button" onClick={() => onEdit(asset)}>Edit</button>
+                  <button type="button" onClick={() => onAssign(asset)}>
                     {asset.assigned_to ? 'Reassign' : 'Assign'}
                   </button>
                   {asset.assigned_to ? (
-                    <button type="button" className="ticket-link-button" onClick={() => onReturn(asset)}>Return</button>
+                    <button type="button" onClick={() => onReturn(asset)}>Return</button>
                   ) : null}
                 </>
               ) : null}
               {canDelete ? (
-                <button type="button" className="ticket-link-button" onClick={() => onDelete(asset)}>
+                <button type="button" onClick={() => onDelete(asset)}>
                   Delete
                 </button>
               ) : null}
-              <Link to={`/assets/${asset.asset_id}`}>Open</Link>
             </div>
           ),
         },
