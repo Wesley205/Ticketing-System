@@ -30,36 +30,29 @@ export function ActivationPage() {
 
   return (
     <div className="auth-screen">
-      <section className="auth-screen-hero">
-        <p className="react-eyebrow">Invitation-only access</p>
-        <h1>Activate your approved account.</h1>
-        <p className="react-copy">
-          Employees and approved temporary users must use an administrator-issued invitation.
-        </p>
-        <div className="ui-inline-actions">
-          <span className="ui-chip">Controlled onboarding</span>
-          <span className="ui-chip">Role-approved access</span>
-          <span className="ui-chip">Lifecycle enforced</span>
-        </div>
-      </section>
-
-      <section className="auth-screen-panel">
-        <div className="auth-card-react">
-          <div className="auth-card-brand">
-            <span className="react-brand-mark">NSC</span>
-            <div>
-              <strong>NSC ICT Service Desk</strong>
-              <small>Invitation activation</small>
-            </div>
+      <div className="auth-layout-card">
+        <section className="auth-brand-panel" aria-label="NSC ICT secure access gateway">
+          <div className="auth-brand-grid" aria-hidden="true" />
+          <div className="auth-logo-lockup">
+            <span className="auth-logo-mark">N</span>
+            <span>NSC ICT</span>
           </div>
-          <div className="ui-stack-md">
-            <div>
-              <h2 className="auth-card-title">Accept invitation</h2>
-              <p className="react-copy">
-                Password rules and invitation validity remain enforced by the existing backend APIs.
-              </p>
-            </div>
+          <div className="auth-brand-copy">
+            <h1>Invitation Activation</h1>
+            <p>Activate your official NSC account using your administrative token.</p>
+          </div>
+          <div className="auth-security-meta" aria-label="Security classification">
+            <span>Gateway Secure</span>
+            <span>Level 4 Security Req</span>
+          </div>
+        </section>
 
+        <section className="auth-form-panel">
+          <div className="auth-card-react">
+            <div className="auth-form-heading">
+              <h2 className="auth-card-title">Activate Invitation</h2>
+              <p>Create your account credentials from an administrator-issued activation link.</p>
+            </div>
             <InvitationForm
               onSubmit={handleSubmit}
               errorMessage={errorMessage}
@@ -67,12 +60,14 @@ export function ActivationPage() {
               initialToken={initialToken}
             />
 
-            <p className="auth-card-footer">
-              Already have access? <Link to="/login">Return to sign in</Link>.
-            </p>
+            <div className="auth-card-footer">
+              <p>
+                Already have access? <Link to="/login">Return to sign in</Link>
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }

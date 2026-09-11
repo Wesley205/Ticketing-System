@@ -3,11 +3,13 @@ import { AppShell } from '../components/layout/AppShell.jsx';
 import { LoadingState } from '../components/feedback/LoadingState.jsx';
 import { FoundationShowcase } from '../components/layout/FoundationShowcase.jsx';
 import { GuestRoute, ProtectedRoute } from '../features/auth/components/AuthGate.jsx';
+import { AccountHelpPage } from '../features/auth/pages/AccountHelpPage.jsx';
 import { ActivationPage } from '../features/auth/pages/ActivationPage.jsx';
 import { AboutPage } from '../features/info/pages/AboutPage.jsx';
 import { AuditLogsPage } from '../features/audit-logs/pages/AuditLogsPage.jsx';
 import { ForbiddenPage } from '../features/auth/pages/ForbiddenPage.jsx';
 import { LoginPage } from '../features/auth/pages/LoginPage.jsx';
+import { NotFoundPage } from '../features/auth/pages/NotFoundPage.jsx';
 import { UnauthorizedPage } from '../features/auth/pages/UnauthorizedPage.jsx';
 import { AssetDetailPage } from '../features/assets/pages/AssetDetailPage.jsx';
 import { AssetsPage } from '../features/assets/pages/AssetsPage.jsx';
@@ -292,6 +294,7 @@ export function AppRouter() {
         />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
         <Route path="/forbidden" element={<ForbiddenPage />} />
+        <Route path="/help" element={<AccountHelpPage />} />
         {protectedRoutes.map((route) => (
           <Route
             key={route.path}
@@ -341,7 +344,7 @@ export function AppRouter() {
             </ProtectedRoute>
           )}
         />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );

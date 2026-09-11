@@ -1,29 +1,35 @@
-import { Link, useLocation } from 'react-router-dom';
-import { Button } from '../../../components/forms/Button.jsx';
+import { Link } from 'react-router-dom';
+
+function ShieldIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 3 5 6v5c0 5 3 8 7 10 4-2 7-5 7-10V6z" />
+      <path d="M12 8v5" />
+      <path d="M12 16h.01" />
+    </svg>
+  );
+}
 
 export function ForbiddenPage() {
-  const location = useLocation();
-
   return (
-    <div className="ui-stack-lg auth-guard-screen">
-      <section className="react-panel">
-        <p className="react-eyebrow">403</p>
-        <h2 className="auth-card-title">Access denied</h2>
-        <p className="react-copy">
-          Your account is signed in, but it does not currently have permission to open this React route.
-        </p>
-        {location.state?.from ? (
-          <p className="react-copy">Requested route: {location.state.from}</p>
-        ) : null}
-        <div className="ui-inline-actions">
-          <Link to="/dashboard">
-            <Button>Go to dashboard</Button>
+    <main className="auth-state-screen">
+      <section className="auth-state-card auth-state-card-compact auth-state-card-forbidden" aria-labelledby="forbidden-title">
+        <span className="auth-state-icon auth-state-icon-danger">
+          <ShieldIcon />
+        </span>
+        <h1 id="forbidden-title">You don't have access to this page</h1>
+        <p>You don't have the right permissions to view this page. Please sign in with the correct account or contact your administrator for help.</p>
+        <div className="auth-state-actions">
+          <Link className="auth-state-button auth-state-button-primary" to="/dashboard">
+            Go to Dashboard
           </Link>
-          <Link to="/dashboard">
-            <Button variant="secondary">Return to dashboard</Button>
-          </Link>
+          <div className="auth-state-links">
+            <Link to="/help">Get Help</Link>
+            <span aria-hidden="true">&bull;</span>
+            <Link to="/help">Contact Admin</Link>
+          </div>
         </div>
       </section>
-    </div>
+    </main>
   );
 }
