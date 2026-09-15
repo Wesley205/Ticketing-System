@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1 --open /react-shell.html",
+    "dev": "vite --host 127.0.0.1 --open /",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --test src/test/lib.test.js src/test/auth-service.test.js src/test/service-requests.test.js src/test/technician.test.js src/test/assets.test.js src/test/maintenance.test.js src/test/staff.test.js src/test/departments.test.js src/test/knowledge-base.test.js src/test/dashboard.test.js src/test/reports.test.js src/test/audit-logs.test.js src/test/notifications.test.js",

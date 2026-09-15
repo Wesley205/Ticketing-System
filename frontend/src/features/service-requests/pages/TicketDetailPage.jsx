@@ -6,8 +6,7 @@ import { SecureWorkspaceLayout } from '../../../components/layout/SecureWorkspac
 import { useToast } from '../../../hooks/useToast.js';
 import { useAuth } from '../../auth/hooks/useAuth.js';
 import { TicketAssignmentModal } from '../components/TicketAssignmentModal.jsx';
-import { OperationalTicketDetail } from '../components/OperationalTicketDetail.jsx';
-import { RequesterTicketDetail } from '../components/RequesterTicketDetail.jsx';
+import { ServiceRequestFullDetail } from '../components/ServiceRequestFullDetail.jsx';
 import { useTicketDetail } from '../hooks/useTicketDetail.js';
 import { assignTicket as saveAssignment, isOperationalServiceDeskRole } from '../services/service-requests-api.js';
 
@@ -41,10 +40,13 @@ export function TicketDetailPage() {
         <ErrorState title="Ticket detail unavailable" description={detailState.error} onRetry={detailState.refresh} />
       ) : detailState.isLoading ? (
         <LoadingState variant="detail" description="Loading ticket detail..." />
-      ) : isOperational ? (
-        <OperationalTicketDetail
+      ) : detailState.ticket ? (
+        <ServiceRequestFullDetail
           ticket={detailState.ticket}
+          suggestions={detailState.suggestions}
+          assets={detailState.assets}
           isAdmin={auth.user?.role === 'admin'}
+          isOperational={isOperational}
           onAssignOpen={() => setAssignmentOpen(true)}
           onStatusSubmit={async (payload) => {
             await detailState.updateStatus(payload);
@@ -52,22 +54,21 @@ export function TicketDetailPage() {
           }}
           onCommentSubmit={async (payload) => {
             await detailState.addComment(payload);
-            showToast({ tone: 'success', title: 'Internal note posted' });
+            showToast({ tone: 'success', title: payload.is_internal ? 'Internal note posted' : 'Reply posted' });
           }}
-        />
-      ) : (
-        <RequesterTicketDetail
-          ticket={detailState.ticket}
-          onStatusSubmit={async (payload) => {
-            await detailState.updateStatus(payload);
-            showToast({ tone: 'success', title: 'Request updated' });
-          }}
-          onCommentSubmit={async (payload) => {
-            await detailState.addComment(payload);
-            showToast({ tone: 'success', title: 'Message sent' });
+          onAttachmentUpload={async (payload) => {
+            await detailState.uploadAttachment(payload);
+            showToast({ tone: 'success', title: 'Attachment uploaded' });
           }}
           onAttachmentDownload={handleDownloadAttachment}
+          onAssetSave={isOperational ? async (payload) => {
+            await detailState.updateAsset(payload);
+            showToast({ tone: 'success', title: 'Asset link updated' });
+          } : null}
+          isMutating={detailState.isMutating}
         />
+      ) : (
+        <ErrorState variant="not-found" title="Ticket not found" description="This service request is no longer available or is outside your authorized scope." />
       )}
 
       <TicketAssignmentModal

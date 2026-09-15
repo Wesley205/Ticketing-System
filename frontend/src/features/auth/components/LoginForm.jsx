@@ -20,7 +20,7 @@ export function LoginForm({ onSubmit, errorMessage, isSubmitting = false, defaul
     <form className="ui-stack-md auth-form" onSubmit={handleSubmit}>
       {hasError ? (
         <div className="auth-inline-error" role="alert">
-          <span aria-hidden="true">×</span>
+          <span aria-hidden="true">!</span>
           <strong>Invalid credentials. Please verify your email and password.</strong>
         </div>
       ) : null}
@@ -46,7 +46,7 @@ export function LoginForm({ onSubmit, errorMessage, isSubmitting = false, defaul
             className={`ui-input auth-input ${hasError ? 'auth-input-error' : ''}`}
             type={showPassword ? 'text' : 'password'}
             autoComplete="current-password"
-            placeholder="••••••••••••"
+            placeholder="Enter password"
             aria-invalid={hasError ? 'true' : undefined}
             required
             value={password}

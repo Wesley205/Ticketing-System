@@ -1,6 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from '../components/layout/AppShell.jsx';
-import { LoadingState } from '../components/feedback/LoadingState.jsx';
 import { FoundationShowcase } from '../components/layout/FoundationShowcase.jsx';
 import { GuestRoute, ProtectedRoute } from '../features/auth/components/AuthGate.jsx';
 import { AccountHelpPage } from '../features/auth/pages/AccountHelpPage.jsx';
@@ -13,7 +12,6 @@ import { NotFoundPage } from '../features/auth/pages/NotFoundPage.jsx';
 import { UnauthorizedPage } from '../features/auth/pages/UnauthorizedPage.jsx';
 import { AssetDetailPage } from '../features/assets/pages/AssetDetailPage.jsx';
 import { AssetsPage } from '../features/assets/pages/AssetsPage.jsx';
-import { useAuth } from '../features/auth/hooks/useAuth.js';
 import { DashboardPage } from '../features/dashboard/pages/DashboardPage.jsx';
 import { DepartmentsPage } from '../features/departments/pages/DepartmentsPage.jsx';
 import { ReportsPage } from '../features/reports/pages/ReportsPage.jsx';
@@ -99,20 +97,6 @@ const protectedRoutes = [
     description: 'System information shell placeholder.',
   },
 ];
-
-function AuthenticatedLanding() {
-  const auth = useAuth();
-
-  if (!auth.isReady) {
-    return <LoadingState variant="overlay" title="Loading session..." description="Checking for an active authenticated session." />;
-  }
-
-  if (!auth.isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <Navigate to="/dashboard" replace />;
-}
 
 function RoutePlaceholder({ label, description }) {
   return (
@@ -211,7 +195,7 @@ export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<AuthenticatedLanding />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route
           path="/login"
           element={(

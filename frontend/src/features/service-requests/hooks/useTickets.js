@@ -90,6 +90,11 @@ export function useTickets({ role, pageSize = 8 } = {}) {
     setPage(1);
   }
 
+  function clearFilters() {
+    setFilters(DEFAULT_FILTERS);
+    setPage(1);
+  }
+
   async function submitCreateTicket(payload) {
     setIsSubmitting(true);
     try {
@@ -113,6 +118,7 @@ export function useTickets({ role, pageSize = 8 } = {}) {
     submitCreateTicket,
     tickets: pagination.items,
     totalTickets: searchedTickets.length,
+    clearFilters,
     updateFilter,
   };
 }

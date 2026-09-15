@@ -32,17 +32,18 @@ export function LoginPage() {
     <div className="auth-screen">
       <div className="auth-layout-card">
         <section className="auth-brand-panel" aria-label="NSC ICT secure access gateway">
+          <div className="auth-brand-grid" aria-hidden="true" />
           <div className="auth-logo-lockup">
             <span className="auth-logo-mark">N</span>
-            <span>NSC ICT</span>
+            <span>NSC Secure</span>
           </div>
           <div className="auth-brand-copy">
-            <h1>ICT Service Management</h1>
-            <p>National Security Council secure access gateway.</p>
+            <h1>ICT Service Hub</h1>
+            <p>Secure access for ticketing, assets, maintenance, and operational support.</p>
           </div>
           <div className="auth-security-meta" aria-label="Security classification">
-            <span>Gateway Secure</span>
-            <span>Level 4 Security Req</span>
+            <span>Secure Endpoint</span>
+            <span>Internal Access Only</span>
           </div>
         </section>
 

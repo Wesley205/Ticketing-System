@@ -26,6 +26,7 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true,
       rollupOptions: {
         input: {
+          app: path.resolve(process.cwd(), 'index.html'),
           shell: path.resolve(process.cwd(), 'react-shell.html'),
         },
       },
