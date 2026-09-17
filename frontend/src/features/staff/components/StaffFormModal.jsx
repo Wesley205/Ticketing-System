@@ -42,6 +42,14 @@ export function StaffFormModal({
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  function selectSponsorOfficer(officer) {
+    setForm((current) => ({
+      ...current,
+      sponsor_name: officer.full_name || officer.username || '',
+      supervisor_user_id: officer.user_id || '',
+    }));
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
 
@@ -65,8 +73,8 @@ export function StaffFormModal({
       setErrorMessage('Temporary users require an account expiration date.');
       return;
     }
-    if (isTemporaryUser(form.user_type) && !form.sponsor_name.trim()) {
-      setErrorMessage('Temporary users require a sponsor or supervisor.');
+    if (isTemporaryUser(form.user_type) && !form.supervisor_user_id) {
+      setErrorMessage('Select an ICT officer sponsor or supervisor.');
       return;
     }
 
@@ -167,14 +175,31 @@ export function StaffFormModal({
           </FormField>
         </div>
 
-        <div className="ui-grid-2">
-          <FormField label="Sponsor Or Supervisor" htmlFor="staff-sponsor">
-            <input id="staff-sponsor" className="ui-input" value={form.sponsor_name} onChange={(event) => updateField('sponsor_name', event.target.value)} />
+        {isTemporaryUser(form.user_type) ? (
+          <FormField label="ICT Officer Sponsor" htmlFor="staff-sponsor-officer" error={errorMessage}>
+            <section id="staff-sponsor-officer" className="assignment-technician-list" aria-label="ICT officer sponsors">
+              {(lookups.ict_officers || []).map((officer) => {
+                const selected = String(form.supervisor_user_id) === String(officer.user_id);
+                return (
+                  <button
+                    type="button"
+                    key={officer.user_id}
+                    className={selected ? 'assignment-technician-option active' : 'assignment-technician-option'}
+                    onClick={() => selectSponsorOfficer(officer)}
+                  >
+                    <span aria-hidden="true" />
+                    <strong>{officer.full_name || officer.username}</strong>
+                    <small>{officer.email || 'ICT officer'}</small>
+                    <b>ICT Officer</b>
+                  </button>
+                );
+              })}
+              {!(lookups.ict_officers || []).length ? (
+                <p className="react-copy">No ICT officers are available for sponsorship.</p>
+              ) : null}
+            </section>
           </FormField>
-          <FormField label="Supervisor User ID" htmlFor="staff-supervisor-id">
-            <input id="staff-supervisor-id" className="ui-input" value={form.supervisor_user_id} onChange={(event) => updateField('supervisor_user_id', event.target.value)} />
-          </FormField>
-        </div>
+        ) : null}
 
         <button id="staff-form-submit" type="submit" hidden />
       </form>

@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   buildInvitationListQuery,
   buildStaffListQuery,
+  filterIctOfficers,
   filterStaffBySearch,
   paginateStaff,
 } from '../features/staff/services/staff-api.js';
@@ -36,6 +37,16 @@ test('staff search matches name, email, and department text', () => {
 
   assert.equal(result.length, 1);
   assert.equal(result[0].user_id, 2);
+});
+
+test('staff helpers derive ICT officers for temporary account sponsorship', () => {
+  const officers = filterIctOfficers([
+    { user_id: 1, role: 'staff' },
+    { user_id: 2, role: 'ict_officer' },
+    { user_id: 3, role: 'admin' },
+  ]);
+
+  assert.deepEqual(officers, [{ user_id: 2, role: 'ict_officer' }]);
 });
 
 test('staff pagination stays deterministic for array-backed responses', () => {

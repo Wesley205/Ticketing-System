@@ -12,6 +12,7 @@ async function main() {
 
   try {
     const { KnowledgeBasePage } = await vite.ssrLoadModule('/src/features/knowledge-base/pages/KnowledgeBasePage.jsx');
+    const { ArticleDetail } = await vite.ssrLoadModule('/src/features/knowledge-base/components/ArticleDetail.jsx');
     const { AuthContext } = await vite.ssrLoadModule('/src/features/auth/hooks/useAuth.js');
     const { ToastProvider } = await vite.ssrLoadModule('/src/components/feedback/ToastProvider.jsx');
 
@@ -53,6 +54,16 @@ async function main() {
     assert.match(html, /Standard Operating Procedures/i);
     assert.match(html, /Loading knowledge-base articles/i);
     assert.doesNotMatch(html, /Edit Library/i);
+
+    const withArticles = renderToStaticMarkup(
+      createElement(ArticleDetail, { article: null, hasArticles: true }),
+    );
+    const withoutArticles = renderToStaticMarkup(
+      createElement(ArticleDetail, { article: null, hasArticles: false }),
+    );
+
+    assert.doesNotMatch(withArticles, /Select an article/i);
+    assert.match(withoutArticles, /Select an article/i);
     console.log('Knowledge Base page smoke check passed.');
   } finally {
     await vite.close();

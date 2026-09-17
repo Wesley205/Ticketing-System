@@ -7,7 +7,6 @@ import { getRoleLabel, getUserTypeLabel, isTemporaryUser } from '../services/sta
 export function StaffList({
   rows = [],
   canManage = false,
-  onSelect,
   onEdit,
   onToggleActive,
   onExtend,
@@ -23,10 +22,10 @@ export function StaffList({
           key: 'full_name',
           label: 'Name & Title',
           render: (row) => (
-            <button type="button" className="ticket-link-button" onClick={() => onSelect(row)}>
+            <div className="staff-name-cell">
               <strong>{row.full_name}</strong>
               <small className="maintenance-subtext">{row.username || row.email || '-'}</small>
-            </button>
+            </div>
           ),
         },
         { key: 'staff_code', label: 'Staff ID', render: (row) => row.staff_code || `NSC-${String(row.user_id).padStart(4, '0')}` },
@@ -60,7 +59,6 @@ export function StaffList({
           label: 'Actions',
           render: (row) => (
             <div className="secure-row-actions">
-              <button type="button" onClick={() => onSelect(row)}>Open</button>
               {canManage ? (
                 <>
                   <button type="button" onClick={() => onEdit(row)}>Edit</button>

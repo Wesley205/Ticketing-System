@@ -73,10 +73,10 @@ try {
     '/service-requests/7'
   );
 
-  assert.match(listHtml, /ICT Service Desk Workspace/i);
-  assert.match(listHtml, /Service Desk Operations/i);
+  assert.match(listHtml, /Service requests/i);
   assert.match(listHtml, /Operational Queue/i);
   assert.match(listHtml, /New Ticket/i);
+  assert.doesNotMatch(listHtml, /Open full details/i);
   assert.match(operationalDetailHtml, /Internal Notes/i);
   assert.match(operationalDetailHtml, /SLA Status/i);
   assert.match(operationalDetailHtml, /Admin Override Controls/i);

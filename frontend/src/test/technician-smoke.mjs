@@ -94,7 +94,7 @@ try {
   assert.match(dashboardHtml, /Technician Dashboard/i);
   assert.match(dashboardHtml, /Next Actionable Work/i);
   assert.match(dashboardHtml, /Priority queue/i);
-  assert.match(dashboardHtml, /Maintenance Due Today/i);
+  assert.doesNotMatch(dashboardHtml, /Maintenance Due Today/i);
   assert.match(dashboardHtml, /Assigned Work/i);
   assert.match(dashboardHtml, /Log out/i);
   assert.match(assignedWorkHtml, /Technician Work Center/i);

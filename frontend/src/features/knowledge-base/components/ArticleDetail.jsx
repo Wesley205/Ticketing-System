@@ -16,6 +16,7 @@ export function ArticleDetail({
   error = '',
   canManage = false,
   canFeedback = false,
+  hasArticles = false,
   isSubmitting = false,
   onEdit,
   onFeedback,
@@ -29,6 +30,7 @@ export function ArticleDetail({
   }
 
   if (!article) {
+    if (hasArticles) return null;
     return <EmptyState variant="search" title="Select an article" description="Choose a knowledge-base article to view details, feedback, and revision history." />;
   }
 

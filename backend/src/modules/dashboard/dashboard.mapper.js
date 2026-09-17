@@ -34,6 +34,10 @@ function mapDashboardStats({ filters, ticketMetrics, assetMetrics, maintenanceMe
     resolved_requests: safeNumber(ticketMetrics.resolved_requests),
     overdue_requests: safeNumber(ticketMetrics.overdue_requests),
     escalated_requests: safeNumber(ticketMetrics.escalated_requests),
+    response_sla_met: safeNumber(ticketMetrics.response_sla_met),
+    response_sla_measured: safeNumber(ticketMetrics.response_sla_measured),
+    resolution_sla_met: safeNumber(ticketMetrics.resolution_sla_met),
+    resolution_sla_measured: safeNumber(ticketMetrics.resolution_sla_measured),
     avg_resolution_hours: safeNullableNumber(ticketMetrics.avg_resolution_hours),
     response_sla_met_rate: safeNumber(ticketMetrics.response_sla_measured)
       ? safeNumber(ticketMetrics.response_sla_met) / safeNumber(ticketMetrics.response_sla_measured)

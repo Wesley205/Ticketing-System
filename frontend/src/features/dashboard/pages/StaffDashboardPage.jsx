@@ -56,7 +56,6 @@ export function StaffDashboardPage({ user }) {
       {isLoading ? <LoadingState variant="table" description="Loading staff dashboard..." /> : null}
 
       <section className="secure-dashboard-action-grid">
-        <SecureDashboardActionCard title="Request help" description="Submit a new request for ICT support." actionLabel="Open form" to="/service-requests" />
         <SecureDashboardActionCard title="Track requests" description="See the status of your open and recent requests." actionLabel="View requests" to="/service-requests?mine=1" />
         <SecureDashboardActionCard title={`Confirmations - ${confirmationCount}`} description="Respond to required actions and approvals." actionLabel="Review" to="/service-requests?mine=1" tone="warning" />
         <SecureDashboardActionCard title="Knowledge" description="Find guides and policies for common tasks." actionLabel="Browse guides" to="/knowledge-base" />

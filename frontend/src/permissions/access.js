@@ -138,7 +138,7 @@ export function canAccessRoute(profile, route) {
 
 export function getDefaultAuthenticatedRoute(profile) {
   if (profile?.role === ROLES.TECHNICIAN || profile?.primary_portal === 'technician') {
-    return hasPermission(profile, 'can_access_technician_portal') ? '/technician/assigned-work' : '/dashboard';
+    return hasPermission(profile, 'can_access_technician_portal') ? '/technician' : '/dashboard';
   }
   if (hasPermission(profile, 'can_access_dashboard')) return '/dashboard';
   return '/login';
@@ -146,38 +146,38 @@ export function getDefaultAuthenticatedRoute(profile) {
 
 export const SECURE_WORKSPACE_LINKS = Object.freeze({
   staff: [
-    { to: '/dashboard', label: 'Dashboard', icon: 'grid' },
+    { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
     { to: '/service-requests?mine=1', label: 'My requests', icon: 'ticket' },
     { to: '/knowledge-base', label: 'Knowledge base', icon: 'book' },
   ],
   technician: [
-    { to: '/dashboard', label: 'Dashboard', icon: 'grid' },
+    { to: '/technician', label: 'Dashboard', icon: 'dashboard' },
     { to: '/technician/assigned-work', label: 'Assigned Work', icon: 'ticket' },
     { to: '/knowledge-base', label: 'Knowledge Base', icon: 'book' },
-    { to: '/assets', label: 'Assets', icon: 'grid' },
-    { to: '/maintenance', label: 'Maintenance', icon: 'ticket' },
+    { to: '/assets', label: 'Assets', icon: 'asset' },
+    { to: '/maintenance', label: 'Maintenance', icon: 'wrench' },
   ],
   ict_officer: [
-    { to: '/dashboard', label: 'Dashboard', icon: 'grid' },
+    { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
     { to: '/service-requests', label: 'Service Desk', icon: 'ticket' },
-    { to: '/assets', label: 'Assets', icon: 'grid' },
-    { to: '/maintenance', label: 'Maintenance', icon: 'ticket' },
-    { to: '/staff', label: 'Staff Directory', icon: 'book' },
-    { to: '/departments', label: 'Departments', icon: 'grid' },
+    { to: '/assets', label: 'Assets', icon: 'asset' },
+    { to: '/maintenance', label: 'Maintenance', icon: 'wrench' },
+    { to: '/staff', label: 'Staff Directory', icon: 'users' },
+    { to: '/departments', label: 'Departments', icon: 'building' },
     { to: '/knowledge-base', label: 'Knowledge Base', icon: 'book' },
-    { to: '/reports', label: 'Reports', icon: 'ticket' },
-    { to: '/audit-logs', label: 'Audit Logs', icon: 'info' },
+    { to: '/reports', label: 'Reports', icon: 'chart' },
+    { to: '/audit-logs', label: 'Audit Logs', icon: 'shield' },
   ],
   admin: [
-    { to: '/dashboard', label: 'Dashboard', icon: 'grid' },
+    { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
     { to: '/service-requests', label: 'Service Desk', icon: 'ticket' },
-    { to: '/assets', label: 'Assets', icon: 'grid' },
-    { to: '/maintenance', label: 'Maintenance', icon: 'ticket' },
-    { to: '/staff', label: 'Staff & Access', icon: 'book' },
-    { to: '/departments', label: 'Departments', icon: 'grid' },
+    { to: '/assets', label: 'Assets', icon: 'asset' },
+    { to: '/maintenance', label: 'Maintenance', icon: 'wrench' },
+    { to: '/staff', label: 'Staff & Access', icon: 'users' },
+    { to: '/departments', label: 'Departments', icon: 'building' },
     { to: '/knowledge-base', label: 'Knowledge Base', icon: 'book' },
-    { to: '/reports', label: 'Reports', icon: 'ticket' },
-    { to: '/audit-logs', label: 'Audit Logs', icon: 'info' },
+    { to: '/reports', label: 'Reports', icon: 'chart' },
+    { to: '/audit-logs', label: 'Audit Logs', icon: 'shield' },
   ],
 });
 

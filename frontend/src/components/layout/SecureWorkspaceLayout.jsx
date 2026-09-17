@@ -94,7 +94,8 @@ export function SecureWorkspaceLayout({
               className={`technician-dashboard-notification-link${location.pathname === '/notifications' ? ' active' : ''}`}
               aria-label="Open notifications"
             >
-              <span className="technician-dashboard-notification" aria-hidden="true">3</span>
+              <span className="technician-dashboard-notification-icon" aria-hidden="true" />
+              <span className="technician-dashboard-notification-count" aria-hidden="true">3</span>
             </Link>
             <span className="technician-dashboard-user-pill">
               <span aria-hidden="true" />

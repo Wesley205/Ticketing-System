@@ -5,6 +5,7 @@ import {
   createStaff,
   fetchDepartments,
   fetchStaff,
+  filterIctOfficers,
   filterStaffBySearch,
   paginateStaff,
 } from '../services/staff-api.js';
@@ -27,19 +28,25 @@ export function useStaff({ pageSize = 8 } = {}) {
     roles: USER_ROLES,
     user_types: USER_TYPES,
     departments: [],
+    ict_officers: [],
   });
 
   async function loadLookups() {
     try {
-      const departments = await fetchDepartments().catch(() => []);
+      const [departments, staffRows] = await Promise.all([
+        fetchDepartments().catch(() => []),
+        fetchStaff({ role: 'ict_officer' }).catch(() => []),
+      ]);
       setLookups((current) => ({
         ...current,
         departments: Array.isArray(departments) ? departments : [],
+        ict_officers: filterIctOfficers(Array.isArray(staffRows) ? staffRows : []),
       }));
     } catch {
       setLookups((current) => ({
         ...current,
         departments: [],
+        ict_officers: [],
       }));
     }
   }

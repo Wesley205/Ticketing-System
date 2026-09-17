@@ -5,10 +5,9 @@ import { Pagination } from '../../../components/tables/Pagination.jsx';
 import { PriorityBadge } from '../../../components/status/PriorityBadge.jsx';
 import { StatusBadge } from '../../../components/status/StatusBadge.jsx';
 import { formatDateTime } from '../../../lib/formatting.js';
-import { SlaIndicator } from './SlaIndicator.jsx';
 import { ticketId } from './service-request-formatters.js';
 
-function ServiceRequestRow({ ticket, selected, canManageAssignments, onSelect, onAssign }) {
+function ServiceRequestRow({ ticket, onSelect }) {
   const id = ticketId(ticket);
 
   function handleKeyDown(event) {
@@ -20,10 +19,9 @@ function ServiceRequestRow({ ticket, selected, canManageAssignments, onSelect, o
 
   return (
     <article
-      className={`service-request-row ${selected ? 'is-selected' : ''}`}
+      className="service-request-row"
       role="button"
       tabIndex={0}
-      aria-pressed={selected ? 'true' : 'false'}
       onClick={() => onSelect(ticket)}
       onKeyDown={handleKeyDown}
     >
@@ -51,11 +49,6 @@ function ServiceRequestRow({ ticket, selected, canManageAssignments, onSelect, o
       </div>
 
       <div className="service-request-row-actions" onClick={(event) => event.stopPropagation()}>
-        {canManageAssignments && !['Closed', 'Cancelled'].includes(ticket.status) ? (
-          <button type="button" className="ticket-link-button" onClick={() => onAssign(ticket)}>
-            {ticket.assigned_technician_id ? 'Reassign' : 'Assign'}
-          </button>
-        ) : null}
         <Link to={`/service-requests/${ticket.request_id}`}>Open</Link>
       </div>
     </article>
@@ -64,12 +57,9 @@ function ServiceRequestRow({ ticket, selected, canManageAssignments, onSelect, o
 
 export function ServiceRequestQueue({
   tickets = [],
-  selectedTicketId = null,
-  canManageAssignments = false,
   pagination,
   totalTickets = 0,
   onSelect,
-  onAssign,
   onCreate,
   onPrevious,
   onNext,
@@ -104,10 +94,7 @@ export function ServiceRequestQueue({
           <ServiceRequestRow
             key={ticket.request_id}
             ticket={ticket}
-            selected={String(selectedTicketId) === String(ticket.request_id)}
-            canManageAssignments={canManageAssignments}
             onSelect={onSelect}
-            onAssign={onAssign}
           />
         ))}
       </div>

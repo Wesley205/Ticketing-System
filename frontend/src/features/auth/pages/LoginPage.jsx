@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { normalizeApiError } from '../../../lib/error-handling.js';
-import { getDefaultAuthenticatedRoute } from '../../../permissions/access.js';
+import { buildAccessProfile, getDefaultAuthenticatedRoute, normalizeAccessProfile } from '../../../permissions/access.js';
 import { useAuth } from '../hooks/useAuth.js';
 import { LoginForm } from '../components/LoginForm.jsx';
 
@@ -12,13 +12,17 @@ export function LoginPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const returnTo = location.state?.from || getDefaultAuthenticatedRoute(auth.accessProfile);
   async function handleSubmit(credentials) {
     setIsSubmitting(true);
     setErrorMessage('');
 
     try {
-      await auth.login(credentials);
+      const session = await auth.login(credentials);
+      const accessProfile = normalizeAccessProfile(
+        session.user?.access_profile || buildAccessProfile(session.user),
+        session.user
+      );
+      const returnTo = location.state?.from || getDefaultAuthenticatedRoute(accessProfile);
       navigate(returnTo, { replace: true });
     } catch (error) {
       const normalized = normalizeApiError(error, 'Unable to sign in.');

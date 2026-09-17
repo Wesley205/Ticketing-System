@@ -59,6 +59,10 @@ export function paginateStaff(rows = [], page = 1, pageSize = 10) {
   };
 }
 
+export function filterIctOfficers(rows = []) {
+  return rows.filter((row) => row.role === 'ict_officer');
+}
+
 export async function fetchStaff(filters = {}) {
   const query = buildStaffListQuery(filters).toString();
   const suffix = query ? `?${query}` : '';

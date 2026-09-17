@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '../../../components/forms/Button.jsx';
 import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
@@ -10,7 +10,6 @@ import { formatDate } from '../../../lib/formatting.js';
 import { useAuth } from '../../auth/hooks/useAuth.js';
 import { InvitationList } from '../components/InvitationList.jsx';
 import { InvitationModal } from '../components/InvitationModal.jsx';
-import { StaffDetailPanel } from '../components/StaffDetailPanel.jsx';
 import { StaffFormModal } from '../components/StaffFormModal.jsx';
 import { StaffList } from '../components/StaffList.jsx';
 import { useInvitations } from '../hooks/useInvitations.js';
@@ -23,15 +22,9 @@ export function StaffPage() {
   const staffState = useStaff();
   const canManage = auth.accessProfile?.permissions?.can_manage_users === true || auth.user?.role === 'admin';
   const invitationsState = useInvitations({ enabled: canManage || auth.accessProfile?.permissions?.can_create_invitation === true });
-  const [selectedUserId, setSelectedUserId] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [inviteOpen, setInviteOpen] = useState(false);
-
-  const selectedUser = useMemo(
-    () => staffState.staff.find((row) => Number(row.user_id) === Number(selectedUserId)) || staffState.staff[0] || null,
-    [selectedUserId, staffState.staff]
-  );
 
   return (
     <SecureWorkspaceLayout title="Staff & Access Control Hub" subtitle="ICT Service Hub">
@@ -42,11 +35,11 @@ export function StaffPage() {
             <p>Account lifecycle, internal directory visibility, and administrator-issued invitations.</p>
           </div>
           <div className="service-desk-secure-actions">
-            <Button variant="secondary" onClick={() => staffState.loadStaff(staffState.filters)}>Refresh</Button>
+            <Button size="sm" variant="secondary" onClick={() => staffState.loadStaff(staffState.filters)}>Refresh</Button>
             {canManage ? (
               <>
-                <Button variant="secondary" onClick={() => setInviteOpen(true)}>Invite Staff</Button>
-                <Button onClick={() => {
+                <Button size="sm" variant="secondary" onClick={() => setInviteOpen(true)}>Invite Staff</Button>
+                <Button size="sm" onClick={() => {
                   setEditingUser(null);
                   setFormOpen(true);
                 }}
@@ -111,7 +104,6 @@ export function StaffPage() {
               <StaffList
                 rows={staffState.staff}
                 canManage={canManage}
-                onSelect={(row) => setSelectedUserId(row.user_id)}
                 onEdit={(row) => {
                   setEditingUser(row);
                   setFormOpen(true);
@@ -140,24 +132,6 @@ export function StaffPage() {
             </div>
           )}
         </section>
-
-        <StaffDetailPanel
-          user={selectedUser}
-          canManage={canManage}
-          invitations={invitationsState.invitations}
-          onEdit={(row) => {
-            setEditingUser(row);
-            setFormOpen(true);
-          }}
-          onToggleActive={async (row) => {
-            await updateStaffStatus(row.user_id, {
-              is_active: !row.is_active,
-              deactivation_reason: row.is_active ? 'Deactivated during React admin verification' : null,
-            });
-            await staffState.loadStaff(staffState.filters);
-            showToast({ tone: 'success', title: row.is_active ? 'Account deactivated' : 'Account activated' });
-          }}
-        />
       </div>
 
       {canManage ? (
@@ -175,7 +149,7 @@ export function StaffPage() {
                   <option key={status} value={status}>{status}</option>
                 ))}
               </select>
-              <Button variant="secondary" onClick={() => invitationsState.loadInvitations(invitationsState.statusFilter)}>Refresh</Button>
+              <Button size="sm" variant="secondary" onClick={() => invitationsState.loadInvitations(invitationsState.statusFilter)}>Refresh</Button>
             </div>
           )}
         >
@@ -211,7 +185,7 @@ export function StaffPage() {
 
           const created = await staffState.submitCreateStaff(payload);
           showToast({ tone: 'success', title: 'Staff account created' });
-          setSelectedUserId(created.user_id);
+          return created;
         }}
       />
 

@@ -57,6 +57,10 @@ test('dashboard mapper preserves stats response shape', () => {
   assert.equal(mapped.total_requests, 2);
   assert.equal(mapped.total_assets, 4);
   assert.equal(mapped.maintenance_total_cost, 2500);
+  assert.equal(mapped.response_sla_met, 0);
+  assert.equal(mapped.response_sla_measured, 0);
+  assert.equal(mapped.resolution_sla_met, 0);
+  assert.equal(mapped.resolution_sla_measured, 0);
   assert.equal(mapped.response_sla_met_rate, null);
   assert.ok(Array.isArray(mapped.tickets_by_status));
 });

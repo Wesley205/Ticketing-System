@@ -28,13 +28,21 @@ test('dashboard query builder preserves existing backend filter keys only', () =
 test('dashboard stats normalizer returns stable numeric and array values', () => {
   const stats = normalizeDashboardStats({
     total_requests: '4',
+    response_sla_met: '2',
+    response_sla_measured: '3',
     response_sla_met_rate: null,
+    resolution_sla_met: '1',
+    resolution_sla_measured: '2',
     avg_resolution_hours: '2.5',
     tickets_by_status: [{ status: 'New', total: '2' }],
   });
 
   assert.equal(stats.total_requests, 4);
+  assert.equal(stats.response_sla_met, 2);
+  assert.equal(stats.response_sla_measured, 3);
   assert.equal(stats.response_sla_met_rate, null);
+  assert.equal(stats.resolution_sla_met, 1);
+  assert.equal(stats.resolution_sla_measured, 2);
   assert.equal(stats.avg_resolution_hours, 2.5);
   assert.deepEqual(stats.tickets_by_status, [{ status: 'New', total: '2' }]);
   assert.deepEqual(stats.assets_by_status, []);

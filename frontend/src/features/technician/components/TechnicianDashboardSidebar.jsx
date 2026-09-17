@@ -1,13 +1,13 @@
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/forms/Button.jsx';
 import { useAuth } from '../../auth/hooks/useAuth.js';
 
 const links = [
-  { to: '/technician', label: 'Dashboard', icon: 'grid' },
+  { to: '/technician', label: 'Dashboard', icon: 'dashboard' },
   { to: '/technician/assigned-work', label: 'Assigned Work', icon: 'ticket' },
   { to: '/knowledge-base', label: 'Knowledge Base', icon: 'book' },
-  { to: '/assets', label: 'Assets', icon: 'grid' },
-  { to: '/maintenance', label: 'Maintenance', icon: 'ticket' },
+  { to: '/assets', label: 'Assets', icon: 'asset' },
+  { to: '/maintenance', label: 'Maintenance', icon: 'wrench' },
   { to: '/about', label: 'About', icon: 'info' },
 ];
 
@@ -17,7 +17,6 @@ function NavIcon({ type }) {
 
 export function TechnicianDashboardSidebar() {
   const auth = useAuth();
-  const location = useLocation();
   const navigate = useNavigate();
 
   async function handleLogout() {
@@ -42,9 +41,7 @@ export function TechnicianDashboardSidebar() {
               key={link.to}
               to={link.to}
               className={({ isActive }) =>
-                isActive || (link.to === '/technician/assigned-work' && location.pathname === '/service-requests' && location.search.includes('mine=1'))
-                  ? 'technician-dashboard-nav-link active'
-                  : 'technician-dashboard-nav-link'
+                isActive ? 'technician-dashboard-nav-link active' : 'technician-dashboard-nav-link'
               }
             >
               <NavIcon type={link.icon} />

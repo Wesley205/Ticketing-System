@@ -144,7 +144,7 @@ test('guest-route decisions send authenticated users to the default landing rout
   assert.deepEqual(decision, { redirectTo: '/dashboard' });
 });
 
-test('guest-route decisions send technicians to assigned work', () => {
+test('guest-route decisions send technicians to the technician dashboard', () => {
   const decision = resolveGuestRoute({
     isReady: true,
     isAuthenticated: true,
@@ -158,7 +158,7 @@ test('guest-route decisions send technicians to assigned work', () => {
     },
   });
 
-  assert.deepEqual(decision, { redirectTo: '/technician/assigned-work' });
+  assert.deepEqual(decision, { redirectTo: '/technician' });
 });
 
 test('hydrateStoredSession normalizes missing access profile data from legacy storage', () => {

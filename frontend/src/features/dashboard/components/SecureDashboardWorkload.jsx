@@ -32,22 +32,27 @@ export function TechnicianCapacityPanel({ rows = [], capacityLimit = 15 }) {
 }
 
 export function SlaSummaryCards({ stats }) {
+  const responseMeasured = Number(stats?.response_sla_measured || 0);
+  const responseMet = Number(stats?.response_sla_met || 0);
+  const resolutionMeasured = Number(stats?.resolution_sla_measured || 0);
+  const resolutionMet = Number(stats?.resolution_sla_met || 0);
+
   return (
     <div className="secure-dashboard-sla-grid">
       <article>
         <span>{formatPercent(stats?.response_sla_met_rate)}</span>
         <strong>Response SLA</strong>
-        <small>Target: 95% on-time</small>
+        <small>{responseMeasured ? `${responseMet}/${responseMeasured} first responses on time` : 'No measured first responses'}</small>
       </article>
       <article>
         <span>{formatPercent(stats?.resolution_sla_met_rate)}</span>
         <strong>Resolution SLA</strong>
-        <small>Target: 90% on-time</small>
+        <small>{resolutionMeasured ? `${resolutionMet}/${resolutionMeasured} resolutions on time` : 'No measured resolutions'}</small>
       </article>
       <article>
         <span>{formatHours(stats?.avg_resolution_hours)}</span>
         <strong>Avg Resolution Time</strong>
-        <small>Hours</small>
+        <small>{stats?.avg_resolution_hours === null || stats?.avg_resolution_hours === undefined ? 'No resolved tickets' : 'Hours from submission to resolution'}</small>
       </article>
     </div>
   );
