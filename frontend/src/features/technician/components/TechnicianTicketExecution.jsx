@@ -5,12 +5,40 @@ import { PriorityBadge } from '../../../components/status/PriorityBadge.jsx';
 import { StatusBadge } from '../../../components/status/StatusBadge.jsx';
 import { formatDateTime } from '../../../lib/formatting.js';
 
-const statusActions = [
-  { label: 'Accept', status: 'Accepted' },
-  { label: 'Start Work', status: 'In Progress' },
-  { label: 'Wait for User', status: 'Waiting for User' },
-  { label: 'Resolve Ticket', status: 'Resolved', primary: true },
-];
+function buildTechnicianStatusActions(ticket = {}) {
+  const transitions = ticket.permissions?.allowed_status_transitions || ticket.allowed_status_transitions || [];
+  const status = ticket.status || '';
+  const hasTransition = (nextStatus) => transitions.includes(nextStatus);
+
+  if (status === 'Assigned') {
+    return [
+      hasTransition('Accepted') ? { label: 'Accept', status: 'Accepted' } : null,
+      hasTransition('Pending') ? { label: 'Unavailable', status: 'Pending', note: 'Technician marked unavailable for this assigned ticket.' } : null,
+    ].filter(Boolean);
+  }
+
+  if (status === 'Accepted') {
+    return hasTransition('In Progress') ? [{ label: 'Start Work', status: 'In Progress', primary: true }] : [];
+  }
+
+  if (status === 'In Progress') {
+    return [
+      hasTransition('Waiting for User') ? { label: 'Waiting for User', status: 'Waiting for User' } : null,
+      hasTransition('Waiting for Parts') ? { label: 'Waiting for Parts', status: 'Waiting for Parts' } : null,
+      hasTransition('Resolved') ? { label: 'Resolve Ticket', status: 'Resolved', primary: true } : null,
+    ].filter(Boolean);
+  }
+
+  if (status === 'Waiting for User' || status === 'Waiting for Parts') {
+    return hasTransition('In Progress') ? [{ label: 'Resume Work', status: 'In Progress', primary: true }] : [];
+  }
+
+  return transitions.map((nextStatus) => ({
+    label: nextStatus,
+    status: nextStatus,
+  }));
+}
+
 
 function attachmentSize(attachment) {
   const bytes = Number(attachment.file_size_bytes || 0);
@@ -36,10 +64,13 @@ export function TechnicianTicketExecution({
   });
   const [file, setFile] = useState(null);
 
-  async function submitStatus(status) {
+  const statusActions = buildTechnicianStatusActions(ticket);
+
+  async function submitStatus(action) {
+    const status = action.status;
     await onStatusSubmit({
       status,
-      note: note.trim(),
+      note: note.trim() || action.note || '',
       resolution: status === 'Resolved' ? resolution.resolution.trim() : '',
       time_spent_minutes: resolution.time_spent_minutes || undefined,
       root_cause: resolution.root_cause.trim(),
@@ -100,7 +131,7 @@ export function TechnicianTicketExecution({
                   key={action.status}
                   variant={action.primary ? 'primary' : 'secondary'}
                   disabled={isMutating}
-                  onClick={() => submitStatus(action.status)}
+                  onClick={() => submitStatus(action)}
                 >
                   {action.label}
                 </Button>

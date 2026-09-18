@@ -1,6 +1,7 @@
 import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '../forms/Button.jsx';
 import { useAuth } from '../../features/auth/hooks/useAuth.js';
+import { useNotificationCount } from '../../features/notifications/hooks/useNotificationCount.js';
 import { canAccessRoute, getSecureWorkspaceLinks } from '../../permissions/access.js';
 
 function linkPath(to = '') {
@@ -21,6 +22,7 @@ export function SecureWorkspaceLayout({
   const auth = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const notifications = useNotificationCount();
   const sidebarProfile = {
     ...(auth.accessProfile || {}),
     role: auth.accessProfile?.role || auth.user?.role,
@@ -92,10 +94,15 @@ export function SecureWorkspaceLayout({
             <Link
               to="/notifications"
               className={`technician-dashboard-notification-link${location.pathname === '/notifications' ? ' active' : ''}`}
-              aria-label="Open notifications"
+              aria-label={`Open notifications${notifications.unreadCount ? `, ${notifications.unreadCount} unread` : ''}`}
+              title={notifications.unreadCount ? `${notifications.unreadCount} unread notification${notifications.unreadCount === 1 ? '' : 's'}` : 'No unread notifications'}
             >
               <span className="technician-dashboard-notification-icon" aria-hidden="true" />
-              <span className="technician-dashboard-notification-count" aria-hidden="true">3</span>
+              {notifications.unreadCount ? (
+                <span className="technician-dashboard-notification-count" aria-hidden="true">
+                  {notifications.unreadCount > 99 ? '99+' : notifications.unreadCount}
+                </span>
+              ) : null}
             </Link>
             <span className="technician-dashboard-user-pill">
               <span aria-hidden="true" />

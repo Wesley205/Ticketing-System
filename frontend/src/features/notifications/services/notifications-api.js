@@ -43,15 +43,19 @@ export function buildNotificationsQuery(filters = {}) {
 }
 
 export function normalizeNotification(row = {}) {
+  const sourceType = row.source_type || row.entity_type || row.related_record_type || row.payload_json?.source_type || '';
+  const sourceId = row.source_id || row.entity_id || row.related_record_id || row.payload_json?.source_id || null;
+
   return {
     notification_id: row.notification_id || row.id || `${row.source_type || 'notification'}-${row.source_id || row.created_at || 'unknown'}`,
     severity: String(row.severity || row.type || 'info').toLowerCase(),
     title: row.title || row.subject || 'Notification',
     message: row.message || row.body || row.description || '',
     created_at: row.created_at || row.timestamp || new Date().toISOString(),
-    read_at: row.read_at || null,
-    source_type: row.source_type || row.entity_type || '',
-    source_id: row.source_id || row.entity_id || null,
+    read_at: row.read_at || (row.is_read ? row.updated_at || row.created_at || new Date().toISOString() : null),
+    source_type: sourceType,
+    source_id: sourceId,
+    action_url: row.action_url || row.url || '',
   };
 }
 
@@ -84,11 +88,24 @@ export function groupNotificationsByDate(notifications = [], now = new Date()) {
 }
 
 export function notificationTarget(notification) {
+  if (notification.action_url) return notification.action_url;
   if (notification.source_type === 'technician_ticket') return `/technician/work/ticket/${notification.source_id}`;
-  if (notification.source_type === 'ticket') return `/service-requests/${notification.source_id}`;
+  if (notification.source_type === 'ticket' || notification.source_type === 'service_request') return `/service-requests/${notification.source_id}`;
   if (notification.source_type === 'maintenance') return '/maintenance';
   if (notification.source_type === 'audit') return '/audit-logs';
   return '';
+}
+
+export async function fetchUnreadNotificationCount() {
+  try {
+    const payload = await apiClient('/notifications/unread-count');
+    return Number(payload?.unread_count || payload?.count || 0);
+  } catch (error) {
+    if (error.status === 404) {
+      return sampleNotifications.filter((notification) => !notification.read_at).length;
+    }
+    throw error;
+  }
 }
 
 export function relativeNotificationTime(value, now = new Date()) {
@@ -116,9 +133,9 @@ export async function fetchNotifications(filters = {}) {
 }
 
 export async function markNotificationRead(notificationId) {
-  return apiClient(`/notifications/${notificationId}/read`, { method: 'PATCH' });
+  return apiClient(`/notifications/${notificationId}/read`, { method: 'POST' });
 }
 
 export async function markAllNotificationsRead() {
-  return apiClient('/notifications/read-all', { method: 'PATCH' });
+  return apiClient('/notifications/read-all', { method: 'POST' });
 }

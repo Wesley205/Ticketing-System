@@ -17,7 +17,7 @@ const {
 const STATUS_TRANSITIONS = {
   New: ["Pending", "Assigned", "Cancelled"],
   Pending: ["Assigned", "Cancelled"],
-  Assigned: ["Accepted", "In Progress", "Cancelled"],
+  Assigned: ["Accepted", "Pending", "In Progress", "Cancelled"],
   Accepted: ["In Progress"],
   "In Progress": ["Waiting for User", "Waiting for Parts", "Resolved"],
   "Waiting for User": ["In Progress"],
@@ -52,6 +52,7 @@ function canActorTransitionStatus(user, request, nextStatus) {
   if (isAssignedTechnician) {
     return [
       "Accepted",
+      "Pending",
       "In Progress",
       "Waiting for User",
       "Waiting for Parts",

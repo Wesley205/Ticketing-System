@@ -50,5 +50,8 @@ assert.ok(layoutSource.includes('technician-dashboard-notification-icon'), 'topb
 assert.ok(layoutSource.includes('technician-dashboard-notification-count'), 'topbar should render notification count badge');
 assert.ok(cssSource.includes('.technician-dashboard-notification-icon::before'), 'notification bell cap should be styled');
 assert.ok(cssSource.includes('.technician-dashboard-notification-icon::after'), 'notification bell clapper should be styled');
+assert.match(cssSource, /\.technician-dashboard-sidebar\s*{[\s\S]*position:\s*sticky/, 'sidebar should stay sticky on desktop pages');
+assert.match(cssSource, /\.technician-dashboard-sidebar\s*{[\s\S]*width:\s*224px/, 'sidebar should keep a fixed desktop width');
+assert.match(cssSource, /\.technician-dashboard-sidebar\s*{[\s\S]*max-height:\s*100vh/, 'sidebar should not expand beyond the viewport height');
 
 console.log('secure layout icon smoke checks passed');

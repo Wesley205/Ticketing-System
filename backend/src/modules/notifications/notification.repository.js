@@ -79,7 +79,9 @@ async function insertEmailDelivery(executor, notificationRow, target, event) {
 
 async function listUserNotifications(userId, options, executor) {
   const limit = Math.max(1, Math.min(Number(options.limit) || 20, 100));
-  const unreadOnly = String(options.unread || '').toLowerCase() === 'true';
+  const unreadOnly =
+    String(options.unread || '').toLowerCase() === 'true' ||
+    String(options.status || '').toLowerCase() === 'unread';
   const params = [userId];
   let where = 'WHERE recipient_user_id = $1';
 

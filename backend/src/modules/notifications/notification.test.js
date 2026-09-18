@@ -68,3 +68,18 @@ test('notification repository lists due email deliveries with capped batch query
   assert.match(calls[0].sql, /LIMIT 50/i);
   assert.deepEqual(calls[0].params, [3]);
 });
+
+test('notification repository accepts status unread filter from frontend query', async () => {
+  const calls = [];
+  const executor = {
+    async query(sql, params) {
+      calls.push({ sql, params });
+      return { rows: [] };
+    },
+  };
+
+  await repository.listUserNotifications(7, { status: 'unread' }, executor);
+
+  assert.match(calls[0].sql, /is_read = FALSE/i);
+  assert.deepEqual(calls[0].params, [7, 20]);
+});
