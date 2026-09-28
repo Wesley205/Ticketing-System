@@ -27,8 +27,21 @@ const updatePreferences = [
   sendFirstValidationError,
 ];
 
+const saveBrowserSubscription = [
+  body('endpoint')
+    .optional()
+    .isURL({ require_tld: false, require_protocol: true })
+    .withMessage('Browser subscription endpoint must be a URL.'),
+  body('subscription.endpoint')
+    .optional()
+    .isURL({ require_tld: false, require_protocol: true })
+    .withMessage('Browser subscription endpoint must be a URL.'),
+  sendFirstValidationError,
+];
+
 module.exports = {
   listNotifications,
   markRead,
+  saveBrowserSubscription,
   updatePreferences,
 };

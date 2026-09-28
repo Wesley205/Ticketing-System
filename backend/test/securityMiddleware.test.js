@@ -5,7 +5,11 @@ const assert = require('node:assert/strict');
 const { createApp } = require('../src/app');
 const { normalizeEnv, validateRuntimeConfig } = require('../src/config');
 const { createRateLimiter } = require('../src/middleware/rateLimit');
-const { configureTrustProxy, contentTypeGuard } = require('../src/middleware/security');
+const {
+  configureTrustProxy,
+  contentTypeGuard,
+  isSameHostOrigin,
+} = require('../src/middleware/security');
 const { requestId, sanitizeRequestId } = require('../src/middleware/requestId');
 
 function createResponse() {
@@ -149,6 +153,38 @@ test('contentTypeGuard rejects unsupported request body content types', () => {
   assert.equal(nextError.code, 'CONTENT_TYPE_UNSUPPORTED');
   assert.equal(nextError.statusCode, 415);
   assert.match(nextError.message, /Unsupported content type/);
+});
+
+test('same host origins are allowed for LAN browser asset requests', () => {
+  const req = {
+    protocol: 'http',
+    headers: { host: '192.168.1.16:5000' },
+    get(name) {
+      return this.headers[String(name).toLowerCase()];
+    },
+  };
+
+  assert.equal(isSameHostOrigin(req, 'http://192.168.1.16:5000'), true);
+  assert.equal(isSameHostOrigin(req, 'http://evil.example'), false);
+});
+
+test('CORS allows frontend assets requested from the same LAN host origin', async () => {
+  const server = await createTestApp();
+
+  try {
+    const response = await request(server, {
+      path: '/assets/main.js',
+      headers: {
+        Origin: `http://127.0.0.1:${server.address().port}`,
+        Host: `127.0.0.1:${server.address().port}`,
+      },
+    });
+
+    assert.notEqual(response.statusCode, 500);
+    assert.equal(response.headers['access-control-allow-origin'], `http://127.0.0.1:${server.address().port}`);
+  } finally {
+    await closeServer(server);
+  }
 });
 
 test('rate limiter blocks requests after configured threshold', () => {

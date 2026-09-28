@@ -108,7 +108,7 @@ export function TechnicianTicketExecution({
         <h2>{ticket.subject || 'Assigned ticket execution'}</h2>
       </section>
 
-      <section className="technician-execution-grid">
+      <section className="technician-execution-grid responsive-detail-grid">
         <div className="technician-execution-left">
           <article className="technician-execution-card">
             <h3>Ticket Context &amp; Assets</h3>
@@ -125,7 +125,7 @@ export function TechnicianTicketExecution({
 
           <article className="technician-execution-card">
             <h3>Update Ticket Status</h3>
-            <div className="technician-execution-status-actions">
+            <div className="technician-execution-status-actions responsive-action-grid">
               {statusActions.map((action) => (
                 <Button
                   key={action.status}

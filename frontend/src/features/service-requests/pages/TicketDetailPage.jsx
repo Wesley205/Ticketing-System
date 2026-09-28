@@ -49,8 +49,12 @@ export function TicketDetailPage() {
           isOperational={isOperational}
           onAssignOpen={() => setAssignmentOpen(true)}
           onStatusSubmit={async (payload) => {
-            await detailState.updateStatus(payload);
-            showToast({ tone: 'success', title: 'Status updated' });
+            try {
+              await detailState.updateStatus(payload);
+              showToast({ tone: 'success', title: 'Status updated' });
+            } catch (error) {
+              showToast({ tone: 'error', title: 'Status update failed', message: error.message || 'The ticket status could not be updated.' });
+            }
           }}
           onCommentSubmit={async (payload) => {
             await detailState.addComment(payload);

@@ -21,6 +21,7 @@ test('notification mapper nests delivery target preferences', () => {
     email: 'user@nsc.test',
     in_app_enabled: true,
     email_enabled: false,
+    browser_push_enabled: true,
     assignment_enabled: true,
   };
 
@@ -28,6 +29,7 @@ test('notification mapper nests delivery target preferences', () => {
   assert.equal(mapped.user_id, 3);
   assert.equal(mapped.preferences.in_app_enabled, true);
   assert.equal(mapped.preferences.email_enabled, false);
+  assert.equal(mapped.preferences.browser_push_enabled, true);
 });
 
 test('notification policy restricts record access to owner', () => {
@@ -37,7 +39,14 @@ test('notification policy restricts record access to owner', () => {
 
 test('notification preferences use a fixed allowlist', () => {
   assert.ok(constants.PREFERENCE_FIELDS.includes('email_enabled'));
+  assert.ok(constants.PREFERENCE_FIELDS.includes('browser_push_enabled'));
   assert.equal(constants.PREFERENCE_FIELDS.includes('password_hash'), false);
+});
+
+test('notification policy supports browser push as an opt-in channel', () => {
+  const event = service.getNotificationEventConfig('ticket_assigned');
+  assert.equal(policy.shouldDeliverForChannel(event, { browser_push_enabled: false }, 'browser_push'), false);
+  assert.equal(policy.shouldDeliverForChannel(event, { browser_push_enabled: true }, 'browser_push'), true);
 });
 
 test('notification routes preserve public endpoint surface', () => {
@@ -47,10 +56,31 @@ test('notification routes preserve public endpoint surface', () => {
 
   assert.ok(endpoints.includes('GET /'));
   assert.ok(endpoints.includes('GET /unread-count'));
+  assert.ok(endpoints.includes('GET /browser/vapid-public-key'));
+  assert.ok(endpoints.includes('GET /browser-subscriptions/me'));
+  assert.ok(endpoints.includes('POST /browser-subscriptions'));
+  assert.ok(endpoints.includes('DELETE /browser-subscriptions/:id'));
+  assert.ok(endpoints.includes('POST /browser/test'));
   assert.ok(endpoints.includes('POST /read-all'));
   assert.ok(endpoints.includes('GET /preferences/me'));
   assert.ok(endpoints.includes('PATCH /preferences/me'));
   assert.ok(endpoints.includes('POST /:id/read'));
+});
+
+test('notification repository lists due browser push deliveries per active endpoint', async () => {
+  const calls = [];
+  const executor = {
+    async query(sql, params) {
+      calls.push({ sql, params });
+      return { rows: [{ notification_delivery_id: 9, channel: 'browser_push' }] };
+    },
+  };
+
+  const rows = await repository.listDueBrowserPushDeliveries(executor, 4);
+  assert.equal(rows[0].notification_delivery_id, 9);
+  assert.match(calls[0].sql, /browser_push/i);
+  assert.match(calls[0].sql, /bps\.endpoint = nd\.recipient_address/i);
+  assert.deepEqual(calls[0].params, [4]);
 });
 
 test('notification repository lists due email deliveries with capped batch query', async () => {

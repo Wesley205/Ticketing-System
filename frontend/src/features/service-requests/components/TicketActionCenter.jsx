@@ -1,6 +1,22 @@
 import { Button } from '../../../components/forms/Button.jsx';
 import { SlaIndicator } from './SlaIndicator.jsx';
 
+function actionIcon(status) {
+  return {
+    Accepted: 'check',
+    'In Progress': 'play',
+    Resolved: 'check',
+    Closed: 'check',
+    Reopened: 'refresh',
+    Assigned: 'user',
+    Pending: 'clock',
+    Unavailable: 'clock',
+    Cancelled: 'x',
+    'Waiting for User': 'pause',
+    'Waiting for Parts': 'pause',
+  }[status] || 'dot';
+}
+
 function actionLabel(status) {
   return {
     Accepted: 'Accept ticket',
@@ -65,9 +81,15 @@ function buildWorkflowActions(ticket = {}) {
 
 export function TicketActionCenter({ ticket, isAdmin = false, canAssign = false, onAssignOpen, onStatusSubmit, isMutating = false }) {
   const workflowActions = buildWorkflowActions(ticket);
+  const hasAssignWorkflow = workflowActions.some((action) => action.status === 'Assigned');
 
   function submitStatus(action) {
     const status = action.status;
+    if (status === 'Assigned') {
+      onAssignOpen?.();
+      return;
+    }
+
     if (status === 'Cancelled' && !window.confirm('Cancel this ticket? This is an exceptional workflow action.')) {
       return;
     }
@@ -97,19 +119,22 @@ export function TicketActionCenter({ ticket, isAdmin = false, canAssign = false,
         <strong>{ticket?.technician_name || 'Unassigned'}</strong>
       </div>
 
-      <div className="service-request-action-buttons">
+      <div className="service-request-action-buttons responsive-action-grid">
         {workflowActions.map((action) => (
           <Button
             key={`${action.status}-${action.label}`}
             variant={action.variant}
+            className="ui-button-with-icon"
             onClick={() => submitStatus(action)}
             disabled={isMutating}
           >
+            <span className={`nsc-action-icon nsc-action-icon-${actionIcon(action.status)}`} aria-hidden="true" />
             {action.label}
           </Button>
         ))}
-        {canAssign ? (
-          <Button variant="secondary" onClick={onAssignOpen}>
+        {canAssign && !hasAssignWorkflow ? (
+          <Button variant="secondary" className="ui-button-with-icon" onClick={onAssignOpen}>
+            <span className="nsc-action-icon nsc-action-icon-user" aria-hidden="true" />
             {ticket?.assigned_technician_id ? 'Reassign' : 'Assign technician'}
           </Button>
         ) : null}

@@ -55,7 +55,7 @@ export function StaffDashboardPage({ user }) {
       {error ? <ErrorState title="Dashboard unavailable" description={error} /> : null}
       {isLoading ? <LoadingState variant="table" description="Loading staff dashboard..." /> : null}
 
-      <section className="secure-dashboard-action-grid">
+      <section className="secure-dashboard-action-grid responsive-grid-4">
         <SecureDashboardActionCard title="Track requests" description="See the status of your open and recent requests." actionLabel="View requests" to="/service-requests?mine=1" />
         <SecureDashboardActionCard title={`Confirmations - ${confirmationCount}`} description="Respond to required actions and approvals." actionLabel="Review" to="/service-requests?mine=1" tone="warning" />
         <SecureDashboardActionCard title="Knowledge" description="Find guides and policies for common tasks." actionLabel="Browse guides" to="/knowledge-base" />

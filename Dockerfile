@@ -1,4 +1,12 @@
-FROM node:20-bookworm-slim AS dependencies
+FROM node:20-bookworm-slim AS frontend-build
+
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm ci
+COPY frontend ./
+RUN npm run build
+
+FROM node:20-bookworm-slim AS backend-dependencies
 
 WORKDIR /app/backend
 COPY backend/package*.json ./
@@ -9,9 +17,9 @@ FROM node:20-bookworm-slim
 ENV NODE_ENV=production
 WORKDIR /app
 
-COPY --from=dependencies /app/backend/node_modules ./backend/node_modules
+COPY --from=backend-dependencies /app/backend/node_modules ./backend/node_modules
 COPY backend ./backend
-COPY frontend ./frontend
+COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 COPY database/migrations ./database/migrations
 
 RUN mkdir -p /app/storage/ticket-attachments \

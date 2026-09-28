@@ -5,6 +5,7 @@ import { Button } from '../../../components/forms/Button.jsx';
 import { TimelineList } from '../../../components/status/TimelineList.jsx';
 import { formatDateTime } from '../../../lib/formatting.js';
 import { splitRelations } from '../services/knowledge-base-api.js';
+import { formatArticleVisibility } from '../services/knowledge-base-copy.js';
 
 function feedbackCount(summary, key) {
   return Number(summary?.[key] || 0);
@@ -49,7 +50,7 @@ export function ArticleDetail({
           <div className="kb-meta-react">
             <strong>{article.article_code || `NSC-KB-${article.article_id}`}</strong>
             <span>{article.category || 'General'}</span>
-            <span>{article.visibility_scope}</span>
+            <span>{formatArticleVisibility(article.visibility_scope)}</span>
           </div>
           <h3>{article.title}</h3>
         </div>

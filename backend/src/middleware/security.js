@@ -18,6 +18,10 @@ const {
 
 const BODY_METHODS = new Set(['POST', 'PUT', 'PATCH']);
 
+function normalizeOrigin(value) {
+  return String(value || '').trim().replace(/\/+$/, '');
+}
+
 function configureTrustProxy(app, env = process.env) {
   const raw = env.TRUST_PROXY;
 
@@ -50,6 +54,30 @@ function contentTypeGuard(req, res, next) {
   }));
 }
 
+function isSameHostOrigin(req, origin) {
+  const host = req.get?.('host') || req.headers?.host;
+  if (!host || !origin) return false;
+
+  return normalizeOrigin(origin) === `${req.protocol}://${host}`;
+}
+
+function createCorsOptionsDelegate(env = process.env) {
+  const baseOptions = getCorsOptions(env);
+
+  return (req, callback) => {
+    callback(null, {
+      ...baseOptions,
+      origin(origin, corsCallback) {
+        if (!origin || isSameHostOrigin(req, origin)) {
+          return corsCallback(null, true);
+        }
+
+        return baseOptions.origin(origin, corsCallback);
+      },
+    });
+  };
+}
+
 function createSecurityMiddleware(env = process.env) {
   const config = normalizeEnv(env);
   const rateLimit = createRateLimiter({
@@ -62,7 +90,7 @@ function createSecurityMiddleware(env = process.env) {
     requestTimer,
     requestLogger,
     securityHeaders,
-    cors(getCorsOptions(env)),
+    cors(createCorsOptionsDelegate(env)),
     rateLimit,
     contentTypeGuard,
     express.json({ limit: config.jsonBodyLimit }),
@@ -75,6 +103,8 @@ module.exports = {
   buildContentSecurityPolicy,
   configureTrustProxy,
   contentTypeGuard,
+  createCorsOptionsDelegate,
   createSecurityMiddleware,
+  isSameHostOrigin,
   securityHeaders,
 };

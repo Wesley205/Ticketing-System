@@ -38,10 +38,11 @@ test('canonical domain constants match migration-allowed values', () => {
   assertSqlContainsEveryValue(allMigrationSql, domain.KNOWLEDGE_BASE_RELATION_TYPES, 'knowledge-base relation migration constraints');
 });
 
-test('development seed remains compatible with lifecycle and domain constraints', () => {
+test('admin-only seed remains compatible with lifecycle and domain constraints', () => {
   assert.match(seedSql, /account_status/i);
-  assert.match(seedSql, /CASE WHEN v\.is_active THEN 'active' ELSE 'deactivated' END/i);
-  assert.match(seedSql, /'Maintenance Request'/i);
-  assert.match(seedSql, /'maintenance_due'/i);
+  assert.match(seedSql, /'admin'/i);
+  assert.match(seedSql, /'employee'/i);
+  assert.match(seedSql, /'active'/i);
+  assert.match(seedSql, /notification_preferences/i);
   assert.doesNotMatch(seedSql, /account_status\s*=\s*'active'[^;]+is_active\s*=\s*FALSE/is);
 });

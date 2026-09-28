@@ -63,11 +63,71 @@ async function updatePreferences(req, res) {
   }
 }
 
+function getBrowserPushPublicKey(req, res) {
+  const config = service.getBrowserPushConfig();
+  res.json({
+    configured: config.configured,
+    public_key: config.publicKey || null,
+  });
+}
+
+async function saveBrowserSubscription(req, res) {
+  try {
+    const subscription = await service.saveBrowserSubscription(
+      req.user.user_id,
+      req.body.subscription || req.body,
+      req.get('user-agent')
+    );
+    res.status(201).json(subscription);
+  } catch (err) {
+    const statusCode = err.statusCode || 500;
+    if (statusCode >= 500) {
+      return logAndSend(res, err, NOTIFICATION_ERROR_MESSAGES.browserSubscriptionFailed);
+    }
+    return res.status(statusCode).json({ error: err.message });
+  }
+}
+
+async function listBrowserSubscriptions(req, res) {
+  try {
+    const subscriptions = await service.listBrowserSubscriptions(req.user.user_id);
+    res.json(subscriptions);
+  } catch (err) {
+    logAndSend(res, err, NOTIFICATION_ERROR_MESSAGES.browserSubscriptionListFailed);
+  }
+}
+
+async function deleteBrowserSubscription(req, res) {
+  try {
+    const subscription = await service.deleteBrowserSubscription(req.user.user_id, req.params.id);
+    if (!subscription) {
+      return res.status(404).json({ error: 'Browser notification device not found.' });
+    }
+    return res.json(subscription);
+  } catch (err) {
+    return logAndSend(res, err, NOTIFICATION_ERROR_MESSAGES.browserSubscriptionDeleteFailed);
+  }
+}
+
+async function sendBrowserTest(req, res) {
+  try {
+    const notification = await service.enqueueBrowserTestNotification(req.user);
+    res.status(202).json({ queued: Boolean(notification), notification });
+  } catch (err) {
+    logAndSend(res, err, NOTIFICATION_ERROR_MESSAGES.browserTestFailed);
+  }
+}
+
 module.exports = {
+  deleteBrowserSubscription,
+  getBrowserPushPublicKey,
   getPreferences,
+  listBrowserSubscriptions,
   listNotifications,
   markAllRead,
   markRead,
+  saveBrowserSubscription,
+  sendBrowserTest,
   unreadCount,
   updatePreferences,
 };

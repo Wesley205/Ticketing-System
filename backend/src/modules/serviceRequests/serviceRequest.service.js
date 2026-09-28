@@ -174,6 +174,10 @@ async function updateStatus(user, requestId, payload) {
     throw forbidden("You do not have permission to update this request.");
   }
 
+  if (payload.status === "Assigned") {
+    throw badRequest("Use the assignment action to select a technician before assigning a ticket.");
+  }
+
   return legacyService.updateServiceRequestStatusRecord(
     requestId,
     payload.status,

@@ -28,7 +28,7 @@ export function ServiceRequestFullDetail({
   const canEditAsset = isOperational && Boolean(onAssetSave);
 
   return (
-    <div className="service-request-detail-layout">
+    <div className="service-request-detail-layout responsive-detail-grid">
       <main className="service-request-detail-main">
         <header className="service-request-detail-header">
           <Link to="/service-requests" className="service-request-back-link">Back to requests</Link>
@@ -37,7 +37,7 @@ export function ServiceRequestFullDetail({
               <strong>{ticketId(ticket)}</strong>
               <h2>{ticket.subject || 'Untitled request'}</h2>
             </div>
-            <div className="ui-inline-actions">
+            <div className="ui-inline-actions responsive-action-row">
               <StatusBadge value={ticket.status} />
               <PriorityBadge value={ticket.priority} />
             </div>
@@ -113,7 +113,7 @@ export function ServiceRequestFullDetail({
         </section>
       </main>
 
-      <aside className="service-request-detail-context">
+      <aside className="service-request-detail-context responsive-priority-panel">
         <TicketActionCenter
           ticket={ticket}
           isAdmin={isAdmin}

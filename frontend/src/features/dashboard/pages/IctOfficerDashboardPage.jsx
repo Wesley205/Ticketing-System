@@ -43,7 +43,7 @@ export function IctOfficerDashboardPage({ dashboard }) {
         />
       ) : null}
 
-      <section className="secure-dashboard-metric-grid">
+      <section className="secure-dashboard-metric-grid responsive-grid-3">
         <SecureDashboardMetricCard
           label="Unassigned"
           value={stats.pending_requests || 0}

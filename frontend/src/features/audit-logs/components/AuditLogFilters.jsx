@@ -61,8 +61,14 @@ export function AuditLogFilters({ filters, isLoading = false, onChange, onReset,
       </FormField>
 
       <div className="audit-log-filter-actions">
-        <Button onClick={onApply} disabled={isLoading}>Apply</Button>
-        <Button variant="secondary" onClick={onReset} disabled={isLoading}>Clear</Button>
+        <Button className="ui-button-with-icon" onClick={onApply} disabled={isLoading}>
+          <span className="nsc-action-icon nsc-action-icon-check" aria-hidden="true" />
+          Apply
+        </Button>
+        <Button variant="secondary" className="ui-button-with-icon" onClick={onReset} disabled={isLoading}>
+          <span className="nsc-action-icon nsc-action-icon-x" aria-hidden="true" />
+          Clear
+        </Button>
       </div>
     </div>
   );

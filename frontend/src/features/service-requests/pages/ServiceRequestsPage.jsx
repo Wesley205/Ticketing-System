@@ -73,11 +73,14 @@ export function ServiceRequestsPage() {
         <div className="service-desk-secure-actions">
           <Button
             variant="secondary"
+            className="ui-button-with-icon"
             onClick={() => ticketsState.loadTickets(ticketsState.filters)}
           >
+            <span className="nsc-action-icon nsc-action-icon-refresh" aria-hidden="true" />
             Refresh
           </Button>
-          <Button onClick={() => setCreateOpen(true)}>
+          <Button className="ui-button-with-icon" onClick={() => setCreateOpen(true)}>
+            <span className="nsc-action-icon nsc-action-icon-plus" aria-hidden="true" />
             {isOperational ? "New ticket" : "Request help"}
           </Button>
         </div>
@@ -105,7 +108,7 @@ export function ServiceRequestsPage() {
             <h3>
               {isOperational ? "Operational queue" : "Submitted requests"}
             </h3>
-            <span>{ticketsState.totalTickets} tickets</span>
+            <span>{ticketsState.totalTickets} {ticketsState.totalTickets === 1 ? "ticket" : "tickets"}</span>
           </div>
           {ticketsState.isLoading ? (
             <LoadingState

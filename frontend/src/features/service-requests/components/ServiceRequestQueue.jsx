@@ -45,11 +45,15 @@ function ServiceRequestRow({ ticket, onSelect }) {
 
       <div className="service-request-row-assignee">
         <span>{ticket.technician_name || 'Unassigned'}</span>
+        <span className="service-request-row-meta-separator" aria-hidden="true">·</span>
         <small>{formatDateTime(ticket.date_submitted)}</small>
       </div>
 
       <div className="service-request-row-actions" onClick={(event) => event.stopPropagation()}>
-        <Link to={`/service-requests/${ticket.request_id}`}>Open</Link>
+        <Link className="service-request-open-link" to={`/service-requests/${ticket.request_id}`} aria-label={`Open ${id}`}>
+          <span className="nsc-action-icon nsc-action-icon-open" aria-hidden="true" />
+          <span>Open</span>
+        </Link>
       </div>
     </article>
   );

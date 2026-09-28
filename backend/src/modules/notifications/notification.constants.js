@@ -19,6 +19,7 @@ const NOTIFICATION_EVENT_TYPES = {
 const PREFERENCE_FIELDS = [
   'in_app_enabled',
   'email_enabled',
+  'browser_push_enabled',
   'assignment_enabled',
   'status_change_enabled',
   'maintenance_enabled',
@@ -47,6 +48,11 @@ const NOTIFICATION_ERROR_MESSAGES = {
   preferencesUpdateFailed: 'Failed to update notification preferences.',
   readAllFailed: 'Failed to mark notifications as read.',
   readFailed: 'Failed to update notification.',
+  browserPushUnavailable: 'Browser push notifications are not configured.',
+  browserSubscriptionFailed: 'Failed to save browser notification subscription.',
+  browserSubscriptionDeleteFailed: 'Failed to disable browser notification subscription.',
+  browserSubscriptionListFailed: 'Failed to load browser notification devices.',
+  browserTestFailed: 'Failed to send browser test notification.',
 };
 
 module.exports = {

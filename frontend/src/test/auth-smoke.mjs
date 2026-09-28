@@ -56,12 +56,13 @@ try {
     )
   );
 
-  assert.match(loginHtml, /ICT Service Management/i);
+  assert.match(loginHtml, /ICT Service Hub/i);
   assert.match(loginHtml, /Sign In/i);
   assert.match(loginHtml, /Activate an invitation/i);
   assert.match(activationHtml, /Activate Invitation/i);
   assert.match(activationHtml, /Token \/ Invitation Code/i);
-  assert.match(forbiddenHtml, /access to this page/i);
+  assert.match(forbiddenHtml, /Access Restricted/i);
+  assert.match(forbiddenHtml, /permission to view this content/i);
   assert.match(helpHtml, /Need help with your account/i);
   assert.match(helpHtml, /Automated password reset is not currently available/i);
   assert.match(notFoundHtml, /Page not found/i);

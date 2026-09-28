@@ -24,16 +24,22 @@ function resolveFrontendPaths(
 ) {
   const frontendPath = path.join(rootDir, "frontend");
   const reactBuildPath = path.join(frontendPath, "dist");
+  const indexPath = path.join(reactBuildPath, "index.html");
   const reactShellPath = path.join(reactBuildPath, "react-shell.html");
 
   return {
     frontendPath,
+    indexPath,
     reactBuildPath,
     reactShellPath,
   };
 }
 
 function getFrontendShellPath(paths = resolveFrontendPaths()) {
+  if (fs.existsSync(paths.indexPath)) {
+    return paths.indexPath;
+  }
+
   if (fs.existsSync(paths.reactShellPath)) {
     return paths.reactShellPath;
   }
@@ -46,6 +52,14 @@ function shouldServeFrontendFallback(req) {
   if (req.method !== "GET" && req.method !== "HEAD") return false;
   if (path.extname(req.path)) return false;
   return true;
+}
+
+function isFrontendAssetRequest(req) {
+  return (
+    (req.method === "GET" || req.method === "HEAD") &&
+    req.path.startsWith("/assets/") &&
+    Boolean(path.extname(req.path))
+  );
 }
 
 function buildLegacyRedirectTarget(req) {
@@ -65,6 +79,13 @@ function configureFrontendServing(app, options = {}) {
   };
 
   app.use(express.static(paths.reactBuildPath, staticOptions));
+  app.use((req, res, next) => {
+    if (!isFrontendAssetRequest(req)) return next();
+    return res
+      .status(404)
+      .type("text/plain")
+      .send("Frontend asset not found. Rebuild and restart the application container.");
+  });
   app.get(Object.keys(LEGACY_FRONTEND_REDIRECTS), (req, res) => {
     res.redirect(308, buildLegacyRedirectTarget(req));
   });
@@ -89,6 +110,7 @@ module.exports = {
   buildLegacyRedirectTarget,
   configureFrontendServing,
   getFrontendShellPath,
+  isFrontendAssetRequest,
   resolveFrontendPaths,
   shouldServeFrontendFallback,
 };

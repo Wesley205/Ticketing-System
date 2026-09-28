@@ -67,7 +67,7 @@ export function KnowledgeBasePage() {
               and network troubleshooting.
             </p>
           </div>
-          <div className="service-desk-secure-actions">
+          <div className="service-desk-secure-actions responsive-action-row">
             <Button
               variant="secondary"
               size="sm"

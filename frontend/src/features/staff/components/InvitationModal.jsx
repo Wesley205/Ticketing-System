@@ -8,6 +8,7 @@ import { getRoleLabel, getUserTypeLabel, isTemporaryUser } from '../services/sta
 const defaultAcceptance = {
   url: '',
   email: '',
+  emailStatus: '',
 };
 
 export function InvitationModal({
@@ -97,6 +98,7 @@ export function InvitationModal({
       setAcceptance({
         url: created.acceptance_url || '',
         email: created.email || form.email.trim(),
+        emailStatus: created.email_delivery_status || '',
       });
     } catch (error) {
       setErrorMessage(normalizeApiError(error, 'Failed to create the invitation.').message);
@@ -183,7 +185,9 @@ export function InvitationModal({
         {acceptance.url ? (
           <div className="react-panel">
             <strong>Invitation created for {acceptance.email}</strong>
-            <p className="react-copy">The backend returned an activation link for manual delivery or verification.</p>
+            <p className="react-copy">
+              Invitation email queued{acceptance.emailStatus ? ` (${acceptance.emailStatus})` : ''}. Keep this activation link for verification or manual delivery.
+            </p>
             <textarea className="ui-input" rows={3} readOnly value={acceptance.url} />
           </div>
         ) : null}

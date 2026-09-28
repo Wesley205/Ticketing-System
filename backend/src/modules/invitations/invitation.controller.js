@@ -45,6 +45,20 @@ async function revoke(req, res) {
   }
 }
 
+async function resend(req, res, next) {
+  try {
+    const result = await service.resendInvitationEmail(req.params.id, req.user);
+
+    if (!result) {
+      return res.status(404).json({ error: INVITATION_ERROR_MESSAGES.pendingNotFound });
+    }
+
+    return res.json(result);
+  } catch (err) {
+    return next(err);
+  }
+}
+
 function toAppError(message, statusCode = 400) {
   return new AppError({
     code: ERROR_CODES.VALIDATION_ERROR,
@@ -57,6 +71,7 @@ module.exports = {
   accept,
   create,
   list,
+  resend,
   revoke,
   toAppError,
 };

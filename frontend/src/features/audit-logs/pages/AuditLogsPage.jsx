@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '../../../components/forms/Button.jsx';
 import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
@@ -13,6 +14,7 @@ export function AuditLogsPage() {
   const auth = useAuth();
   const canViewAuditLogs = hasPermission(auth.accessProfile, 'can_view_audit_logs');
   const auditLogs = useAuditLogs({ enabled: auth.isReady && canViewAuditLogs });
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   function handleExport() {
     downloadAuditLogCsv(auditLogs.rows);
@@ -36,23 +38,39 @@ export function AuditLogsPage() {
             <p>Track system changes, exports, and user actions across the ICT service hub.</p>
           </div>
           <div className="service-desk-secure-actions">
-            <Button variant="secondary" onClick={() => auditLogs.loadAuditLogs(auditLogs.filters)} disabled={auditLogs.isLoading}>
+            <Button variant="secondary" className="ui-button-with-icon" onClick={() => auditLogs.loadAuditLogs(auditLogs.filters)} disabled={auditLogs.isLoading}>
+              <span className="nsc-action-icon nsc-action-icon-refresh" aria-hidden="true" />
               Refresh
             </Button>
-            <Button onClick={handleExport} disabled={!auditLogs.rows.length}>
+            <Button className="ui-button-with-icon" onClick={handleExport} disabled={!auditLogs.rows.length}>
+              <span className="nsc-action-icon nsc-action-icon-download" aria-hidden="true" />
               Export Audit Report
             </Button>
           </div>
         </div>
 
-        <div className="secure-filter-bar">
-          <AuditLogFilters
-            filters={auditLogs.filters}
-            isLoading={auditLogs.isLoading}
-            onChange={auditLogs.updateFilter}
-            onReset={auditLogs.resetFilters}
-            onApply={() => auditLogs.loadAuditLogs(auditLogs.filters)}
-          />
+        <div className={`secure-filter-bar audit-filter-shell${filtersOpen ? ' open' : ''}`}>
+          <button
+            type="button"
+            className="audit-filter-toggle"
+            aria-expanded={filtersOpen}
+            onClick={() => setFiltersOpen((open) => !open)}
+          >
+            <span className="nsc-action-icon nsc-action-icon-filter" aria-hidden="true" />
+            Filters
+          </button>
+          <div className="audit-filter-panel">
+            <AuditLogFilters
+              filters={auditLogs.filters}
+              isLoading={auditLogs.isLoading}
+              onChange={auditLogs.updateFilter}
+              onReset={auditLogs.resetFilters}
+              onApply={() => {
+                auditLogs.loadAuditLogs(auditLogs.filters);
+                setFiltersOpen(false);
+              }}
+            />
+          </div>
           <div className="secure-filter-meta">
             <span>{auditLogs.rows.length} audit entries loaded</span>
             <small>Read-only system record</small>

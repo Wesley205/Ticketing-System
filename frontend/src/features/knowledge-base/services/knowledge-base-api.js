@@ -95,7 +95,7 @@ export function normalizeArticlePayload(form = {}) {
     slug: String(form.slug || '').trim() || slugifyTitle(form.title),
     summary: String(form.summary || '').trim(),
     body: String(form.body || '').trim(),
-    category: String(form.category || 'General').trim() || 'General',
+    category: String(form.category || 'General support').trim() || 'General support',
     status: form.status || 'draft',
     visibility_scope: form.visibility_scope || 'all_users',
     department_id: form.department_id || null,

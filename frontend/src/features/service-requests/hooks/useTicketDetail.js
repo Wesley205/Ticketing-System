@@ -118,7 +118,6 @@ export function useTicketDetail(ticketId) {
       await refresh();
       return result;
     } catch (mutationError) {
-      setError(mutationError.message || 'Ticket update failed.');
       throw mutationError;
     } finally {
       setIsMutating(false);

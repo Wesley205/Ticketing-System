@@ -12,6 +12,13 @@ import {
   notificationTarget,
   relativeNotificationTime,
 } from '../features/notifications/services/notifications-api.js';
+import {
+  disableBrowserPushSubscription,
+  fetchBrowserPushPublicKey,
+  listBrowserPushSubscriptions,
+  saveBrowserPushSubscription,
+  sendBrowserPushTest,
+} from '../features/notifications/services/browser-push-api.js';
 
 test('notification query builder preserves supported filters only', () => {
   assert.equal(
@@ -101,6 +108,32 @@ test('notification write APIs use backend-supported POST methods', async () => {
   assert.match(calls[0].url, /\/notifications\/unread-count$/);
   assert.match(calls[1].url, /\/notifications\/7\/read$/);
   assert.match(calls[2].url, /\/notifications\/read-all$/);
+
+  delete globalThis.fetch;
+});
+
+test('browser notification APIs use backend-supported endpoint surface', async () => {
+  const calls = [];
+  globalThis.fetch = async (url, options = {}) => {
+    calls.push({ url: String(url), method: options.method || 'GET', body: options.body || '' });
+    return new Response(JSON.stringify({ configured: true, public_key: 'public-key' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+
+  await fetchBrowserPushPublicKey();
+  await listBrowserPushSubscriptions();
+  await saveBrowserPushSubscription({ endpoint: 'https://push.example.test/1', keys: { p256dh: 'a', auth: 'b' } });
+  await disableBrowserPushSubscription(3);
+  await sendBrowserPushTest();
+
+  assert.deepEqual(calls.map((call) => call.method), ['GET', 'GET', 'POST', 'DELETE', 'POST']);
+  assert.match(calls[0].url, /\/notifications\/browser\/vapid-public-key$/);
+  assert.match(calls[1].url, /\/notifications\/browser-subscriptions\/me$/);
+  assert.match(calls[2].url, /\/notifications\/browser-subscriptions$/);
+  assert.match(calls[3].url, /\/notifications\/browser-subscriptions\/3$/);
+  assert.match(calls[4].url, /\/notifications\/browser\/test$/);
 
   delete globalThis.fetch;
 });

@@ -116,6 +116,12 @@ export async function revokeInvitation(invitationId) {
   });
 }
 
+export async function resendInvitation(invitationId) {
+  return apiClient(`/invitations/${invitationId}/resend`, {
+    method: 'POST',
+  });
+}
+
 export async function fetchDepartments() {
   return apiClient('/departments');
 }

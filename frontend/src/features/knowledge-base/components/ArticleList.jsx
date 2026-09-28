@@ -1,4 +1,5 @@
 import { EmptyState } from '../../../components/feedback/EmptyState.jsx';
+import { formatArticleStatus } from '../services/knowledge-base-copy.js';
 
 export function ArticleList({ articles = [], selectedArticleId = null, onSelect }) {
   if (!articles.length) {
@@ -17,7 +18,7 @@ export function ArticleList({ articles = [], selectedArticleId = null, onSelect 
           <strong>{article.title}</strong>
           <span>{article.summary || 'No summary available.'}</span>
           <small>
-            {article.category || 'General'} / {article.status} / Helpful {article.helpful_count} / Views {article.view_count}
+            {article.category || 'General support'} / {formatArticleStatus(article.status)} / Helpful {article.helpful_count} / Views {article.view_count}
           </small>
         </button>
       ))}

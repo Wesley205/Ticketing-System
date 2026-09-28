@@ -42,13 +42,40 @@ export function ServiceRequestCommandBar({ filters, metadata, isOperational = fa
           <span>{isOperational ? 'My tickets' : 'My requests'}</span>
         </label>
 
-        <Button variant="secondary" onClick={() => setMoreOpen((current) => !current)}>
-          More filters
+        <Button
+          variant="secondary"
+          className="service-request-more-filter-button ui-button-with-icon"
+          onClick={() => setMoreOpen((current) => !current)}
+          aria-expanded={moreOpen}
+        >
+          <span className="nsc-action-icon nsc-action-icon-filter" aria-hidden="true" />
+          {moreOpen ? 'Hide filters' : 'Show filters'}
         </Button>
       </div>
 
       {moreOpen ? (
         <div className="service-request-command-more">
+          <div className="service-request-mobile-extra-filters">
+            <FormField label="Status" htmlFor="ticket-filter-status-mobile">
+              <select id="ticket-filter-status-mobile" className="ui-input" value={filters.status} onChange={(event) => onChange('status', event.target.value)}>
+                <option value="">All statuses</option>
+                {(metadata.statuses || []).map((value) => <option key={value} value={value}>{value}</option>)}
+              </select>
+            </FormField>
+
+            <FormField label="Priority" htmlFor="ticket-filter-priority-mobile">
+              <select id="ticket-filter-priority-mobile" className="ui-input" value={filters.priority} onChange={(event) => onChange('priority', event.target.value)}>
+                <option value="">All priorities</option>
+                {(metadata.priorities || []).map((value) => <option key={value} value={value}>{value}</option>)}
+              </select>
+            </FormField>
+
+            <label className="ticket-checkbox service-request-mine-toggle">
+              <input type="checkbox" checked={filters.mine} onChange={(event) => onChange('mine', event.target.checked)} />
+              <span>{isOperational ? 'My tickets' : 'My requests'}</span>
+            </label>
+          </div>
+
           <FormField label="Ticket Type" htmlFor="ticket-filter-type">
             <select id="ticket-filter-type" className="ui-input" value={filters.ticket_type} onChange={(event) => onChange('ticket_type', event.target.value)}>
               <option value="">All types</option>

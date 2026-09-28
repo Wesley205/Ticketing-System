@@ -1,10 +1,14 @@
 import { Button } from '../../../components/forms/Button.jsx';
 import { FormField } from '../../../components/forms/FormField.jsx';
 import { ARTICLE_STATUSES } from '../services/knowledge-base-api.js';
+import {
+  formatArticleStatus,
+  getCategoryOptions,
+} from '../services/knowledge-base-copy.js';
 
 export function ArticleFilters({ filters, canManage = false, onChange, onCreate }) {
   return (
-    <section className="kb-filters" aria-label="Knowledge-base filters">
+    <section className="kb-filters responsive-filter-grid" aria-label="Knowledge-base filters">
       <FormField label="Search" htmlFor="kb-search-react">
         <input
           id="kb-search-react"
@@ -15,14 +19,20 @@ export function ArticleFilters({ filters, canManage = false, onChange, onCreate 
         />
       </FormField>
 
-      <FormField label="Category" htmlFor="kb-category-react">
+      <FormField label="Topic" htmlFor="kb-category-react">
         <input
           id="kb-category-react"
           className="ui-input"
           value={filters.category}
-          placeholder="Category"
+          list="kb-category-options"
+          placeholder="All topics"
           onChange={(event) => onChange('category', event.target.value)}
         />
+        <datalist id="kb-category-options">
+          {getCategoryOptions(filters.category).map((category) => (
+            <option key={category} value={category} />
+          ))}
+        </datalist>
       </FormField>
 
       {canManage ? (
@@ -34,7 +44,7 @@ export function ArticleFilters({ filters, canManage = false, onChange, onCreate 
             onChange={(event) => onChange('status', event.target.value)}
           >
             <option value="">All statuses</option>
-            {ARTICLE_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
+            {ARTICLE_STATUSES.map((status) => <option key={status} value={status}>{formatArticleStatus(status)}</option>)}
           </select>
         </FormField>
       ) : null}
