@@ -1,7 +1,7 @@
 import { Sidebar } from './Sidebar.jsx';
 import { Topbar } from './Topbar.jsx';
 
-export function AppShell({ title, subtitle, children, eyebrow = 'Incremental Migration' }) {
+export function AppShell({ title, subtitle, children, eyebrow = 'ICT Service Hub' }) {
   return (
     <div className="react-shell">
       <Sidebar />

@@ -1,6 +1,22 @@
 import { Button } from '../../../components/forms/Button.jsx';
-import { recommendedAction } from './service-request-formatters.js';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 import { SlaIndicator } from './SlaIndicator.jsx';
+
+function actionIcon(status) {
+  return {
+    Accepted: 'check',
+    'In Progress': 'play',
+    Resolved: 'check',
+    Closed: 'check',
+    Reopened: 'refresh',
+    Assigned: 'user',
+    Pending: 'clock',
+    Unavailable: 'clock',
+    Cancelled: 'x',
+    'Waiting for User': 'pause',
+    'Waiting for Parts': 'pause',
+  }[status] || 'dot';
+}
 
 function actionLabel(status) {
   return {
@@ -11,18 +27,70 @@ function actionLabel(status) {
     Reopened: 'Reopen ticket',
     Assigned: 'Assign technician',
     Pending: 'Move to pending',
+    Unavailable: 'Unavailable',
     Cancelled: 'Cancel ticket',
     'Waiting for User': 'Wait for requester',
     'Waiting for Parts': 'Wait for parts',
   }[status] || status;
 }
 
-export function TicketActionCenter({ ticket, isAdmin = false, canAssign = false, onAssignOpen, onStatusSubmit, isMutating = false }) {
-  const transitions = ticket?.permissions?.allowed_status_transitions || [];
-  const primaryStatus = recommendedAction(ticket);
-  const secondary = transitions.filter((status) => status !== primaryStatus);
+function buildWorkflowActions(ticket = {}) {
+  const transitions = ticket?.permissions?.allowed_status_transitions || ticket.allowed_status_transitions || [];
+  const status = ticket?.status || '';
+  const hasTransition = (nextStatus) => transitions.includes(nextStatus);
 
-  function submitStatus(status) {
+  if (status === 'Assigned') {
+    return [
+      hasTransition('Accepted') ? { label: 'Accept', status: 'Accepted', variant: 'primary' } : null,
+      hasTransition('Pending') ? { label: 'Unavailable', status: 'Pending', note: 'Technician marked unavailable for this assigned ticket.', variant: 'secondary' } : null,
+    ].filter(Boolean);
+  }
+
+  if (status === 'Accepted') {
+    return hasTransition('In Progress')
+      ? [{ label: 'Start work', status: 'In Progress', variant: 'primary' }]
+      : [];
+  }
+
+  if (status === 'In Progress') {
+    return [
+      hasTransition('Waiting for User') ? { label: 'Waiting for user', status: 'Waiting for User', variant: 'secondary' } : null,
+      hasTransition('Waiting for Parts') ? { label: 'Waiting for parts', status: 'Waiting for Parts', variant: 'secondary' } : null,
+      hasTransition('Resolved') ? { label: 'Resolve ticket', status: 'Resolved', variant: 'primary' } : null,
+    ].filter(Boolean);
+  }
+
+  if (status === 'Waiting for User' || status === 'Waiting for Parts') {
+    return hasTransition('In Progress')
+      ? [{ label: 'Resume work', status: 'In Progress', variant: 'primary' }]
+      : [];
+  }
+
+  if (status === 'Resolved') {
+    return [
+      hasTransition('Closed') ? { label: 'Confirm closure', status: 'Closed', variant: 'primary' } : null,
+      hasTransition('Reopened') ? { label: 'Reopen ticket', status: 'Reopened', variant: 'secondary' } : null,
+    ].filter(Boolean);
+  }
+
+  return transitions.map((nextStatus) => ({
+    label: actionLabel(nextStatus),
+    status: nextStatus,
+    variant: nextStatus === 'Cancelled' ? 'danger' : 'secondary',
+  }));
+}
+
+export function TicketActionCenter({ ticket, isAdmin = false, canAssign = false, onAssignOpen, onStatusSubmit, isMutating = false }) {
+  const workflowActions = buildWorkflowActions(ticket);
+  const hasAssignWorkflow = workflowActions.some((action) => action.status === 'Assigned');
+
+  function submitStatus(action) {
+    const status = action.status;
+    if (status === 'Assigned') {
+      onAssignOpen?.();
+      return;
+    }
+
     if (status === 'Cancelled' && !window.confirm('Cancel this ticket? This is an exceptional workflow action.')) {
       return;
     }
@@ -41,7 +109,7 @@ export function TicketActionCenter({ ticket, isAdmin = false, canAssign = false,
       return;
     }
 
-    onStatusSubmit({ status, note: `${actionLabel(status)} selected.` });
+    onStatusSubmit({ status, note: action.note || `${action.label || actionLabel(status)} selected.` });
   }
 
   return (
@@ -52,22 +120,25 @@ export function TicketActionCenter({ ticket, isAdmin = false, canAssign = false,
         <strong>{ticket?.technician_name || 'Unassigned'}</strong>
       </div>
 
-      <div className="service-request-action-buttons">
-        {primaryStatus ? (
-          <Button onClick={() => submitStatus(primaryStatus)} disabled={isMutating}>
-            {actionLabel(primaryStatus)}
+      <div className="service-request-action-buttons responsive-action-grid">
+        {workflowActions.map((action) => (
+          <Button
+            key={`${action.status}-${action.label}`}
+            variant={action.variant}
+            className="ui-button-with-icon"
+            onClick={() => submitStatus(action)}
+            disabled={isMutating}
+          >
+            <AppIcon name={actionIcon(action.status)} />
+            {action.label}
           </Button>
-        ) : null}
-        {canAssign ? (
-          <Button variant="secondary" onClick={onAssignOpen}>
+        ))}
+        {canAssign && !hasAssignWorkflow ? (
+          <Button variant="secondary" className="ui-button-with-icon" onClick={onAssignOpen}>
+            <AppIcon name="user" />
             {ticket?.assigned_technician_id ? 'Reassign' : 'Assign technician'}
           </Button>
         ) : null}
-        {secondary.map((status) => (
-          <Button key={status} variant={status === 'Cancelled' ? 'danger' : 'secondary'} onClick={() => submitStatus(status)} disabled={isMutating}>
-            {actionLabel(status)}
-          </Button>
-        ))}
       </div>
 
       {isAdmin ? (

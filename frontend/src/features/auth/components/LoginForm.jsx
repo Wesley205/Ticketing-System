@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '../../../components/forms/Button.jsx';
 import { FormField } from '../../../components/forms/FormField.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 
 export function LoginForm({ onSubmit, errorMessage, isSubmitting = false, defaultValues = {} }) {
   const [identifier, setIdentifier] = useState(defaultValues.identifier || '');
@@ -58,7 +59,7 @@ export function LoginForm({ onSubmit, errorMessage, isSubmitting = false, defaul
             onClick={() => setShowPassword((current) => !current)}
             aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
-            {showPassword ? 'HIDE' : 'SHOW'}
+            <AppIcon name={showPassword ? 'view-off' : 'view'} size={18} />
           </button>
         </div>
       </FormField>

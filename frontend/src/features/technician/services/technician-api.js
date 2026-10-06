@@ -8,6 +8,7 @@ import {
 } from '../../service-requests/services/service-requests-api.js';
 import { apiClient } from '../../../lib/api-client.js';
 import { buildQueryParams } from '../../../lib/query-params.js';
+import { imageFileToUploadPayload } from '../../../lib/media-files.js';
 
 const priorityRank = {
   Critical: 0,
@@ -15,15 +16,6 @@ const priorityRank = {
   Medium: 2,
   Low: 3,
 };
-
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error('Failed to read the selected file.'));
-    reader.readAsDataURL(file);
-  });
-}
 
 export function buildMaintenanceQuery(filters = {}) {
   return buildQueryParams({
@@ -187,13 +179,7 @@ export async function addTechnicianTicketComment(ticketId, payload) {
 }
 
 export async function uploadTechnicianTicketAttachment(ticketId, { file, is_internal }) {
-  const content_base64 = await readFileAsDataUrl(file);
-  return uploadTicketAttachment(ticketId, {
-    file_name: file.name,
-    mime_type: file.type || 'application/octet-stream',
-    content_base64,
-    is_internal: !!is_internal,
-  });
+  return uploadTicketAttachment(ticketId, await imageFileToUploadPayload(file, { is_internal: !!is_internal }));
 }
 
 export async function downloadTechnicianTicketAttachment(ticketId, attachmentId) {

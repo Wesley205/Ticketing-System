@@ -44,7 +44,8 @@ try {
 
   assert.match(html, /Staff &amp; Access Control Hub/i);
   assert.match(html, /Staff Directory/i);
-  assert.match(html, /Invite Staff/i);
+  assert.match(html, /Send Invitation/i);
+  assert.match(html, /Create Account/i);
   assert.match(html, /Pending Invitations/i);
 
   console.log('Staff page smoke check passed.');

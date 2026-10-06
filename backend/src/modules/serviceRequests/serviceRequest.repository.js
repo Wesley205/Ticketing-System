@@ -2,16 +2,19 @@ const { constrainServiceRequestVisibility } = require("../../utils/authorization
 
 const SERVICE_REQUEST_SELECT = `
   SELECT sr.*, req.full_name AS requester_name, d.name AS department_name,
-         tech.full_name AS technician_name, officer.full_name AS ict_officer_name
+         tech.full_name AS technician_name, officer.full_name AS ict_officer_name,
+         f.floor_label, catalog.name AS catalog_item_name
   FROM service_requests sr
   LEFT JOIN users req ON req.user_id = sr.requester_id
   LEFT JOIN departments d ON d.department_id = sr.department_id
   LEFT JOIN users tech ON tech.user_id = sr.assigned_technician_id
   LEFT JOIN users officer ON officer.user_id = sr.assigned_ict_officer_id
+  LEFT JOIN floors f ON f.floor_id = sr.floor_id
+  LEFT JOIN service_catalog_items catalog ON catalog.catalog_item_id = sr.catalog_item_id
 `;
 
 function buildListFilters(user, query = {}) {
-  const { status, priority, category, ticket_type, mine } = query;
+  const { status, priority, category, ticket_type, mine, queue } = query;
   const clauses = [];
   const params = [];
 
@@ -37,6 +40,30 @@ function buildListFilters(user, query = {}) {
   if (ticket_type) {
     params.push(ticket_type);
     clauses.push(`sr.ticket_type = $${params.length}`);
+  }
+
+  if (queue === "unassigned") {
+    clauses.push("sr.assigned_technician_id IS NULL");
+    clauses.push("sr.status NOT IN ('Resolved', 'Closed', 'Cancelled')");
+  } else if (queue === "overdue") {
+    clauses.push("sr.status NOT IN ('Resolved', 'Closed', 'Cancelled')");
+    clauses.push(`(
+      (sr.first_response_at IS NULL AND sr.sla_response_due_at < NOW())
+      OR sr.sla_resolution_due_at < NOW()
+      OR sr.expected_completion_at < NOW()
+    )`);
+  } else if (queue === "sla_risk") {
+    clauses.push("sr.status NOT IN ('Resolved', 'Closed', 'Cancelled')");
+    clauses.push(`(
+      sr.response_warning_level > 0
+      OR sr.resolution_warning_level > 0
+      OR sr.expected_completion_warning_level > 0
+      OR (sr.first_response_at IS NULL AND sr.sla_response_due_at < NOW())
+      OR sr.sla_resolution_due_at < NOW()
+      OR sr.expected_completion_at < NOW()
+    )`);
+  } else if (queue === "pending_approval") {
+    clauses.push("sr.approval_status = 'pending'");
   }
 
   return {
@@ -65,7 +92,7 @@ async function listAssignedToUser(client, userId) {
 async function getAssetForTicket(client, assetId) {
   if (!assetId) return null;
   const result = await client.query(
-    `SELECT asset_id, asset_tag, department_id, assigned_to, status, is_archived
+    `SELECT asset_id, asset_tag, department_id, floor_id, assigned_to, status, is_archived
      FROM assets
      WHERE asset_id = $1`,
     [assetId],
@@ -75,7 +102,7 @@ async function getAssetForTicket(client, assetId) {
 
 async function getActiveTechnicianById(client, userId) {
   const result = await client.query(
-    `SELECT user_id, role, is_active
+    `SELECT user_id, role, is_active, floor_id
      FROM users
      WHERE user_id = $1`,
     [userId],
@@ -87,10 +114,47 @@ async function getActiveTechnicianById(client, userId) {
   return user;
 }
 
+async function listRoutingSuggestions(client, requestId) {
+  const result = await client.query(
+    `SELECT u.user_id, u.full_name, u.email, u.username, u.floor_id, f.floor_label,
+            u.technician_availability, u.technician_capacity,
+            COALESCE(workload.active_count, 0)::integer AS active_count,
+            (u.floor_id IS NOT NULL AND u.floor_id = sr.floor_id) AS floor_match,
+            ROUND(
+              COALESCE(workload.active_count, 0)::numeric /
+              GREATEST(u.technician_capacity, 1)::numeric * 100
+            )::integer AS utilization_percent
+     FROM service_requests sr
+     CROSS JOIN users u
+     LEFT JOIN floors f ON f.floor_id = u.floor_id
+     LEFT JOIN (
+       SELECT assigned_technician_id, COUNT(*)::integer AS active_count
+       FROM service_requests
+       WHERE assigned_technician_id IS NOT NULL
+         AND status NOT IN ('Resolved', 'Closed', 'Cancelled')
+       GROUP BY assigned_technician_id
+     ) workload ON workload.assigned_technician_id = u.user_id
+     WHERE sr.request_id = $1
+       AND u.role = 'technician'
+       AND u.is_active = TRUE
+     ORDER BY
+       (u.floor_id IS NOT NULL AND u.floor_id = sr.floor_id) DESC,
+       CASE u.technician_availability
+         WHEN 'available' THEN 0 WHEN 'busy' THEN 1 WHEN 'away' THEN 2
+         WHEN 'offline' THEN 3 ELSE 4
+       END,
+       COALESCE(workload.active_count, 0)::numeric / GREATEST(u.technician_capacity, 1),
+       u.full_name`,
+    [requestId],
+  );
+  return result.rows;
+}
+
 module.exports = {
   SERVICE_REQUEST_SELECT,
   getActiveTechnicianById,
   getAssetForTicket,
   listAssignedToUser,
+  listRoutingSuggestions,
   listServiceRequests,
 };

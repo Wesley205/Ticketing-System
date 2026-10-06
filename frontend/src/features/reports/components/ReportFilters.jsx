@@ -10,7 +10,7 @@ export function ReportFilters({
   isLoading = false,
 }) {
   return (
-    <section className="report-filters" aria-label="Report filters">
+    <section className="report-filters responsive-filter-grid" aria-label="Report filters">
       <FormField label="From" htmlFor="report-date-from">
         <input
           id="report-date-from"

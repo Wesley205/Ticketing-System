@@ -8,7 +8,7 @@ import { useAuth } from '../../auth/hooks/useAuth.js';
 import { TicketAssignmentModal } from '../components/TicketAssignmentModal.jsx';
 import { ServiceRequestFullDetail } from '../components/ServiceRequestFullDetail.jsx';
 import { useTicketDetail } from '../hooks/useTicketDetail.js';
-import { assignTicket as saveAssignment, isOperationalServiceDeskRole } from '../services/service-requests-api.js';
+import { assignTicket as saveAssignment, decideTicketApproval, isOperationalServiceDeskRole } from '../services/service-requests-api.js';
 
 export function TicketDetailPage() {
   const { ticketId } = useParams();
@@ -23,7 +23,7 @@ export function TicketDetailPage() {
   }
 
   async function handleDownloadAttachment(attachmentId, fileName) {
-    const blob = await detailState.downloadAttachment(attachmentId);
+    const blob = await handleLoadAttachment(attachmentId);
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -34,8 +34,12 @@ export function TicketDetailPage() {
     window.URL.revokeObjectURL(url);
   }
 
+  function handleLoadAttachment(attachmentId) {
+    return detailState.downloadAttachment(attachmentId);
+  }
+
   return (
-    <SecureWorkspaceLayout title={isOperational ? 'ICT Service Desk Operations Control' : 'Staff Access Portal'} subtitle={isOperational ? 'Tactical Secure Control' : 'ICT Service Hub'}>
+    <SecureWorkspaceLayout title={isOperational ? 'ICT Service Desk' : 'Staff Access Portal'} subtitle="ICT Service Hub">
       {detailState.error ? (
         <ErrorState title="Ticket detail unavailable" description={detailState.error} onRetry={detailState.refresh} />
       ) : detailState.isLoading ? (
@@ -49,8 +53,12 @@ export function TicketDetailPage() {
           isOperational={isOperational}
           onAssignOpen={() => setAssignmentOpen(true)}
           onStatusSubmit={async (payload) => {
-            await detailState.updateStatus(payload);
-            showToast({ tone: 'success', title: 'Status updated' });
+            try {
+              await detailState.updateStatus(payload);
+              showToast({ tone: 'success', title: 'Status updated' });
+            } catch (error) {
+              showToast({ tone: 'error', title: 'Status update failed', message: error.message || 'The ticket status could not be updated.' });
+            }
           }}
           onCommentSubmit={async (payload) => {
             await detailState.addComment(payload);
@@ -61,9 +69,19 @@ export function TicketDetailPage() {
             showToast({ tone: 'success', title: 'Attachment uploaded' });
           }}
           onAttachmentDownload={handleDownloadAttachment}
+          onAttachmentLoad={handleLoadAttachment}
           onAssetSave={isOperational ? async (payload) => {
             await detailState.updateAsset(payload);
             showToast({ tone: 'success', title: 'Asset link updated' });
+          } : null}
+          onApprovalSubmit={isOperational ? async (payload) => {
+            try {
+              await decideTicketApproval(ticketId, payload);
+              await detailState.refresh();
+              showToast({ tone: 'success', title: payload.decision === 'approved' ? 'Request approved' : 'Request rejected' });
+            } catch (error) {
+              showToast({ tone: 'error', title: 'Decision not saved', message: error.message || 'The approval decision could not be saved.' });
+            }
           } : null}
           isMutating={detailState.isMutating}
         />

@@ -5,7 +5,7 @@ const validator = require("./serviceRequest.validator");
 
 const router = express.Router();
 
-router.get("/", requireAuth, controller.listTickets);
+router.get("/", requireAuth, validator.listTicketValidators, validator.handleValidation, controller.listTickets);
 router.get("/assigned-to-me", requireAuth, controller.listAssignedToMe);
 router.get("/metadata/options", requireAuth, controller.getMetadata);
 
@@ -15,6 +15,14 @@ router.get(
   validator.ticketIdParam,
   validator.handleValidation,
   controller.getAssignmentHistory,
+);
+
+router.get(
+  "/:id/routing-suggestions",
+  requireAuth,
+  validator.ticketIdParam,
+  validator.handleValidation,
+  controller.getRoutingSuggestions,
 );
 
 router.get(
@@ -39,6 +47,14 @@ router.patch(
   validator.ticketIdParam,
   validator.handleValidation,
   controller.assignTicket,
+);
+
+router.post(
+  "/:id/approval",
+  requireAuth,
+  validator.approvalValidators,
+  validator.handleValidation,
+  controller.decideApproval,
 );
 
 router.patch(

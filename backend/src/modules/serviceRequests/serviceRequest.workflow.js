@@ -17,7 +17,7 @@ const {
 const STATUS_TRANSITIONS = {
   New: ["Pending", "Assigned", "Cancelled"],
   Pending: ["Assigned", "Cancelled"],
-  Assigned: ["Accepted", "In Progress", "Cancelled"],
+  Assigned: ["Accepted", "Pending", "In Progress", "Cancelled"],
   Accepted: ["In Progress"],
   "In Progress": ["Waiting for User", "Waiting for Parts", "Resolved"],
   "Waiting for User": ["In Progress"],
@@ -37,6 +37,23 @@ function isOperationalRole(user) {
   return ["admin", "ict_officer", "technician"].includes(user?.role);
 }
 
+function actorDisplayName(user) {
+  return user?.full_name || user?.username || "A user";
+}
+
+function ticketParticipantIds(request, actorUserId, additionalIds = []) {
+  return [
+    request?.requester_id,
+    request?.assigned_technician_id,
+    request?.assigned_ict_officer_id,
+    ...additionalIds,
+  ].filter((value, index, values) => (
+    value &&
+    Number(value) !== Number(actorUserId) &&
+    values.findIndex((candidate) => Number(candidate) === Number(value)) === index
+  ));
+}
+
 function canActorTransitionStatus(user, request, nextStatus) {
   if (!user || !request) return false;
 
@@ -52,6 +69,7 @@ function canActorTransitionStatus(user, request, nextStatus) {
   if (isAssignedTechnician) {
     return [
       "Accepted",
+      "Pending",
       "In Progress",
       "Waiting for User",
       "Waiting for Parts",
@@ -129,6 +147,17 @@ async function insertNotifications(
   requestId,
   options = {},
 ) {
+  const actor = options.actor_user;
+  const payload = {
+    ...(options.payload || {}),
+    ...(actor ? {
+      actor_user_id: actor.user_id || null,
+      actor_name: actorDisplayName(actor),
+      actor_role: actor.role || null,
+    } : {}),
+    ticket_id: Number(requestId),
+  };
+
   await emitNotificationEvent(
     {
       type: notificationType,
@@ -137,7 +166,7 @@ async function insertNotifications(
       related_record_type: "service_request",
       related_record_id: requestId,
       recipient_user_ids: recipients,
-      payload: options.payload || {},
+      payload,
       severity: options.severity,
       action_url:
         options.action_url || `/service-requests/${requestId}`,
@@ -168,6 +197,9 @@ async function getServiceRequestById(client, requestId) {
             officer.full_name AS ict_officer_name,
             closer.full_name AS closed_by_name,
             assigner.full_name AS assigned_by_name,
+            floor.floor_label,
+             catalog.name AS catalog_item_name,
+             approver.full_name AS approval_decided_by_name,
             asset.asset_tag AS affected_asset_tag,
             asset.status AS affected_asset_status,
             sp.name AS sla_policy_name,
@@ -181,6 +213,9 @@ async function getServiceRequestById(client, requestId) {
      LEFT JOIN users closer ON closer.user_id = sr.closed_by_user_id
      LEFT JOIN users assigner ON assigner.user_id = sr.assigned_by_user_id
      LEFT JOIN departments d ON d.department_id = sr.department_id
+     LEFT JOIN floors floor ON floor.floor_id = sr.floor_id
+      LEFT JOIN service_catalog_items catalog ON catalog.catalog_item_id = sr.catalog_item_id
+      LEFT JOIN users approver ON approver.user_id = sr.approval_decided_by
      LEFT JOIN assets asset ON asset.asset_id = sr.affected_asset_id
      LEFT JOIN sla_policies sp ON sp.sla_policy_id = sr.sla_policy_id
      WHERE sr.request_id = $1`,
@@ -264,6 +299,13 @@ function buildSlaSummary(request) {
     resolution_due_at: request.sla_resolution_due_at || null,
     response_escalated_at: request.response_escalated_at || null,
     resolution_escalated_at: request.resolution_escalated_at || null,
+    response_warning_sent_at: request.response_warning_sent_at || null,
+    resolution_warning_sent_at: request.resolution_warning_sent_at || null,
+    response_warning_level: Number(request.response_warning_level || 0),
+    resolution_warning_level: Number(request.resolution_warning_level || 0),
+    expected_completion_warning_sent_at: request.expected_completion_warning_sent_at || null,
+    expected_completion_warning_level: Number(request.expected_completion_warning_level || 0),
+    expected_completion_escalated_at: request.expected_completion_escalated_at || null,
     last_escalated_at: request.last_escalated_at || null,
     escalation_count: request.escalation_count || 0,
     ...calculateSlaState(request),
@@ -309,14 +351,16 @@ async function createServiceRequestRecord(data) {
     const requestId = Number(idResult.rows[0].request_id);
     const now = new Date();
     const ticketNumber = buildTicketNumber(requestId, now);
+    const initialStatus = data.approval_status === "pending" ? "Pending" : "New";
 
     const inserted = await client.query(
       `INSERT INTO service_requests
         (request_id, ticket_number, requester_id, department_id, category, subject, description, priority, ticket_type,
-     subcategory, impact, urgency, source_channel, affected_asset_id,
+     subcategory, impact, urgency, source_channel, affected_asset_id, floor_id,
+     catalog_item_id, catalog_responses, approval_status, approval_role,
      closure_confirmation_required, status, sla_policy_id, sla_response_due_at, sla_resolution_due_at,
      status_changed_at)
-   VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'New',$16,$17,$18,NOW())
+   VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,NOW())
    RETURNING *`,
       [
         requestId,
@@ -333,7 +377,13 @@ async function createServiceRequestRecord(data) {
         data.urgency || data.priority || "Medium",
         data.source_channel || "portal",
         data.affected_asset_id || null,
+        data.floor_id || null,
+        data.catalog_item_id || null,
+        JSON.stringify(data.catalog_responses || {}),
+        data.approval_status || "not_required",
+        data.approval_role || null,
         !!data.closure_confirmation_required,
+        initialStatus,
         selectedPolicy?.sla_policy_id || null,
         deadlines.responseDueAt,
         deadlines.resolutionDueAt,
@@ -348,7 +398,7 @@ async function createServiceRequestRecord(data) {
       data.requester_id,
       "created",
       {
-        to_status: "New",
+        to_status: initialStatus,
         details: `${data.ticket_type || "Incident"}: ${data.subject}`,
       },
     );
@@ -362,10 +412,112 @@ async function createServiceRequestRecord(data) {
       client,
     );
 
+    if (data.approval_status === "pending") {
+      await insertTicketHistory(client, request.request_id, data.requester_id, "approval_requested", {
+        from_status: initialStatus,
+        to_status: initialStatus,
+        details: `Approval requested from ${data.approval_role}.`,
+      });
+      const approvers = await client.query(
+        `SELECT user_id FROM users
+         WHERE is_active = TRUE
+           AND (role = $1 OR role = 'admin')`,
+        [data.approval_role],
+      );
+      await insertNotifications(
+        client,
+        approvers.rows.map((row) => row.user_id),
+        "approval_requested",
+        `Approval required: ${ticketNumber}`,
+        `${data.requester_name || "A requester"} submitted ${data.subject} for approval.`,
+        request.request_id,
+        {
+          severity: "warning",
+          actor_user: {
+            user_id: data.requester_id,
+            full_name: data.requester_name,
+            role: data.requester_role,
+          },
+          payload: { change_type: "approval_requested" },
+        },
+      );
+    }
+
     return getServiceRequestDetails(client, request.request_id, {
       user_id: data.requester_id,
       role: data.requester_role || "staff",
     });
+  });
+}
+
+async function decideServiceRequestApprovalRecord(requestId, actorUser, decision) {
+  return withTransaction(async (client) => {
+    const result = await client.query(
+      `SELECT request_id, ticket_number, subject, requester_id, status, approval_status, approval_role
+       FROM service_requests
+       WHERE request_id = $1
+       FOR UPDATE`,
+      [requestId],
+    );
+    const request = result.rows[0];
+    if (!request) {
+      const error = new Error("Request not found.");
+      error.statusCode = 404;
+      throw error;
+    }
+    if (request.approval_status !== "pending") {
+      const error = new Error("This request is not awaiting approval.");
+      error.statusCode = 400;
+      throw error;
+    }
+    if (actorUser.role !== "admin" && actorUser.role !== request.approval_role) {
+      const error = new Error("You do not have permission to approve this request.");
+      error.statusCode = 403;
+      throw error;
+    }
+
+    const approvalStatus = decision.decision;
+    const nextStatus = approvalStatus === "rejected" ? "Cancelled" : request.status;
+    await client.query(
+      `UPDATE service_requests
+       SET approval_status = $1,
+           approval_decided_by = $2,
+           approval_decided_at = NOW(),
+           approval_note = $3,
+           status = $4,
+           status_changed_at = CASE WHEN status <> $4 THEN NOW() ELSE status_changed_at END
+       WHERE request_id = $5`,
+      [approvalStatus, actorUser.user_id, decision.note || null, nextStatus, requestId],
+    );
+
+    await insertTicketHistory(client, requestId, actorUser.user_id, approvalStatus === "approved" ? "approved" : "rejected", {
+      from_status: request.status,
+      to_status: nextStatus,
+      details: decision.note || `Request ${approvalStatus}.`,
+    });
+    await logAction(
+      actorUser.user_id,
+      approvalStatus === "approved" ? "Service request approved" : "Service request rejected",
+      "service_request",
+      requestId,
+      `${request.ticket_number} ${approvalStatus}`,
+      client,
+    );
+    await insertNotifications(
+      client,
+      [request.requester_id],
+      approvalStatus === "approved" ? "approval_approved" : "approval_rejected",
+      `Request ${approvalStatus}: ${request.ticket_number}`,
+      `${actorDisplayName(actorUser)} ${approvalStatus} this request.${decision.note ? ` ${decision.note}` : ""}`,
+      requestId,
+      {
+        severity: approvalStatus === "approved" ? "success" : "error",
+        actor_user: actorUser,
+        payload: { change_type: `approval_${approvalStatus}` },
+      },
+    );
+
+    return getServiceRequestDetails(client, requestId, actorUser);
   });
 }
 
@@ -445,6 +597,9 @@ async function assignServiceRequestRecord(
        accepted_at = CASE WHEN $1::integer IS NULL THEN NULL ELSE accepted_at END,
        assignment_notes = $4,
        expected_completion_at = $5,
+       expected_completion_warning_sent_at = NULL,
+       expected_completion_warning_level = 0,
+       expected_completion_escalated_at = NULL,
        status = $6,
        status_changed_at = NOW()
    WHERE request_id = $7::integer
@@ -488,22 +643,27 @@ async function assignServiceRequestRecord(
           : "Assignment removed"),
     });
 
-    const recipients = [previous.requester_id];
-    if (nextAssignee) recipients.push(nextAssignee);
+    const recipients = ticketParticipantIds(previous, actorUser.user_id, [
+      nextAssignee,
+      assignedIctOfficerId,
+      previous.assigned_technician_id,
+    ]);
     await insertNotifications(
       client,
       recipients,
       "ticket_assigned",
       nextAssignee ? "Ticket assignment updated" : "Ticket unassigned",
       nextAssignee
-        ? `Ticket ${updated.rows[0].ticket_number || requestId} has been assigned.`
-        : `Ticket ${updated.rows[0].ticket_number || requestId} is awaiting reassignment.`,
+        ? `${actorDisplayName(actorUser)} assigned ticket ${updated.rows[0].ticket_number || requestId}.`
+        : `${actorDisplayName(actorUser)} removed the ticket assignment.`,
       requestId,
       {
         payload: {
+          change_type: nextAssignee ? "assignment_updated" : "assignment_removed",
           assigned_technician_id: nextAssignee,
           expected_completion_at: details.expected_completion_at || null,
         },
+        actor_user: actorUser,
       },
     );
 
@@ -531,6 +691,7 @@ async function updateServiceRequestStatusRecord(
   return withTransaction(async (client) => {
     const existingResult = await client.query(
       `SELECT request_id, ticket_number, status, requester_id, assigned_technician_id,
+              assigned_ict_officer_id,
               first_response_at, date_resolved, closure_confirmation_required
        FROM service_requests
        WHERE request_id = $1
@@ -671,14 +832,19 @@ async function updateServiceRequestStatusRecord(
 
     await insertNotifications(
       client,
-      [previous.requester_id, previous.assigned_technician_id].filter(
-        (value) => Number(value) !== Number(actorUser.user_id),
-      ),
+      ticketParticipantIds(previous, actorUser.user_id),
       status === "Resolved" ? "ticket_resolved" : "ticket_updated",
       `Ticket ${updated.rows[0].ticket_number || requestId} updated`,
-      `The ticket status is now ${status}.`,
+      `${actorDisplayName(actorUser)} changed the status from ${previous.status} to ${status}.`,
       requestId,
-      { payload: { status } },
+      {
+        actor_user: actorUser,
+        payload: {
+          change_type: "status_changed",
+          previous_status: previous.status,
+          status,
+        },
+      },
     );
 
     await logAction(
@@ -731,14 +897,15 @@ async function addTicketCommentRecord(requestId, actorUser, body, isInternal) {
     if (!isInternal) {
       await insertNotifications(
         client,
-        [request.requester_id, request.assigned_technician_id].filter(
-          (value) => Number(value) !== Number(actorUser.user_id),
-        ),
+        ticketParticipantIds(request, actorUser.user_id),
         "ticket_comment",
         `New comment on ${request.ticket_number || `ticket ${requestId}`}`,
         `${actorUser.full_name || "A user"} added a comment.`,
         requestId,
-        { payload: { is_internal: false } },
+        {
+          actor_user: actorUser,
+          payload: { change_type: "comment_added", is_internal: false },
+        },
       );
     }
 
@@ -792,14 +959,15 @@ async function addTicketAttachmentRecord(requestId, actorUser, attachment) {
     if (!attachment.is_internal) {
       await insertNotifications(
         client,
-        [request.requester_id, request.assigned_technician_id].filter(
-          (value) => Number(value) !== Number(actorUser.user_id),
-        ),
+        ticketParticipantIds(request, actorUser.user_id),
         "ticket_attachment",
         `New attachment on ${request.ticket_number || `ticket ${requestId}`}`,
         `${actorUser.full_name || "A user"} uploaded ${attachment.fileName}.`,
         requestId,
-        { payload: { file_name: attachment.fileName } },
+        {
+          actor_user: actorUser,
+          payload: { change_type: "attachment_added", file_name: attachment.fileName },
+        },
       );
     }
 
@@ -839,7 +1007,8 @@ async function updateServiceRequestAssetRecord(
 ) {
   return withTransaction(async (client) => {
     const existing = await client.query(
-      `SELECT request_id, ticket_number, requester_id, affected_asset_id
+      `SELECT request_id, ticket_number, requester_id, affected_asset_id,
+              assigned_technician_id, assigned_ict_officer_id
        FROM service_requests
        WHERE request_id = $1
        FOR UPDATE`,
@@ -850,13 +1019,23 @@ async function updateServiceRequestAssetRecord(
     const previous = existing.rows[0];
     const nextAssetId = affectedAssetId ? Number(affectedAssetId) : null;
 
+    let nextFloorId = null;
+    if (nextAssetId) {
+      const assetResult = await client.query(
+        `SELECT floor_id FROM assets WHERE asset_id = $1`,
+        [nextAssetId],
+      );
+      nextFloorId = assetResult.rows[0]?.floor_id || null;
+    }
+
     const updated = await client.query(
       `UPDATE service_requests
        SET affected_asset_id = $1,
+           floor_id = $2,
            status_changed_at = NOW()
-       WHERE request_id = $2
+       WHERE request_id = $3
        RETURNING *`,
-      [nextAssetId, requestId],
+      [nextAssetId, nextFloorId, requestId],
     );
 
     await insertTicketHistory(
@@ -868,6 +1047,24 @@ async function updateServiceRequestAssetRecord(
         details: nextAssetId
           ? `Affected asset linked to asset_id ${nextAssetId}`
           : "Affected asset link removed",
+      },
+    );
+
+    await insertNotifications(
+      client,
+      ticketParticipantIds(previous, actorUser.user_id),
+      "ticket_updated",
+      `Ticket ${previous.ticket_number || requestId} updated`,
+      nextAssetId
+        ? `${actorDisplayName(actorUser)} linked an affected asset to this ticket.`
+        : `${actorDisplayName(actorUser)} removed the affected asset from this ticket.`,
+      requestId,
+      {
+        actor_user: actorUser,
+        payload: {
+          change_type: nextAssetId ? "asset_linked" : "asset_removed",
+          affected_asset_id: nextAssetId,
+        },
       },
     );
 
@@ -898,6 +1095,7 @@ module.exports = {
   buildSlaSummary,
   canActorTransitionStatus,
   createServiceRequestRecord,
+  decideServiceRequestApprovalRecord,
   fetchActiveSlaPolicies,
   getAllowedTicketTransitions,
   getServiceRequestById,

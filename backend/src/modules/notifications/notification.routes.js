@@ -18,6 +18,38 @@ router.get(
   controller.unreadCount
 );
 
+router.get(
+  '/browser/vapid-public-key',
+  requireAuth,
+  controller.getBrowserPushPublicKey
+);
+
+router.get(
+  '/browser-subscriptions/me',
+  requireAuth,
+  controller.listBrowserSubscriptions
+);
+
+router.post(
+  '/browser-subscriptions',
+  requireAuth,
+  validator.saveBrowserSubscription,
+  controller.saveBrowserSubscription
+);
+
+router.delete(
+  '/browser-subscriptions/:id',
+  requireAuth,
+  validator.markRead,
+  controller.deleteBrowserSubscription
+);
+
+router.post(
+  '/browser/test',
+  requireAuth,
+  controller.sendBrowserTest
+);
+
 router.post(
   '/read-all',
   requireAuth,

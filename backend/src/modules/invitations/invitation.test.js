@@ -64,6 +64,40 @@ test('invitation routes preserve endpoint surface', () => {
   assert.ok(endpoints.includes('POST /'));
   assert.ok(endpoints.includes('POST /accept'));
   assert.ok(endpoints.includes('POST /:id/revoke'));
+  assert.ok(endpoints.includes('POST /:id/resend'));
+});
+
+test('invitation repository queues activation email delivery without requiring an accepted user', async () => {
+  const calls = [];
+  const client = {
+    async query(sql, params) {
+      calls.push({ sql, params });
+      return {
+        rows: [{
+          notification_delivery_id: 11,
+          delivery_status: 'pending',
+          recipient_address: params[0],
+          subject: params[1],
+        }],
+      };
+    },
+  };
+
+  const delivery = await repository.insertInvitationEmailDelivery(
+    client,
+    {
+      full_name: 'Ada Nwosu',
+      email: 'ada@nscict.local',
+      expires_at: '2026-10-01T00:00:00.000Z',
+    },
+    'https://service-desk.internal/activate?token=abc'
+  );
+
+  assert.equal(delivery.delivery_status, 'pending');
+  assert.equal(delivery.recipient_address, 'ada@nscict.local');
+  assert.match(calls[0].sql, /notification_deliveries/i);
+  assert.match(calls[0].sql, /recipient_user_id, channel/i);
+  assert.match(calls[0].params[2], /activate\?token=abc/);
 });
 
 test('invitation constants reuse canonical domain values', () => {

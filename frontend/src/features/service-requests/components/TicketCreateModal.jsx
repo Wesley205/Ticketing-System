@@ -3,7 +3,10 @@ import { Button } from '../../../components/forms/Button.jsx';
 import { FormField } from '../../../components/forms/FormField.jsx';
 import { Modal } from '../../../components/modals/Modal.jsx';
 import { normalizeApiError } from '../../../lib/error-handling.js';
+import { IMAGE_MIME_TYPES } from '../../../lib/media-files.js';
+import { ImageUploadPreview } from '../../../components/media/ImageGallery.jsx';
 import { fetchAssets, fetchTicketSuggestions, mapSimplifiedTicketPayload } from '../services/service-requests-api.js';
+import { fetchServiceCatalog } from '../services/service-catalog-api.js';
 import { KBSuggestions } from './KBSuggestions.jsx';
 
 const CATEGORY_OPTIONS = ['Computer', 'Network', 'Printer', 'Internet', 'Software', 'Email', 'Hardware', 'Other'];
@@ -17,6 +20,7 @@ const CLASSIFICATION_OPTIONS = [
   { value: 'Other|General Support', label: 'Other / General Support' },
 ];
 const SEVERITY_OPTIONS = ['Low', 'Medium', 'High', 'Critical'];
+const MAX_TICKET_IMAGES = 3;
 const INITIAL_FORM = {
   ticket_type: 'Incident',
   classification: 'Computer|Endpoint Device',
@@ -25,6 +29,8 @@ const INITIAL_FORM = {
   description: '',
   affected_asset_id: '',
   closure_confirmation_required: false,
+  catalog_item_id: '',
+  catalog_responses: {},
 };
 const STEPS = ['Describe', 'Classify', 'Review'];
 
@@ -48,15 +54,22 @@ export function TicketCreateModal({
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(INITIAL_FORM);
   const [assets, setAssets] = useState([]);
+  const [catalogItems, setCatalogItems] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [suggestionsError, setSuggestionsError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
+  const [images, setImages] = useState([]);
+  const [imageError, setImageError] = useState('');
   const subjectRef = useRef(null);
   const descriptionRef = useRef(null);
 
   const payload = useMemo(() => mapSimplifiedTicketPayload(form), [form]);
+  const selectedCatalogItem = useMemo(
+    () => catalogItems.find((item) => String(item.catalog_item_id) === String(form.catalog_item_id)) || null,
+    [catalogItems, form.catalog_item_id]
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -65,9 +78,24 @@ export function TicketCreateModal({
     setSubmitError('');
     setSuggestions([]);
     setSuggestionsError('');
+    setImages([]);
+    setImageError('');
     fetchAssets()
       .then((rows) => setAssets(Array.isArray(rows) ? rows : []))
       .catch(() => setAssets([]));
+    fetchServiceCatalog()
+      .then((rows) => {
+        setCatalogItems(rows);
+        if (rows[0]) {
+          setForm((current) => current.catalog_item_id ? current : {
+            ...current,
+            catalog_item_id: rows[0].catalog_item_id,
+            ticket_type: rows[0].ticket_type,
+            severity: rows[0].default_priority,
+          });
+        }
+      })
+      .catch(() => setCatalogItems([]));
     window.setTimeout(() => subjectRef.current?.focus(), 0);
   }, [open]);
 
@@ -104,10 +132,36 @@ export function TicketCreateModal({
     setFieldErrors((current) => ({ ...current, [key]: '' }));
   }
 
+  function selectCatalogItem(value) {
+    const item = catalogItems.find((row) => String(row.catalog_item_id) === String(value));
+    setForm((current) => ({
+      ...current,
+      catalog_item_id: value,
+      catalog_responses: {},
+      ticket_type: item?.ticket_type || current.ticket_type,
+      severity: item?.default_priority || current.severity,
+    }));
+    setFieldErrors({});
+  }
+
+  function updateCatalogResponse(key, value) {
+    setForm((current) => ({
+      ...current,
+      catalog_responses: { ...current.catalog_responses, [key]: value },
+    }));
+    setFieldErrors((current) => ({ ...current, [`catalog_${key}`]: '' }));
+  }
+
   function validateDescribe() {
     const nextErrors = {};
     if (!form.subject.trim()) nextErrors.subject = 'Subject is required.';
     if (!form.description.trim()) nextErrors.description = 'Description is required.';
+    if (!form.catalog_item_id) nextErrors.catalog_item_id = 'Select the service you need.';
+    for (const field of selectedCatalogItem?.form_schema || []) {
+      if (field.required && !String(form.catalog_responses[field.key] || '').trim()) {
+        nextErrors[`catalog_${field.key}`] = `${field.label} is required.`;
+      }
+    }
     setFieldErrors(nextErrors);
     if (nextErrors.subject) subjectRef.current?.focus();
     else if (nextErrors.description) descriptionRef.current?.focus();
@@ -125,8 +179,30 @@ export function TicketCreateModal({
     setForm(INITIAL_FORM);
     setStep(0);
     setSuggestions([]);
+    setImages([]);
+    setImageError('');
     setFieldErrors({});
     setSubmitError('');
+  }
+
+  function handleAddImages(event) {
+    const selected = Array.from(event.target.files || []);
+    event.target.value = '';
+    setImageError('');
+
+    const invalid = selected.find((file) => !IMAGE_MIME_TYPES.includes(file.type));
+    if (invalid) {
+      setImageError('Only JPG, PNG, or WEBP images can be attached.');
+      return;
+    }
+
+    setImages((current) => {
+      const next = [...current, ...selected].slice(0, MAX_TICKET_IMAGES);
+      if (current.length + selected.length > MAX_TICKET_IMAGES) {
+        setImageError(`Tickets can include up to ${MAX_TICKET_IMAGES} images.`);
+      }
+      return next;
+    });
   }
 
   function continueStep() {
@@ -144,7 +220,7 @@ export function TicketCreateModal({
     setSubmitError('');
 
     try {
-      const created = await onSubmit(payload);
+      const created = await onSubmit(payload, images);
       resetDraft();
       onCreated(created);
     } catch (error) {
@@ -157,6 +233,7 @@ export function TicketCreateModal({
       open={open}
       title="Create request"
       onClose={handleClose}
+      className="ticket-create-modal"
       footer={
         <>
           <Button variant="secondary" onClick={handleClose} disabled={isSubmitting}>Cancel</Button>
@@ -186,6 +263,19 @@ export function TicketCreateModal({
             <section className="ticket-create-section">
               <strong>Describe the request</strong>
               <p className="ticket-create-help">Include location, error messages, affected system or device, and what has already been tried.</p>
+              <FormField label="Service needed" htmlFor="create-catalog-item" error={fieldErrors.catalog_item_id}>
+                <select id="create-catalog-item" className="ui-input" value={form.catalog_item_id} onChange={(event) => selectCatalogItem(event.target.value)}>
+                  <option value="">Select a service</option>
+                  {catalogItems.map((item) => <option key={item.catalog_item_id} value={item.catalog_item_id}>{item.name}</option>)}
+                </select>
+              </FormField>
+              {selectedCatalogItem ? (
+                <div className="ticket-catalog-summary">
+                  <strong>{selectedCatalogItem.name}</strong>
+                  <p>{selectedCatalogItem.description}</p>
+                  {selectedCatalogItem.approval_required ? <span>Approval required before assignment</span> : <span>No approval required</span>}
+                </div>
+              ) : null}
               <FormField label="Subject" htmlFor="create-subject" error={fieldErrors.subject}>
                 <input
                   ref={subjectRef}
@@ -212,6 +302,39 @@ export function TicketCreateModal({
                   onChange={(event) => updateField('description', event.target.value)}
                 />
               </FormField>
+
+              {(selectedCatalogItem?.form_schema || []).map((field) => (
+                <FormField key={field.key} label={field.label} htmlFor={`create-catalog-${field.key}`} error={fieldErrors[`catalog_${field.key}`]}>
+                  {field.type === 'textarea' ? (
+                    <textarea
+                      id={`create-catalog-${field.key}`}
+                      className="ui-input"
+                      rows={4}
+                      value={form.catalog_responses[field.key] || ''}
+                      placeholder={field.placeholder || ''}
+                      onChange={(event) => updateCatalogResponse(field.key, event.target.value)}
+                    />
+                  ) : (
+                    <input
+                      id={`create-catalog-${field.key}`}
+                      className="ui-input"
+                      value={form.catalog_responses[field.key] || ''}
+                      placeholder={field.placeholder || ''}
+                      onChange={(event) => updateCatalogResponse(field.key, event.target.value)}
+                    />
+                  )}
+                </FormField>
+              ))}
+
+              <ImageUploadPreview
+                files={images}
+                limit={MAX_TICKET_IMAGES}
+                label="Context images"
+                description="Add up to 3 screenshots or photos that help ICT understand the issue."
+                error={imageError}
+                onAdd={handleAddImages}
+                onRemove={(index) => setImages((current) => current.filter((_, itemIndex) => itemIndex !== index))}
+              />
             </section>
           ) : null}
 
@@ -268,10 +391,13 @@ export function TicketCreateModal({
               {submitError ? <p className="ui-field-error" role="alert">{submitError}</p> : null}
               <dl className="ticket-create-summary">
                 <div><dt>Subject</dt><dd>{form.subject}</dd></div>
+                <div><dt>Service</dt><dd>{selectedCatalogItem?.name || 'General support'}</dd></div>
+                <div><dt>Approval</dt><dd>{selectedCatalogItem?.approval_required ? 'Required' : 'Not required'}</dd></div>
                 <div><dt>Type</dt><dd>{form.ticket_type}</dd></div>
                 <div><dt>Classification</dt><dd>{form.classification.replace('|', ' / ')}</dd></div>
                 <div><dt>Priority</dt><dd>{form.severity}</dd></div>
                 <div><dt>Affected asset</dt><dd>{selectedAssetLabel(assets, form.affected_asset_id)}</dd></div>
+                <div><dt>Images</dt><dd>{images.length ? `${images.length} attached` : 'No images attached'}</dd></div>
                 <div><dt>Closure confirmation</dt><dd>{form.closure_confirmation_required ? 'Required' : 'Not required'}</dd></div>
               </dl>
               <Button variant="secondary" onClick={() => setStep(0)}>Edit description</Button>

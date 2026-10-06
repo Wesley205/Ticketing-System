@@ -19,6 +19,7 @@ export function TicketDetail({
   onCommentSubmit,
   onAttachmentUpload,
   onAttachmentDownload,
+  onAttachmentLoad,
   isMutating = false,
   allowAssetEditing = true,
   showWorkflow = true,
@@ -49,6 +50,7 @@ export function TicketDetail({
           <div className="ticket-kpi-card"><span>Requester</span><strong>{ticket.requester_name || '-'}</strong></div>
           <div className="ticket-kpi-card"><span>Technician</span><strong>{ticket.technician_name || 'Unassigned'}</strong></div>
           <div className="ticket-kpi-card"><span>Department</span><strong>{ticket.department_name || '-'}</strong></div>
+          <div className="ticket-kpi-card"><span>Floor</span><strong>{ticket.floor_label || '-'}</strong></div>
           <div className="ticket-kpi-card"><span>Created</span><strong>{formatDateTime(ticket.date_submitted)}</strong></div>
           <div className="ticket-kpi-card"><span>Expected Completion</span><strong>{formatDateTime(ticket.expected_completion_at)}</strong></div>
           <div className="ticket-kpi-card"><span>Escalations</span><strong>{ticket.sla?.escalation_count || 0}</strong></div>
@@ -171,6 +173,7 @@ export function TicketDetail({
             canAddInternal={ticket.permissions?.can_add_internal_note}
             onUpload={onAttachmentUpload}
             onDownload={onAttachmentDownload}
+            onLoadImage={onAttachmentLoad}
             isSubmitting={isMutating}
           />
         </section>

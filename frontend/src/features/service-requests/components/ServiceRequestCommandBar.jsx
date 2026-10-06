@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '../../../components/forms/Button.jsx';
 import { FormField } from '../../../components/forms/FormField.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 import { ActiveFilterChips } from './ActiveFilterChips.jsx';
 
 export function ServiceRequestCommandBar({ filters, metadata, isOperational = false, onChange, onClear }) {
@@ -42,13 +43,40 @@ export function ServiceRequestCommandBar({ filters, metadata, isOperational = fa
           <span>{isOperational ? 'My tickets' : 'My requests'}</span>
         </label>
 
-        <Button variant="secondary" onClick={() => setMoreOpen((current) => !current)}>
-          More filters
+        <Button
+          variant="secondary"
+          className="service-request-more-filter-button ui-button-with-icon"
+          onClick={() => setMoreOpen((current) => !current)}
+          aria-expanded={moreOpen}
+        >
+          <AppIcon name="filter" />
+          {moreOpen ? 'Hide filters' : 'Show filters'}
         </Button>
       </div>
 
       {moreOpen ? (
         <div className="service-request-command-more">
+          <div className="service-request-mobile-extra-filters">
+            <FormField label="Status" htmlFor="ticket-filter-status-mobile">
+              <select id="ticket-filter-status-mobile" className="ui-input" value={filters.status} onChange={(event) => onChange('status', event.target.value)}>
+                <option value="">All statuses</option>
+                {(metadata.statuses || []).map((value) => <option key={value} value={value}>{value}</option>)}
+              </select>
+            </FormField>
+
+            <FormField label="Priority" htmlFor="ticket-filter-priority-mobile">
+              <select id="ticket-filter-priority-mobile" className="ui-input" value={filters.priority} onChange={(event) => onChange('priority', event.target.value)}>
+                <option value="">All priorities</option>
+                {(metadata.priorities || []).map((value) => <option key={value} value={value}>{value}</option>)}
+              </select>
+            </FormField>
+
+            <label className="ticket-checkbox service-request-mine-toggle">
+              <input type="checkbox" checked={filters.mine} onChange={(event) => onChange('mine', event.target.checked)} />
+              <span>{isOperational ? 'My tickets' : 'My requests'}</span>
+            </label>
+          </div>
+
           <FormField label="Ticket Type" htmlFor="ticket-filter-type">
             <select id="ticket-filter-type" className="ui-input" value={filters.ticket_type} onChange={(event) => onChange('ticket_type', event.target.value)}>
               <option value="">All types</option>

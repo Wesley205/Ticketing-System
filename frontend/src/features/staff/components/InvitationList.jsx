@@ -4,7 +4,7 @@ import { StatusBadge } from '../../../components/status/StatusBadge.jsx';
 import { formatDate } from '../../../lib/formatting.js';
 import { getRoleLabel, getUserTypeLabel } from '../services/staff-api.js';
 
-export function InvitationList({ rows = [], onRevoke }) {
+export function InvitationList({ rows = [], onRevoke, onResend }) {
   if (!rows.length) {
     return <EmptyState variant="search" title="No invitations found." description="Pending, accepted, revoked, and expired invitations will appear here." />;
   }
@@ -39,7 +39,12 @@ export function InvitationList({ rows = [], onRevoke }) {
           label: 'Actions',
           render: (row) => (
             row.status === 'pending'
-              ? <button type="button" className="ticket-link-button" onClick={() => onRevoke(row)}>Revoke</button>
+              ? (
+                <div className="ui-inline-actions">
+                  <button type="button" className="ticket-link-button" onClick={() => onResend(row)}>Resend email</button>
+                  <button type="button" className="ticket-link-button" onClick={() => onRevoke(row)}>Revoke</button>
+                </div>
+              )
               : '-'
           ),
         },

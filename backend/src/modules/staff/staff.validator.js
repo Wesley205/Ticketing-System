@@ -1,6 +1,7 @@
 const { body, param, query, validationResult } = require('express-validator');
 const { validatePasswordStrength } = require('../../utils/authSecurity');
 const { USER_ROLES, USER_TYPES } = require('./staff.constants');
+const { TECHNICIAN_AVAILABILITY_STATES } = require('../../shared/constants/domain');
 
 function sendFirstValidationError(req, res, next) {
   const errors = validationResult(req);
@@ -35,6 +36,9 @@ const createStaff = [
   body('role').isIn(USER_ROLES).withMessage('Invalid role'),
   body('user_type').optional().isIn(USER_TYPES).withMessage('Invalid user type'),
   body('department_id').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Department id must be a positive integer.'),
+  body('floor_id').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Floor id must be a positive integer.'),
+  body('technician_availability').optional().isIn(TECHNICIAN_AVAILABILITY_STATES).withMessage('Invalid technician availability.'),
+  body('technician_capacity').optional().isInt({ min: 1, max: 50 }).withMessage('Technician capacity must be between 1 and 50.'),
   body('supervisor_user_id').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Supervisor id must be a positive integer.'),
   sendFirstValidationError,
 ];
@@ -45,6 +49,9 @@ const updateStaff = [
   body('role').optional().isIn(USER_ROLES).withMessage('Invalid role'),
   body('user_type').optional().isIn(USER_TYPES).withMessage('Invalid user type'),
   body('department_id').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Department id must be a positive integer.'),
+  body('floor_id').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Floor id must be a positive integer.'),
+  body('technician_availability').optional().isIn(TECHNICIAN_AVAILABILITY_STATES).withMessage('Invalid technician availability.'),
+  body('technician_capacity').optional().isInt({ min: 1, max: 50 }).withMessage('Technician capacity must be between 1 and 50.'),
   body('supervisor_user_id').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Supervisor id must be a positive integer.'),
   sendFirstValidationError,
 ];

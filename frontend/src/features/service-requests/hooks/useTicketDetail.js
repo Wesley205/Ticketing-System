@@ -5,6 +5,7 @@ import {
   downloadTicketAttachment,
   fetchAssets,
   fetchAssignmentHistory,
+  fetchRoutingSuggestions,
   fetchTechnicians,
   fetchTicketDetail,
   fetchTicketSuggestions,
@@ -12,15 +13,7 @@ import {
   updateTicketStatus,
   uploadTicketAttachment,
 } from '../services/service-requests-api.js';
-
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error('Failed to read the selected file.'));
-    reader.readAsDataURL(file);
-  });
-}
+import { imageFileToUploadPayload } from '../../../lib/media-files.js';
 
 export function useTicketDetail(ticketId) {
   const [ticket, setTicket] = useState(null);
@@ -88,7 +81,7 @@ export function useTicketDetail(ticketId) {
   async function loadReferenceData() {
     try {
       const [technicianRows, assetRows] = await Promise.all([
-        fetchTechnicians().catch(() => []),
+        fetchRoutingSuggestions(ticketId).catch(() => fetchTechnicians().catch(() => [])),
         fetchAssets().catch(() => []),
       ]);
       setTechnicians(Array.isArray(technicianRows) ? technicianRows : []);
@@ -118,7 +111,6 @@ export function useTicketDetail(ticketId) {
       await refresh();
       return result;
     } catch (mutationError) {
-      setError(mutationError.message || 'Ticket update failed.');
       throw mutationError;
     } finally {
       setIsMutating(false);
@@ -139,14 +131,9 @@ export function useTicketDetail(ticketId) {
     updateStatus: (payload) => runMutation(() => updateTicketStatus(ticketId, payload)),
     addComment: (payload) => runMutation(() => addTicketComment(ticketId, payload)),
     uploadAttachment: async ({ file, is_internal }) => {
-      const content_base64 = await readFileAsDataUrl(file);
       return runMutation(() =>
-        uploadTicketAttachment(ticketId, {
-          file_name: file.name,
-          mime_type: file.type || 'application/octet-stream',
-          content_base64,
-          is_internal: !!is_internal,
-        })
+        imageFileToUploadPayload(file, { is_internal: !!is_internal })
+          .then((payload) => uploadTicketAttachment(ticketId, payload))
       );
     },
     downloadAttachment: (attachmentId) => downloadTicketAttachment(ticketId, attachmentId),

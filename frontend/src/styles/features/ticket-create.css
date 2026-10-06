@@ -1,0 +1,555 @@
+﻿/* Ticket creation modal styles. */
+.ticket-create-secure {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.75fr);
+  gap: 0;
+  margin: -8px -24px -8px;
+}
+
+.ticket-create-flow {
+  max-height: min(72vh, 760px);
+  overflow: auto;
+}
+
+.ticket-create-steps {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 10px;
+  padding: 0 24px 14px;
+  border-bottom: 1px solid #e6e0d2;
+}
+
+.ticket-create-steps span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #68736b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ticket-create-steps b {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 6px;
+  background: #eee8dc;
+  color: #344037;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.ticket-create-steps span.active,
+.ticket-create-steps span.complete {
+  color: #064723;
+}
+
+.ticket-create-steps span.active b,
+.ticket-create-steps span.complete b {
+  background: #064723;
+  color: #fff;
+}
+
+.ticket-create-form-pane,
+.ticket-create-review-pane {
+  padding: 22px 24px;
+}
+
+.ticket-create-review-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-left: 1px solid #e6e0d2;
+  background: #f8f6f0;
+}
+
+.ticket-create-section {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.ticket-create-help {
+  margin: 0;
+  color: #68736b;
+  line-height: 1.5;
+}
+
+.ticket-create-section > strong,
+.ticket-create-review-card > strong,
+.ticket-create-review-pane .ticket-suggestion-block > strong {
+  color: #064723;
+  font-size: 14px;
+}
+
+.ticket-create-review-card {
+  padding: 16px;
+  border: 1px solid #e6e0d2;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.ticket-create-review-card p {
+  margin: 6px 0 12px;
+  color: #68736b;
+}
+
+.ticket-create-review-card dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.ticket-create-review-card div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ticket-create-review-card dt {
+  color: #68736b;
+}
+
+.ticket-create-review-card dd {
+  margin: 0;
+  color: #202820;
+  font-weight: 800;
+  text-align: right;
+}
+
+.ticket-create-summary {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.ticket-create-summary div {
+  padding: 10px;
+  border-radius: 8px;
+  background: #f7f3ea;
+}
+
+.ticket-create-summary dt {
+  color: #68736b;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.ticket-create-summary dd {
+  margin: 4px 0 0;
+  color: #202820;
+  font-weight: 800;
+}
+
+.technician-workitem-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0 4px;
+}
+
+.technician-execution {
+  display: grid;
+  gap: 20px;
+}
+
+.technician-execution-head {
+  display: grid;
+  gap: 10px;
+}
+
+.technician-execution-head h2 {
+  margin: 0;
+  color: #202820;
+  font-family: var(--font-display);
+  font-size: 26px;
+}
+
+.technician-execution-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.technician-execution-badges > strong {
+  color: #064723;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.technician-execution-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(340px, 0.88fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.technician-execution-left,
+.technician-execution-right {
+  display: grid;
+  gap: 18px;
+}
+
+.technician-execution-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #e6e0d2;
+  border-radius: 8px;
+  background: #fffdf8;
+}
+
+.technician-execution-card h3,
+.technician-execution-card-head h3 {
+  margin: 0;
+  color: #064723;
+  font-size: 15px;
+}
+
+.technician-execution-card h3 span {
+  margin-left: 8px;
+  color: #c1432d;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
+.technician-execution-card p {
+  margin: 0;
+  color: #344037;
+  line-height: 1.55;
+}
+
+.technician-execution-divider {
+  height: 1px;
+  background: #e6e0d2;
+}
+
+.technician-execution-label {
+  color: #68736b;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.technician-execution-meta,
+.technician-execution-resolution-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.technician-execution-meta span {
+  display: block;
+  color: #68736b;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.technician-execution-meta strong {
+  display: block;
+  margin-top: 5px;
+  color: #202820;
+}
+
+.technician-execution-status-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.technician-execution-note-tabs {
+  display: flex;
+  gap: 14px;
+  border-bottom: 1px solid #e6e0d2;
+}
+
+.technician-execution-note-tabs button {
+  padding: 0 0 9px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #68736b;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.technician-execution-note-tabs button.active {
+  border-color: #064723;
+  color: #064723;
+}
+
+.technician-execution-note-form {
+  display: grid;
+  gap: 14px;
+}
+
+.technician-execution-card-footer,
+.technician-execution-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.technician-execution-card-footer small {
+  color: #68736b;
+}
+
+.technician-execution-file-input {
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+}
+
+.technician-execution-file-list {
+  display: grid;
+  gap: 8px;
+}
+
+.technician-execution-file-list button {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 6px;
+  background: #f3f0e8;
+  color: #344037;
+  cursor: pointer;
+  text-align: left;
+}
+
+.technician-execution-file-list p,
+.technician-execution-file-list small {
+  margin: 0;
+  color: #68736b;
+}
+
+/* Roomier ticket request wizard. Scoped to avoid undoing compact app-wide density. */
+.ui-modal.ticket-create-modal {
+  display: flex;
+  width: min(calc(100vw - 48px), 1120px);
+  height: min(90dvh, 860px);
+  max-height: 90dvh;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+
+.ticket-create-modal .ui-modal-head {
+  flex: 0 0 auto;
+  margin-bottom: 0;
+  padding: 26px 34px 22px;
+}
+
+.ticket-create-modal .ui-modal-head h3 {
+  font-size: 1.28rem;
+}
+
+.ticket-create-modal .ui-modal-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0;
+}
+
+.ticket-create-modal .ui-modal-footer {
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  margin-top: 0;
+  padding: 18px 34px;
+}
+
+.ticket-create-modal .ticket-create-secure {
+  min-width: 0;
+  grid-template-columns: minmax(580px, 1.45fr) minmax(320px, 0.75fr);
+  margin: 0;
+}
+
+.ticket-create-modal .ticket-create-flow {
+  max-height: none;
+  overflow: visible;
+}
+
+.ticket-create-modal .ticket-create-steps {
+  gap: 18px;
+  padding: 20px 34px;
+}
+
+.ticket-create-modal .ticket-create-steps span {
+  gap: 10px;
+  font-size: 13px;
+}
+
+.ticket-create-modal .ticket-create-steps b {
+  height: 28px;
+  width: 28px;
+}
+
+.ticket-create-modal .ticket-create-form-pane,
+.ticket-create-modal .ticket-create-review-pane {
+  min-width: 0;
+  padding: 34px 36px;
+}
+
+.ticket-create-modal .ticket-create-review-pane {
+  gap: 20px;
+  background: #faf8f2;
+}
+
+.ticket-create-modal .ticket-create-section {
+  gap: 20px;
+  margin-bottom: 0;
+}
+
+.ticket-create-modal .ticket-create-help {
+  max-width: 560px;
+  font-size: 0.98rem;
+  line-height: 1.65;
+}
+
+.ticket-create-modal .ticket-create-section > strong,
+.ticket-create-modal .ticket-create-review-card > strong,
+.ticket-create-modal .ticket-create-review-pane .ticket-suggestion-block > strong {
+  font-size: 1rem;
+}
+
+.ticket-create-modal .ticket-form-grid {
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 18px 22px;
+}
+
+.ticket-create-modal .ui-field {
+  gap: 8px;
+}
+
+.ticket-create-modal .ui-field-label,
+.ticket-create-modal .ui-field label {
+  font-size: 0.78rem;
+}
+
+.ticket-create-modal .ui-input,
+.ticket-create-modal select.ui-input {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 14px;
+  text-overflow: ellipsis;
+}
+
+.ticket-create-modal select.ui-input {
+  min-width: 0;
+  padding-right: 38px;
+}
+
+.ticket-create-modal textarea.ui-input {
+  min-height: 168px;
+  line-height: 1.55;
+}
+
+.ticket-create-modal .ticket-checkbox {
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid #e8e1d3;
+  border-radius: 8px;
+  background: #fffdf8;
+}
+
+.ticket-create-modal .ticket-suggestion-block {
+  display: grid;
+  min-width: 0;
+  gap: 18px;
+}
+
+.ticket-create-modal .ticket-create-section,
+.ticket-create-modal .ticket-suggestion-block,
+.ticket-create-modal .ui-feedback-empty {
+  overflow-wrap: anywhere;
+}
+
+.ticket-create-modal .ui-feedback-empty {
+  min-height: 220px;
+  padding: 28px;
+  border-style: dashed;
+  background: #fff;
+}
+
+.ticket-create-modal .ticket-create-summary {
+  gap: 12px;
+}
+
+.ticket-create-modal .ticket-create-summary div {
+  padding: 14px;
+}
+
+@media (max-width: 1280px) {
+  .ui-modal.ticket-create-modal {
+    width: min(calc(100vw - 40px), 1080px);
+  }
+
+  .ticket-create-modal .ticket-create-secure {
+    grid-template-columns: minmax(540px, 1.35fr) minmax(300px, 0.75fr);
+  }
+}
+
+@media (max-width: 1100px) {
+  .ui-modal.ticket-create-modal {
+    width: min(calc(100vw - 32px), 880px);
+    height: min(92dvh, 860px);
+    max-height: 92dvh;
+  }
+
+  .ticket-create-modal .ticket-create-secure {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ticket-create-modal .ticket-create-steps,
+  .ticket-create-modal .ticket-create-form-pane,
+  .ticket-create-modal .ticket-create-review-pane,
+  .ticket-create-modal .ui-modal-head,
+  .ticket-create-modal .ui-modal-footer {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+
+  .ticket-create-modal .ticket-create-review-pane {
+    border-left: 0;
+    border-top: 1px solid #e6e0d2;
+  }
+}
+
+@media (max-width: 720px) {
+  .ticket-create-modal .ticket-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .ui-modal.ticket-create-modal {
+    width: calc(100vw - 16px);
+    height: calc(100dvh - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+
+  .ticket-create-modal .ticket-create-steps {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ticket-create-modal .ticket-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+

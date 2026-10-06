@@ -72,7 +72,7 @@ export function AccountHelpPage() {
           <HelpOption
             icon="mail"
             title="Invitation problems?"
-            description="Links expire in 72 hours. Ask your unit commander to request a new token."
+            description="Links expire automatically. Ask your supervisor or ICT administrator to send a new invitation."
           />
           <HelpOption
             icon="clock"
@@ -87,11 +87,11 @@ export function AccountHelpPage() {
           <h2>ICT Support Service Desk</h2>
           <p>
             <HelpIcon type="mail" />
-            <span>EMAIL: ict.support@nsc.gov</span>
+            <span>Email: contact your ICT service desk</span>
           </p>
           <p>
             <HelpIcon type="phone" />
-            <span>PHONE: +1 (555) 010-HELP</span>
+            <span>Phone: use your approved internal support line</span>
           </p>
         </section>
 

@@ -79,17 +79,23 @@ async function listInvitations(filters = {}, executor = pool) {
 async function createInvitationRecord(invitationData) {
   return withTransaction(async (client) => {
     const result = await repository.insertInvitation(client, invitationData);
+    const acceptanceUrl = buildInvitationUrl(invitationData.raw_token);
+    const emailDelivery = await repository.insertInvitationEmailDelivery(client, result, acceptanceUrl);
 
     await logAction(
       invitationData.invited_by_user_id,
       'Invitation created',
       'invitation',
       result.invitation_id,
-      `Created invitation for ${invitationData.email}`,
+      `Created invitation for ${invitationData.email}; queued invitation email`,
       client
     );
 
-    return mapper.mapInvitationRow(result);
+    return {
+      ...mapper.mapInvitationRow(result),
+      acceptance_url: acceptanceUrl,
+      email_delivery_status: emailDelivery?.delivery_status || null,
+    };
   });
 }
 
@@ -120,15 +126,79 @@ async function createInvitation(data, actorUser, executor = pool) {
     supervisor_user_id: data.supervisor_user_id,
     invited_by_user_id: actorUser.user_id,
     token_hash: tokenHash,
+    raw_token: rawToken,
     account_start_date: data.account_start_date,
     account_expiration_date: data.account_expiration_date,
     expires_in_days: expiresInDays,
   });
 
-  return {
-    ...invitation,
-    acceptance_url: buildInvitationUrl(rawToken),
-  };
+  return invitation;
+}
+
+async function resendInvitationEmail(invitationId, actorUser, executor = pool) {
+  const invitation = await repository.findInvitationById(executor, invitationId);
+  if (!invitation) {
+    throw new AppError({
+      code: ERROR_CODES.RESOURCE_NOT_FOUND,
+      statusCode: 404,
+      message: INVITATION_ERROR_MESSAGES.notFound,
+    });
+  }
+
+  if (invitation.status !== 'pending') {
+    throw new AppError({
+      code: ERROR_CODES.AUTHORIZATION_FAILED,
+      statusCode: 409,
+      message: INVITATION_ERROR_MESSAGES.inactive,
+    });
+  }
+
+  if (new Date(invitation.expires_at) < new Date()) {
+    await repository.markInvitationExpired(executor, invitation.invitation_id);
+    throw new AppError({
+      code: ERROR_CODES.AUTHORIZATION_FAILED,
+      statusCode: 410,
+      message: INVITATION_ERROR_MESSAGES.expired,
+    });
+  }
+
+  const rawToken = createInvitationToken();
+  const tokenHash = hashInvitationToken(rawToken);
+  const acceptanceUrl = buildInvitationUrl(rawToken);
+
+  return withTransaction(async (client) => {
+    const lockedInvitation = await repository.lockInvitation(client, invitation.invitation_id);
+    if (!lockedInvitation || lockedInvitation.status !== 'pending' || new Date(lockedInvitation.expires_at) < new Date()) {
+      return null;
+    }
+
+    await client.query(
+      `UPDATE invitations
+       SET token_hash = $1,
+           updated_at = NOW()
+       WHERE invitation_id = $2`,
+      [tokenHash, invitation.invitation_id]
+    );
+
+    const emailDelivery = await repository.insertInvitationEmailDelivery(client, invitation, acceptanceUrl);
+
+    await logAction(
+      actorUser.user_id,
+      'Invitation email resent',
+      'invitation',
+      invitation.invitation_id,
+      `Queued invitation email for ${invitation.email}`,
+      client
+    );
+
+    return {
+      invitation_id: invitation.invitation_id,
+      email: invitation.email,
+      status: invitation.status,
+      acceptance_url: acceptanceUrl,
+      email_delivery_status: emailDelivery?.delivery_status || null,
+    };
+  });
 }
 
 async function acceptInvitationRecord(invitation, username, password, phone) {
@@ -240,5 +310,6 @@ module.exports = {
   hashInvitationToken,
   listInvitations,
   revokeInvitationRecord,
+  resendInvitationEmail,
   validateInvitationRequest,
 };

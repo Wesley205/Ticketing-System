@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '../../../components/forms/Button.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
 import { SecureWorkspaceLayout } from '../../../components/layout/SecureWorkspaceLayout.jsx';
@@ -90,7 +91,7 @@ export function MaintenancePage() {
   }
 
   return (
-    <SecureWorkspaceLayout title="Maintenance Desk" subtitle="ICT Security Hub">
+    <SecureWorkspaceLayout title="Maintenance" subtitle="ICT Service Hub">
       <div className="secure-registry-page">
         <div className="service-desk-secure-head">
           <div>
@@ -98,9 +99,22 @@ export function MaintenancePage() {
             <p>View completed and in-progress maintenance tasks, and manage upcoming preventive schedules.</p>
           </div>
           <div className="service-desk-secure-actions">
-            <Button variant="secondary" onClick={() => maintenance.refresh()}>Refresh</Button>
-            {canManageMaintenance ? <Button onClick={() => openRecordModal()}>+ New Maintenance</Button> : null}
-            {canEditSchedules ? <Button variant="secondary" onClick={() => openScheduleModal()}>+ Create Schedule</Button> : null}
+            <Button variant="secondary" onClick={() => maintenance.refresh()}>
+              <AppIcon name="refresh" />
+              Refresh
+            </Button>
+            {canManageMaintenance ? (
+              <Button className="ui-button-with-icon" onClick={() => openRecordModal()}>
+                <AppIcon name="plus" />
+                Log Maintenance
+              </Button>
+            ) : null}
+            {canEditSchedules ? (
+              <Button className="ui-button-with-icon" variant="secondary" onClick={() => openScheduleModal()}>
+                <AppIcon name="clock" />
+                Create Schedule
+              </Button>
+            ) : null}
           </div>
         </div>
 

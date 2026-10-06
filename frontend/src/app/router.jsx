@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from '../components/layout/AppShell.jsx';
 import { FoundationShowcase } from '../components/layout/FoundationShowcase.jsx';
+import { SecureWorkspaceLayout } from '../components/layout/SecureWorkspaceLayout.jsx';
 import { GuestRoute, ProtectedRoute } from '../features/auth/components/AuthGate.jsx';
 import { AccountHelpPage } from '../features/auth/pages/AccountHelpPage.jsx';
 import { ActivationPage } from '../features/auth/pages/ActivationPage.jsx';
@@ -29,82 +30,81 @@ const protectedRoutes = [
   {
     path: '/dashboard',
     label: 'Dashboard',
-    description: 'Operational overview shell placeholder.',
+    description: 'Operational workload, service health, and priority overview.',
     permissionKey: 'can_access_dashboard',
   },
   {
     path: '/foundation',
     label: 'Shared Foundation',
-    description: 'Reusable components, utilities, and presentation primitives for the React migration.',
+    description: 'Reusable interface patterns and system states.',
   },
   {
     path: '/service-requests',
     label: 'Service Desk',
-    description: 'Ticket workflow shell placeholder.',
+    description: 'Create, triage, assign, and resolve ICT service requests.',
     permissionKey: 'can_access_service_desk',
   },
   {
     path: '/technician',
     label: 'Technician Portal',
-    description: 'Assigned-work shell placeholder.',
+    description: 'Assigned technical work and maintenance tasks.',
     permissionKey: 'can_access_technician_portal',
   },
   {
     path: '/assets',
     label: 'Assets',
-    description: 'Asset management shell placeholder.',
+    description: 'ICT asset inventory, ownership, and lifecycle records.',
     permissionKey: 'can_access_assets',
   },
   {
     path: '/maintenance',
     label: 'Maintenance',
-    description: 'Maintenance workspace shell placeholder.',
+    description: 'Preventive schedules and completed maintenance records.',
     permissionKey: 'can_manage_maintenance',
   },
   {
     path: '/staff',
     label: 'Staff',
-    description: 'Staff administration shell placeholder.',
+    description: 'Staff accounts, access roles, and invitations.',
     permissionKey: 'can_access_staff_portal',
   },
   {
     path: '/departments',
     label: 'Departments',
-    description: 'Department management shell placeholder.',
+    description: 'Department directory and operational ownership.',
     permissionKey: 'can_access_departments',
   },
   {
     path: '/knowledge-base',
     label: 'Knowledge Base',
-    description: 'Knowledge-base shell placeholder.',
+    description: 'Approved ICT guidance and operating procedures.',
     permissionKey: 'can_access_knowledge_base',
   },
   {
     path: '/reports',
     label: 'Reports',
-    description: 'Reporting shell placeholder.',
+    description: 'Service performance, workload, and SLA reporting.',
     permissionKey: 'can_view_reports',
   },
   {
     path: '/audit-logs',
     label: 'Audit Logs',
-    description: 'Audit oversight shell placeholder.',
+    description: 'Read-only security and operational activity history.',
     permissionKey: 'can_view_audit_logs',
   },
   {
     path: '/about',
     label: 'About',
-    description: 'System information shell placeholder.',
+    description: 'System purpose and support information.',
   },
 ];
 
 function RoutePlaceholder({ label, description }) {
   return (
-    <AppShell title={label} subtitle={description} eyebrow="Phase 3">
+    <AppShell title={label} subtitle={description}>
       <div className="react-panel">
         <p className="react-copy">
-          React route placeholder only. Legacy behavior still lives in the static
-          HTML pages while the migration proceeds module by module.
+          This workspace is not available yet. Return to the dashboard or contact ICT support.
         </p>
       </div>
     </AppShell>
@@ -113,13 +113,9 @@ function RoutePlaceholder({ label, description }) {
 
 function FoundationRoute() {
   return (
-    <AppShell
-      title="Shared Foundation"
-      subtitle="Reusable components, utilities, and presentation primitives for the React migration."
-      eyebrow="Phase 2"
-    >
+    <SecureWorkspaceLayout title="Interface patterns" subtitle="ICT Service Hub">
       <FoundationShowcase />
-    </AppShell>
+    </SecureWorkspaceLayout>
   );
 }
 
@@ -230,6 +226,14 @@ export function AppRouter() {
             element={<ProtectedAppRoute route={route} />}
           />
         ))}
+        <Route
+          path="/knowledge-base/:articleId"
+          element={(
+            <ProtectedRoute permissionKey="can_access_knowledge_base">
+              <KnowledgeBasePage />
+            </ProtectedRoute>
+          )}
+        />
         <Route
           path="/service-requests/:ticketId"
           element={(

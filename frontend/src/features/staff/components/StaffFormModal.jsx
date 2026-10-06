@@ -14,6 +14,9 @@ function buildInitialState(user) {
     role: user?.role || 'staff',
     user_type: user?.user_type || 'employee',
     department_id: user?.department_id || '',
+    floor_id: user?.floor_id || '',
+    technician_availability: user?.technician_availability || 'available',
+    technician_capacity: user?.technician_capacity || 8,
     phone: user?.phone || '',
     account_start_date: user?.account_start_date ? String(user.account_start_date).slice(0, 10) : '',
     account_expiration_date: user?.account_expiration_date ? String(user.account_expiration_date).slice(0, 10) : '',
@@ -89,6 +92,9 @@ export function StaffFormModal({
         role: form.role,
         user_type: form.user_type,
         department_id: form.department_id || null,
+        floor_id: form.role === 'technician' ? form.floor_id || null : null,
+        technician_availability: form.role === 'technician' ? form.technician_availability : 'available',
+        technician_capacity: form.role === 'technician' ? Number(form.technician_capacity) : 8,
         phone: form.phone.trim() || null,
         account_start_date: form.account_start_date || null,
         account_expiration_date: form.account_expiration_date || null,
@@ -161,10 +167,41 @@ export function StaffFormModal({
               ))}
             </select>
           </FormField>
-          <FormField label="Phone" htmlFor="staff-phone">
-            <input id="staff-phone" className="ui-input" value={form.phone} onChange={(event) => updateField('phone', event.target.value)} />
-          </FormField>
+          {form.role === 'technician' ? (
+            <FormField label="Assigned Floor" htmlFor="staff-floor" hint="Used to suggest technicians for same-floor tickets.">
+              <select id="staff-floor" className="ui-input" value={form.floor_id} onChange={(event) => updateField('floor_id', event.target.value)}>
+                <option value="">No floor assigned</option>
+                {(lookups.floors || []).map((floor) => (
+                  <option key={floor.floor_id} value={floor.floor_id}>{floor.floor_label}</option>
+                ))}
+              </select>
+            </FormField>
+          ) : (
+            <FormField label="Phone" htmlFor="staff-phone">
+              <input id="staff-phone" className="ui-input" value={form.phone} onChange={(event) => updateField('phone', event.target.value)} />
+            </FormField>
+          )}
         </div>
+
+        {form.role === 'technician' ? (
+          <div className="ui-grid-2">
+            <FormField label="Availability" htmlFor="staff-technician-availability" hint="Used by assignment recommendations.">
+              <select id="staff-technician-availability" className="ui-input" value={form.technician_availability} onChange={(event) => updateField('technician_availability', event.target.value)}>
+                <option value="available">Available</option>
+                <option value="busy">Busy</option>
+                <option value="away">Away</option>
+                <option value="on_leave">On leave</option>
+                <option value="offline">Offline</option>
+              </select>
+            </FormField>
+            <FormField label="Active Ticket Capacity" htmlFor="staff-technician-capacity" hint="Recommended maximum active workload.">
+              <input id="staff-technician-capacity" type="number" min="1" max="50" className="ui-input" value={form.technician_capacity} onChange={(event) => updateField('technician_capacity', event.target.value)} />
+            </FormField>
+            <FormField label="Phone" htmlFor="staff-phone">
+              <input id="staff-phone" className="ui-input" value={form.phone} onChange={(event) => updateField('phone', event.target.value)} />
+            </FormField>
+          </div>
+        ) : null}
 
         <div className="ui-grid-2">
           <FormField label="Account Start Date" htmlFor="staff-start-date">

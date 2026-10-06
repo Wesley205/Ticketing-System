@@ -1,7 +1,7 @@
 import { Button } from '../forms/Button.jsx';
 import { useAuth } from '../../features/auth/hooks/useAuth.js';
 
-export function Topbar({ title, subtitle, eyebrow = 'Incremental Migration' }) {
+export function Topbar({ title, subtitle, eyebrow = 'ICT Service Hub' }) {
   const auth = useAuth();
 
   return (
@@ -26,8 +26,8 @@ export function Topbar({ title, subtitle, eyebrow = 'Incremental Migration' }) {
         <div className="react-status-card">
           <span className="react-status-dot" />
           <div>
-            <strong>React frontend active</strong>
-            <small>Production routes are served by the React application.</small>
+            <strong>Secure session active</strong>
+            <small>Connected to the ICT service workspace.</small>
           </div>
         </div>
       </div>

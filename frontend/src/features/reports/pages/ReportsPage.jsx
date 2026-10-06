@@ -1,5 +1,7 @@
 import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
+import { Button } from '../../../components/forms/Button.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 import { SecureWorkspaceLayout } from '../../../components/layout/SecureWorkspaceLayout.jsx';
 import { PriorityBadge } from '../../../components/status/PriorityBadge.jsx';
 import { StatusBadge } from '../../../components/status/StatusBadge.jsx';
@@ -107,7 +109,8 @@ export function ReportsPage() {
             <h2>Service Desk Overview</h2>
             <p>Track ticket volume, SLA performance, and resolution times.</p>
           </div>
-          <Button onClick={() => reports.exportCsv('service-requests')} disabled={reports.isExporting === 'service-requests'}>
+          <Button className="ui-button-with-icon" onClick={() => reports.exportCsv('service-requests')} disabled={reports.isExporting === 'service-requests'}>
+            <AppIcon name={reports.isExporting === 'service-requests' ? 'refresh' : 'download'} />
             {reports.isExporting === 'service-requests' ? 'Exporting...' : 'Export CSV'}
           </Button>
         </div>

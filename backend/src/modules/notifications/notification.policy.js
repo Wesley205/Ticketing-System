@@ -5,6 +5,7 @@ function getDefaultPreferenceRow(userId) {
     user_id: userId,
     in_app_enabled: true,
     email_enabled: false,
+    browser_push_enabled: false,
     assignment_enabled: true,
     status_change_enabled: true,
     maintenance_enabled: true,
@@ -31,6 +32,11 @@ function shouldDeliverForChannel(eventConfig, preferences, channel) {
   if (channel === 'email') {
     if (!eventConfig.supportsEmail) return false;
     if (prefs.email_enabled !== true) return false;
+    return eventConfig.critical ? true : categoryEnabled;
+  }
+
+  if (channel === 'browser_push') {
+    if (prefs.browser_push_enabled !== true) return false;
     return eventConfig.critical ? true : categoryEnabled;
   }
 

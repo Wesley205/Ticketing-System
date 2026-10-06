@@ -27,9 +27,13 @@ function createStorage() {
 
 test('loginWithPassword stores the backend session shape without exposing password fields', async () => {
   const storage = createStorage();
+  storage.setItem('nsc_token', 'stale-session-token');
   const originalFetch = global.fetch;
+  let requestOptions = null;
 
-  global.fetch = async () => ({
+  global.fetch = async (_url, options) => {
+    requestOptions = options;
+    return ({
     ok: true,
     status: 200,
     headers: { get: () => 'application/json' },
@@ -52,7 +56,8 @@ test('loginWithPassword stores the backend session shape without exposing passwo
         },
       },
     }),
-  });
+    });
+  };
 
   try {
     const session = await loginWithPassword(
@@ -64,6 +69,7 @@ test('loginWithPassword stores the backend session shape without exposing passwo
     assert.equal(session.user.full_name, 'Amina Bello');
     assert.equal(getSession(storage).token, 'session-token');
     assert.equal(getSession(storage).user.access_profile.permissions.can_access_technician_portal, true);
+    assert.equal(requestOptions.headers.has('Authorization'), false);
   } finally {
     global.fetch = originalFetch;
   }

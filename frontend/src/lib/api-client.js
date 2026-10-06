@@ -59,7 +59,9 @@ export function createApiClient(config = {}) {
 
 export async function apiClient(path, options = {}) {
   const baseUrl = options.baseUrl || getApiBaseUrl();
-  const token = options.token || getAuthToken(options.storage);
+  const token = options.includeAuth === false
+    ? null
+    : options.token || getAuthToken(options.storage);
   const headers = createRequestHeaders({
     body: options.body,
     headers: options.headers,
@@ -108,7 +110,9 @@ export async function apiClient(path, options = {}) {
 
 export async function apiDownload(path, options = {}) {
   const baseUrl = options.baseUrl || getApiBaseUrl();
-  const token = options.token || getAuthToken(options.storage);
+  const token = options.includeAuth === false
+    ? null
+    : options.token || getAuthToken(options.storage);
   const headers = createRequestHeaders({
     body: null,
     headers: options.headers,

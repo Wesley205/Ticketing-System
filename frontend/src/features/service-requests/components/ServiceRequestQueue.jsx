@@ -1,14 +1,17 @@
 import { Link } from 'react-router-dom';
 import { Button } from '../../../components/forms/Button.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 import { EmptyState } from '../../../components/feedback/EmptyState.jsx';
 import { Pagination } from '../../../components/tables/Pagination.jsx';
 import { PriorityBadge } from '../../../components/status/PriorityBadge.jsx';
 import { StatusBadge } from '../../../components/status/StatusBadge.jsx';
 import { formatDateTime } from '../../../lib/formatting.js';
 import { ticketId } from './service-request-formatters.js';
+import { ticketSlaState } from '../services/sla-labels.js';
 
 function ServiceRequestRow({ ticket, onSelect }) {
   const id = ticketId(ticket);
+  const sla = ticketSlaState(ticket);
 
   function handleKeyDown(event) {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -41,15 +44,20 @@ function ServiceRequestRow({ ticket, onSelect }) {
       <div className="service-request-row-badges">
         <PriorityBadge value={ticket.priority} />
         <StatusBadge value={ticket.status} />
+        <span className={`service-request-queue-sla service-request-queue-sla-${sla.tone}`}>{sla.label}</span>
       </div>
 
       <div className="service-request-row-assignee">
         <span>{ticket.technician_name || 'Unassigned'}</span>
+        <span className="service-request-row-meta-separator" aria-hidden="true">·</span>
         <small>{formatDateTime(ticket.date_submitted)}</small>
       </div>
 
       <div className="service-request-row-actions" onClick={(event) => event.stopPropagation()}>
-        <Link to={`/service-requests/${ticket.request_id}`}>Open</Link>
+        <Link className="service-request-open-link" to={`/service-requests/${ticket.request_id}`} aria-label={`Open ${id}`}>
+          <AppIcon name="open" size={16} />
+          <span>Open</span>
+        </Link>
       </div>
     </article>
   );

@@ -5,7 +5,6 @@ import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
 import { fetchArticles } from '../../knowledge-base/services/knowledge-base-api.js';
 import { fetchTickets } from '../../service-requests/services/service-requests-api.js';
-import { fallbackDashboardTickets } from '../services/dashboard-api.js';
 import { KnowledgeArticleCards, SecureRequestTable } from '../components/SecureDashboardTables.jsx';
 import { SecureDashboardActionCard } from '../components/SecureDashboardCards.jsx';
 
@@ -26,12 +25,12 @@ export function StaffDashboardPage({ user }) {
           fetchArticles({}, false).catch(() => []),
         ]);
         if (!mounted) return;
-        setTickets(Array.isArray(ticketRows) && ticketRows.length ? ticketRows : fallbackDashboardTickets('staff'));
+        setTickets(Array.isArray(ticketRows) ? ticketRows : []);
         setArticles(Array.isArray(articleRows) ? articleRows : []);
       } catch (loadError) {
         if (!mounted) return;
         setError(loadError.message || 'Failed to load staff dashboard.');
-        setTickets(fallbackDashboardTickets('staff'));
+        setTickets([]);
       } finally {
         if (mounted) setIsLoading(false);
       }
@@ -55,7 +54,7 @@ export function StaffDashboardPage({ user }) {
       {error ? <ErrorState title="Dashboard unavailable" description={error} /> : null}
       {isLoading ? <LoadingState variant="table" description="Loading staff dashboard..." /> : null}
 
-      <section className="secure-dashboard-action-grid">
+      <section className="secure-dashboard-action-grid responsive-grid-4">
         <SecureDashboardActionCard title="Track requests" description="See the status of your open and recent requests." actionLabel="View requests" to="/service-requests?mine=1" />
         <SecureDashboardActionCard title={`Confirmations - ${confirmationCount}`} description="Respond to required actions and approvals." actionLabel="Review" to="/service-requests?mine=1" tone="warning" />
         <SecureDashboardActionCard title="Knowledge" description="Find guides and policies for common tasks." actionLabel="Browse guides" to="/knowledge-base" />

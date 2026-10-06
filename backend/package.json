@@ -6,6 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "migrate": "node src/scripts/runMigrations.js",
+    "seed:knowledge-base": "node src/scripts/seedKnowledgeBase.js",
     "expire-accounts": "node src/scripts/expireAccounts.js",
     "notification-queue": "node src/scripts/runNotificationQueue.js",
     "maintenance-monitor": "node src/scripts/runMaintenanceMonitor.js",
@@ -25,7 +26,9 @@
     "express": "^4.19.2",
     "express-validator": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.23.0"
+    "nodemailer": "^10.0.12",
+    "pg": "^8.23.0",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "nodemon": "^3.1.4"

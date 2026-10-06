@@ -1,0 +1,128 @@
+﻿/* Audit log workspace styles. */
+.audit-log-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(120px, 0.35fr) repeat(2, minmax(150px, 0.45fr)) minmax(130px, 0.35fr) auto;
+  gap: 14px;
+  align-items: end;
+}
+
+.audit-log-filter-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.audit-filter-toggle,
+.audit-mobile-list {
+  display: none;
+}
+
+.audit-secure-page {
+  max-width: 1180px;
+}
+
+.audit-secure-table .ui-table-wrap {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.audit-actor-cell {
+  display: grid;
+  gap: 3px;
+}
+
+.audit-actor-cell strong {
+  color: #202820;
+}
+
+.audit-actor-cell span {
+  color: #68736b;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.audit-action-pill {
+  display: inline-flex;
+  max-width: 170px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f1eee7;
+  color: #064723;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.audit-mobile-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #e6e0d2;
+  border-radius: 8px;
+  background: #fffdf8;
+}
+
+.audit-mobile-card-head,
+.audit-mobile-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.audit-mobile-card-head time,
+.audit-mobile-card-foot span:last-child,
+.audit-mobile-actor span {
+  color: #68736b;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.audit-mobile-actor {
+  display: grid;
+  gap: 2px;
+}
+
+.audit-mobile-card p {
+  margin: 0;
+  color: #344037;
+  line-height: 1.45;
+}
+
+.audit-entity-link {
+  color: #1f78d1;
+  font-weight: 800;
+}
+
+.about-page-react {
+  max-width: 1180px;
+}
+
+.about-grid-react {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.about-list-react {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+
+.audit-mobile-limit-note {
+  margin: 0;
+  padding: 12px;
+  border: 1px dashed #d8d1c4;
+  border-radius: 8px;
+  color: #68736b;
+  font-size: 13px;
+}
+
+

@@ -46,6 +46,16 @@ async function findInvitationByTokenHash(executor, tokenHash) {
   return result.rows[0] || null;
 }
 
+async function findInvitationById(executor, invitationId) {
+  const result = await executor.query(
+    `SELECT i.*
+     FROM invitations i
+     WHERE i.invitation_id = $1`,
+    [invitationId]
+  );
+  return result.rows[0] || null;
+}
+
 async function markInvitationExpired(executor, invitationId) {
   await executor.query(
     `UPDATE invitations
@@ -89,6 +99,31 @@ async function insertInvitation(client, invitationData) {
     ]
   );
   return result.rows[0];
+}
+
+async function insertInvitationEmailDelivery(client, invitation, acceptanceUrl) {
+  const subject = 'NSC ICT account invitation';
+  const body = [
+    `Hello ${invitation.full_name},`,
+    '',
+    'An administrator has invited you to activate your NSC ICT Service Desk account.',
+    '',
+    `Activation link: ${acceptanceUrl}`,
+    '',
+    `This invitation expires on ${new Date(invitation.expires_at).toISOString()}.`,
+    '',
+    'If you did not expect this invitation, contact your NSC ICT administrator.',
+  ].join('\n');
+
+  const result = await client.query(
+    `INSERT INTO notification_deliveries
+      (notification_id, recipient_user_id, channel, delivery_status, recipient_address, subject, body_text)
+     VALUES (NULL,NULL,'email','pending',$1,$2,$3)
+     RETURNING notification_delivery_id, delivery_status, recipient_address, subject, queued_at`,
+    [invitation.email, subject, body]
+  );
+
+  return result.rows[0] || null;
 }
 
 async function lockInvitation(client, invitationId) {
@@ -170,8 +205,10 @@ module.exports = {
   buildInvitationListQuery,
   ensureNotificationPreferences,
   findDuplicateAcceptedUser,
+  findInvitationById,
   findInvitationByTokenHash,
   findUserByEmail,
+  insertInvitationEmailDelivery,
   insertAcceptedUser,
   insertInvitation,
   listInvitations,

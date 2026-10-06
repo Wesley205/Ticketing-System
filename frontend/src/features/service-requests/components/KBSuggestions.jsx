@@ -1,6 +1,7 @@
 import { EmptyState } from '../../../components/feedback/EmptyState.jsx';
 import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 
 export function KBSuggestions({ suggestions = [], isLoading = false, error = '' }) {
   if (isLoading) {
@@ -21,10 +22,22 @@ export function KBSuggestions({ suggestions = [], isLoading = false, error = '' 
         <article key={article.article_id} className="ticket-suggestion-card">
           <strong>{article.title}</strong>
           <p>{article.summary || 'No summary available.'}</p>
-          <small>
-            {article.category || 'General'} | Helpful: {Number(article.helpful_count || 0)} | Score: {Number(article.suggestion_score || 0)}
-          </small>
-          <a href={`/knowledge-base#article-${article.article_id}`} target="_blank" rel="noreferrer">Open article</a>
+          <footer className="ticket-suggestion-footer">
+            <small>
+              <span>{article.category || 'General'}</span>
+              <span>{Number(article.helpful_count || 0)} found this helpful</span>
+            </small>
+            <a
+              className="ticket-suggestion-link"
+              href={`/knowledge-base/${article.article_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Open ${article.title} in a new tab`}
+            >
+              <AppIcon name="open" size={15} />
+              <span>Open article</span>
+            </a>
+          </footer>
         </article>
       ))}
     </div>

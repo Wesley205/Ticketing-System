@@ -19,7 +19,7 @@ export function TechnicianWorkItemPage() {
   const workState = useWorkExecution(workType, itemId);
 
   async function handleDownloadAttachment(attachmentId, fileName) {
-    const blob = await workState.downloadAttachment(attachmentId);
+    const blob = await handleLoadAttachment(attachmentId);
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -30,11 +30,18 @@ export function TechnicianWorkItemPage() {
     window.URL.revokeObjectURL(url);
   }
 
+  function handleLoadAttachment(attachmentId) {
+    return workState.downloadAttachment(attachmentId);
+  }
+
   return (
     <TechnicianDashboardLayout>
       <section className="technician-workitem-title">
-        <h2>{workType === 'maintenance' ? 'Maintenance Work Item' : 'Ticket Execution'}</h2>
-        <p>{workState.item?.ticket_number || workState.item?.maintenance_id || itemId}</p>
+        <div>
+          <h2>{workType === 'maintenance' ? 'Maintenance Work Item' : 'Ticket Execution'}</h2>
+          <p>{workState.item?.ticket_number || workState.item?.maintenance_id || itemId}</p>
+        </div>
+        <Link to="/technician/assigned-work"><Button variant="secondary">Back to assigned work</Button></Link>
       </section>
 
       {workState.error ? (
@@ -61,6 +68,7 @@ export function TechnicianWorkItemPage() {
               showToast({ tone: 'success', title: 'Attachment uploaded' });
             }}
             onAttachmentDownload={handleDownloadAttachment}
+            onAttachmentLoad={handleLoadAttachment}
             isMutating={workState.isMutating}
           />
       ) : (
@@ -127,10 +135,6 @@ export function TechnicianWorkItemPage() {
           </Panel>
         </div>
       )}
-
-      <div className="ui-inline-actions">
-        <Link to="/technician/assigned-work"><Button variant="secondary">Back to assigned work</Button></Link>
-      </div>
     </TechnicianDashboardLayout>
   );
 }

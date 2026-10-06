@@ -1,4 +1,4 @@
-const { body, param, validationResult } = require("express-validator");
+const { body, param, query, validationResult } = require("express-validator");
 const {
   TICKET_PRIORITIES,
   TICKET_SOURCE_CHANNELS,
@@ -23,6 +23,10 @@ const attachmentIdParam = [
   param("attachmentId").isInt({ min: 1 }).withMessage("Invalid attachment ID."),
 ];
 
+const listTicketValidators = [
+  query("queue").optional().isIn(["unassigned", "sla_risk", "overdue", "pending_approval"]).withMessage("Invalid operational queue."),
+];
+
 const createTicketValidators = [
   body("ticket_type").optional().isIn(TICKET_TYPES).withMessage("Invalid ticket type"),
   body("category").notEmpty().withMessage("Category is required"),
@@ -30,6 +34,9 @@ const createTicketValidators = [
   body("impact").optional({ nullable: true }).isIn(TICKET_PRIORITIES).withMessage("Invalid impact"),
   body("urgency").optional({ nullable: true }).isIn(TICKET_PRIORITIES).withMessage("Invalid urgency"),
   body("source_channel").optional().isIn(TICKET_SOURCE_CHANNELS).withMessage("Invalid source channel"),
+  body("floor_id").optional({ nullable: true }).isInt({ min: 1 }).withMessage("Invalid floor"),
+  body("catalog_item_id").optional({ nullable: true }).isInt({ min: 1 }).withMessage("Invalid catalog item"),
+  body("catalog_responses").optional().isObject().withMessage("Catalog responses must be an object"),
   body("subject").trim().notEmpty().withMessage("Subject is required"),
   body("description").trim().notEmpty().withMessage("Description is required"),
 ];
@@ -53,12 +60,20 @@ const attachmentValidators = [
   body("is_internal").optional().isBoolean().withMessage("Invalid internal attachment flag"),
 ];
 
+const approvalValidators = [
+  ...ticketIdParam,
+  body("decision").isIn(["approved", "rejected"]).withMessage("Approval decision must be approved or rejected."),
+  body("note").optional({ nullable: true }).trim().isLength({ max: 1000 }).withMessage("Approval note is too long."),
+];
+
 module.exports = {
   attachmentIdParam,
   attachmentValidators,
+  approvalValidators,
   commentValidators,
   createTicketValidators,
   handleValidation,
+  listTicketValidators,
   statusValidators,
   ticketIdParam,
 };

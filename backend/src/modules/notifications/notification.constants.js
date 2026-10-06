@@ -6,8 +6,12 @@ const NOTIFICATION_EVENT_TYPES = {
   ticket_resolved: { category: 'status_change', critical: false, supportsEmail: true, severity: 'success' },
   ticket_comment: { category: 'comment', critical: false, supportsEmail: true, severity: 'info' },
   ticket_attachment: { category: 'attachment', critical: false, supportsEmail: true, severity: 'info' },
+  ticket_sla_warning: { category: 'sla', critical: true, supportsEmail: true, severity: 'warning' },
   ticket_overdue: { category: 'sla', critical: true, supportsEmail: true, severity: 'warning' },
   ticket_escalated: { category: 'sla', critical: true, supportsEmail: true, severity: 'error' },
+  approval_requested: { category: 'system', critical: true, supportsEmail: true, severity: 'warning' },
+  approval_approved: { category: 'system', critical: false, supportsEmail: true, severity: 'success' },
+  approval_rejected: { category: 'system', critical: true, supportsEmail: true, severity: 'error' },
   maintenance_created: { category: 'maintenance', critical: false, supportsEmail: true, severity: 'info' },
   maintenance_completed: { category: 'maintenance', critical: false, supportsEmail: true, severity: 'success' },
   maintenance_due: { category: 'maintenance', critical: true, supportsEmail: true, severity: 'warning' },
@@ -19,6 +23,7 @@ const NOTIFICATION_EVENT_TYPES = {
 const PREFERENCE_FIELDS = [
   'in_app_enabled',
   'email_enabled',
+  'browser_push_enabled',
   'assignment_enabled',
   'status_change_enabled',
   'maintenance_enabled',
@@ -47,6 +52,11 @@ const NOTIFICATION_ERROR_MESSAGES = {
   preferencesUpdateFailed: 'Failed to update notification preferences.',
   readAllFailed: 'Failed to mark notifications as read.',
   readFailed: 'Failed to update notification.',
+  browserPushUnavailable: 'Browser push notifications are not configured.',
+  browserSubscriptionFailed: 'Failed to save browser notification subscription.',
+  browserSubscriptionDeleteFailed: 'Failed to disable browser notification subscription.',
+  browserSubscriptionListFailed: 'Failed to load browser notification devices.',
+  browserTestFailed: 'Failed to send browser test notification.',
 };
 
 module.exports = {

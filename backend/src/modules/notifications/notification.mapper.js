@@ -14,6 +14,7 @@ function mapDeliveryTargetRow(row) {
     preferences: {
       in_app_enabled: row.in_app_enabled,
       email_enabled: row.email_enabled,
+      browser_push_enabled: row.browser_push_enabled,
       assignment_enabled: row.assignment_enabled,
       status_change_enabled: row.status_change_enabled,
       maintenance_enabled: row.maintenance_enabled,
@@ -25,7 +26,21 @@ function mapDeliveryTargetRow(row) {
   };
 }
 
+function mapBrowserSubscriptionRow(row) {
+  if (!row) return null;
+  return {
+    browser_subscription_id: row.browser_subscription_id,
+    endpoint: row.endpoint,
+    user_agent: row.user_agent,
+    is_active: row.is_active,
+    last_used_at: row.last_used_at,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
 module.exports = {
+  mapBrowserSubscriptionRow,
   mapDeliveryTargetRow,
   mapNotificationRow,
   mapPreferenceRow,

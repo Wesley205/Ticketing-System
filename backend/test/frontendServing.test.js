@@ -18,6 +18,7 @@ function createTempFrontend() {
   const distPath = path.join(frontendPath, 'dist');
 
   fs.mkdirSync(path.join(distPath, 'assets'), { recursive: true });
+  fs.writeFileSync(path.join(distPath, 'index.html'), '<html><body><div id="root"></div><script src="/assets/main.js"></script></body></html>');
   fs.writeFileSync(path.join(distPath, 'react-shell.html'), '<html><body><div id="root"></div><script src="/assets/app.js"></script></body></html>');
   fs.writeFileSync(path.join(distPath, 'assets', 'app.js'), 'console.log("react")');
 
@@ -33,8 +34,16 @@ function createMockResponse() {
   };
 }
 
-test('frontend path resolver prefers built React shell when available', () => {
+test('frontend path resolver prefers built index when available', () => {
   const rootDir = createTempFrontend();
+  const paths = resolveFrontendPaths(rootDir);
+
+  assert.equal(getFrontendShellPath(paths), path.join(rootDir, 'frontend', 'dist', 'index.html'));
+});
+
+test('frontend path resolver falls back to legacy React shell when index is unavailable', () => {
+  const rootDir = createTempFrontend();
+  fs.rmSync(path.join(rootDir, 'frontend', 'dist', 'index.html'));
   const paths = resolveFrontendPaths(rootDir);
 
   assert.equal(getFrontendShellPath(paths), path.join(rootDir, 'frontend', 'dist', 'react-shell.html'));
@@ -42,6 +51,7 @@ test('frontend path resolver prefers built React shell when available', () => {
 
 test('frontend path resolver does not fall back to archived static pages when React build is unavailable', () => {
   const rootDir = createTempFrontend();
+  fs.rmSync(path.join(rootDir, 'frontend', 'dist', 'index.html'));
   fs.rmSync(path.join(rootDir, 'frontend', 'dist', 'react-shell.html'));
   const paths = resolveFrontendPaths(rootDir);
 
@@ -56,7 +66,7 @@ test('frontend fallback excludes api routes, non-get methods, and asset paths', 
   assert.equal(shouldServeFrontendFallback({ method: 'GET', path: '/css/style.css' }), false);
 });
 
-test('frontend fallback sends React shell for direct React deep links', () => {
+test('frontend fallback sends React index for direct React deep links', () => {
   const rootDir = createTempFrontend();
   const app = express();
   configureFrontendServing(app, { rootDir, env: { NODE_ENV: 'production' } });
@@ -66,7 +76,7 @@ test('frontend fallback sends React shell for direct React deep links', () => {
 
   fallbackLayer.route.stack[0].handle(req, res, () => {});
 
-  assert.equal(res.sentFile, path.join(rootDir, 'frontend', 'dist', 'react-shell.html'));
+  assert.equal(res.sentFile, path.join(rootDir, 'frontend', 'dist', 'index.html'));
 });
 
 test('legacy static page URLs redirect to equivalent React routes', () => {

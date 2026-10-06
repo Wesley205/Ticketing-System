@@ -4,11 +4,25 @@ import assert from 'node:assert/strict';
 import {
   buildNotificationsQuery,
   filterNotifications,
+  fetchUnreadNotificationCount,
   groupNotificationsByDate,
+  markAllNotificationsRead,
+  markNotificationRead,
   normalizeNotificationsPayload,
   notificationTarget,
   relativeNotificationTime,
 } from '../features/notifications/services/notifications-api.js';
+import {
+  decodeVapidPublicKey,
+  disableBrowserPushSubscription,
+  fetchBrowserPushPublicKey,
+  listBrowserPushSubscriptions,
+  restoreBrowserPushDevice,
+  saveBrowserPushSubscription,
+  sendBrowserPushTest,
+} from '../features/notifications/services/browser-push-api.js';
+
+const VALID_VAPID_PUBLIC_KEY = 'BDwsptCk-pdnKWI_BVNmVv5uXF90Yl9Kz7_3kl6A_un4HIZdoN5VOUU5LwG34rLdQR8VHuWgNedmTbSJLiLVk4o';
 
 test('notification query builder preserves supported filters only', () => {
   assert.equal(
@@ -31,6 +45,8 @@ test('notification normalizer accepts array and payload wrappers', () => {
         subject: 'Maintenance due',
         body: 'Schedule is due.',
         timestamp: '2026-09-11T08:00:00Z',
+        related_record_type: 'service_request',
+        related_record_id: 22,
       },
     ],
   });
@@ -39,6 +55,8 @@ test('notification normalizer accepts array and payload wrappers', () => {
   assert.equal(rows[0].notification_id, 7);
   assert.equal(rows[0].severity, 'warning');
   assert.equal(rows[0].title, 'Maintenance due');
+  assert.equal(rows[0].source_type, 'service_request');
+  assert.equal(rows[0].source_id, 22);
 });
 
 test('notification grouping splits today from earlier', () => {
@@ -63,6 +81,116 @@ test('notification unread filter and targets stay deterministic', () => {
   assert.equal(filterNotifications(rows, 'unread').length, 1);
   assert.equal(notificationTarget(rows[0]), '/technician/work/ticket/8');
   assert.equal(notificationTarget(rows[1]), '/audit-logs');
+});
+
+test('notification targets prefer backend action urls and route service requests to tickets', () => {
+  assert.equal(
+    notificationTarget({ action_url: '/service-requests/44', source_type: 'maintenance', source_id: 8 }),
+    '/service-requests/44'
+  );
+  assert.equal(
+    notificationTarget({ source_type: 'service_request', source_id: 44 }),
+    '/service-requests/44'
+  );
+});
+
+test('ticket notification payloads preserve actor context and always open the associated ticket', () => {
+  const [notification] = normalizeNotificationsPayload([{
+    notification_id: 18,
+    title: 'Ticket updated',
+    message: 'Test ICT Officer changed the status.',
+    action_url: '/notifications',
+    payload_json: JSON.stringify({
+      ticket_id: 44,
+      actor_user_id: 2,
+      actor_name: 'Test ICT Officer',
+      actor_role: 'ict_officer',
+      change_type: 'status_changed',
+    }),
+  }]);
+
+  assert.equal(notification.source_type, 'service_request');
+  assert.equal(notification.source_id, 44);
+  assert.equal(notification.actor_name, 'Test ICT Officer');
+  assert.equal(notification.change_type, 'status_changed');
+  assert.equal(notificationTarget(notification), '/service-requests/44');
+});
+
+test('notification write APIs use backend-supported POST methods', async () => {
+  const calls = [];
+  globalThis.fetch = async (url, options = {}) => {
+    calls.push({ url: String(url), method: options.method || 'GET' });
+    return new Response(JSON.stringify({ unread_count: 4, updated: 2 }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+
+  assert.equal(await fetchUnreadNotificationCount(), 4);
+  await markNotificationRead(7);
+  await markAllNotificationsRead();
+
+  assert.deepEqual(calls.map((call) => call.method), ['GET', 'POST', 'POST']);
+  assert.match(calls[0].url, /\/notifications\/unread-count$/);
+  assert.match(calls[1].url, /\/notifications\/7\/read$/);
+  assert.match(calls[2].url, /\/notifications\/read-all$/);
+
+  delete globalThis.fetch;
+});
+
+test('browser notification APIs use backend-supported endpoint surface', async () => {
+  const calls = [];
+  globalThis.fetch = async (url, options = {}) => {
+    calls.push({
+      url: String(url),
+      method: options.method || 'GET',
+      body: options.body || '',
+      cache: options.cache,
+      cacheControl: options.headers?.get?.('Cache-Control') || options.headers?.['Cache-Control'],
+    });
+    return new Response(JSON.stringify({ configured: true, public_key: 'public-key' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+
+  await fetchBrowserPushPublicKey();
+  await listBrowserPushSubscriptions();
+  await saveBrowserPushSubscription({ endpoint: 'https://push.example.test/1', keys: { p256dh: 'a', auth: 'b' } });
+  await disableBrowserPushSubscription(3);
+  await sendBrowserPushTest();
+
+  assert.deepEqual(calls.map((call) => call.method), ['GET', 'GET', 'POST', 'DELETE', 'POST']);
+  assert.match(calls[0].url, /\/notifications\/browser\/vapid-public-key$/);
+  assert.equal(calls[0].cache, 'no-store');
+  assert.equal(calls[0].cacheControl, 'no-cache');
+  assert.match(calls[1].url, /\/notifications\/browser-subscriptions\/me$/);
+  assert.match(calls[2].url, /\/notifications\/browser-subscriptions$/);
+  assert.match(calls[3].url, /\/notifications\/browser-subscriptions\/3$/);
+  assert.match(calls[4].url, /\/notifications\/browser\/test$/);
+  assert.equal(calls[4].body, '{}');
+
+  delete globalThis.fetch;
+});
+
+test('browser notification restore is available for previously granted startup sessions', () => {
+  assert.equal(typeof restoreBrowserPushDevice, 'function');
+});
+
+test('browser notification VAPID key validation rejects malformed server keys', () => {
+  assert.throws(
+    () => decodeVapidPublicKey('AAAAAAAAAA'),
+    /public key is invalid/
+  );
+  assert.throws(
+    () => decodeVapidPublicKey('not a valid base64 key'),
+    /public key is invalid/
+  );
+});
+
+test('browser notification VAPID key validation accepts generated and markdown-escaped keys', () => {
+  assert.equal(decodeVapidPublicKey(VALID_VAPID_PUBLIC_KEY).byteLength, 65);
+  assert.equal(decodeVapidPublicKey(VALID_VAPID_PUBLIC_KEY.replaceAll('_', '\\_')).byteLength, 65);
 });
 
 test('notification relative time labels recent alerts', () => {
