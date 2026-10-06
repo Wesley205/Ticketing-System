@@ -130,20 +130,30 @@ export async function sendBrowserPushTest() {
   });
 }
 
-export async function registerBrowserPushDevice() {
+async function ensureBrowserPushDevice({ requestPermission = false } = {}) {
   const support = getBrowserPushSupportStatus();
   if (!support.supported) {
     throw new Error(support.reason || 'Browser notifications are not supported on this device.');
   }
 
+  let permission = window.Notification.permission;
+  if (permission === 'default' && !requestPermission) {
+    return { status: 'permission_required' };
+  }
+  if (permission === 'denied') {
+    return { status: 'denied' };
+  }
+
+  if (permission !== 'granted') {
+    permission = await window.Notification.requestPermission();
+  }
+  if (permission !== 'granted') {
+    throw new Error('Browser notification permission was not granted.');
+  }
+
   const keyPayload = await fetchBrowserPushPublicKey();
   if (!keyPayload?.configured || !keyPayload.public_key) {
     throw new Error('Browser notifications are not configured on the server.');
-  }
-
-  const permission = await window.Notification.requestPermission();
-  if (permission !== 'granted') {
-    throw new Error('Browser notification permission was not granted.');
   }
 
   const registration = await navigator.serviceWorker.register('/notification-sw.js');
@@ -156,4 +166,12 @@ export async function registerBrowserPushDevice() {
     }));
 
   return saveBrowserPushSubscription(subscription.toJSON());
+}
+
+export function registerBrowserPushDevice() {
+  return ensureBrowserPushDevice({ requestPermission: true });
+}
+
+export function restoreBrowserPushDevice() {
+  return ensureBrowserPushDevice({ requestPermission: false });
 }

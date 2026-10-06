@@ -43,8 +43,17 @@ export function buildNotificationsQuery(filters = {}) {
 }
 
 export function normalizeNotification(row = {}) {
-  const sourceType = row.source_type || row.entity_type || row.related_record_type || row.payload_json?.source_type || '';
-  const sourceId = row.source_id || row.entity_id || row.related_record_id || row.payload_json?.source_id || null;
+  let payload = row.payload_json || row.payload || {};
+  if (typeof payload === 'string') {
+    try {
+      payload = JSON.parse(payload);
+    } catch {
+      payload = {};
+    }
+  }
+
+  const sourceId = row.source_id || row.entity_id || row.related_record_id || payload.source_id || payload.ticket_id || payload.request_id || null;
+  const sourceType = row.source_type || row.entity_type || row.related_record_type || payload.source_type || (payload.ticket_id ? 'service_request' : '');
 
   return {
     notification_id: row.notification_id || row.id || `${row.source_type || 'notification'}-${row.source_id || row.created_at || 'unknown'}`,
@@ -56,6 +65,10 @@ export function normalizeNotification(row = {}) {
     source_type: sourceType,
     source_id: sourceId,
     action_url: row.action_url || row.url || '',
+    actor_user_id: payload.actor_user_id || null,
+    actor_name: payload.actor_name || '',
+    actor_role: payload.actor_role || '',
+    change_type: payload.change_type || '',
   };
 }
 
@@ -88,9 +101,11 @@ export function groupNotificationsByDate(notifications = [], now = new Date()) {
 }
 
 export function notificationTarget(notification) {
-  if (notification.action_url) return notification.action_url;
-  if (notification.source_type === 'technician_ticket') return `/technician/work/ticket/${notification.source_id}`;
-  if (notification.source_type === 'ticket' || notification.source_type === 'service_request') return `/service-requests/${notification.source_id}`;
+  if (notification.source_type === 'technician_ticket' && notification.source_id) return `/technician/work/ticket/${notification.source_id}`;
+  if ((notification.source_type === 'ticket' || notification.source_type === 'service_request') && notification.source_id) {
+    return `/service-requests/${notification.source_id}`;
+  }
+  if (notification.action_url?.startsWith('/')) return notification.action_url;
   if (notification.source_type === 'maintenance') return '/maintenance';
   if (notification.source_type === 'audit') return '/audit-logs';
   return '';

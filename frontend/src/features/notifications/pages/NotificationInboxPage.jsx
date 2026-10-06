@@ -1,10 +1,8 @@
 import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
 import { SecureWorkspaceLayout } from '../../../components/layout/SecureWorkspaceLayout.jsx';
-import { BrowserNotificationPanel } from '../components/BrowserNotificationPanel.jsx';
 import { NotificationFeed } from '../components/NotificationFeed.jsx';
 import { NotificationFilters } from '../components/NotificationFilters.jsx';
-import { NotificationPreferencesPanel } from '../components/NotificationPreferencesPanel.jsx';
 import { useNotifications } from '../hooks/useNotifications.js';
 
 export function NotificationInboxPage() {
@@ -26,12 +24,6 @@ export function NotificationInboxPage() {
           isMutating={notifications.isMutating}
         />
       </section>
-
-      <BrowserNotificationPanel
-        onNotificationSent={() => notifications.refresh(notifications.filter)}
-      />
-
-      <NotificationPreferencesPanel />
 
       {notifications.error ? (
         <ErrorState

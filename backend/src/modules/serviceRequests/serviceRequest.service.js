@@ -159,6 +159,7 @@ async function createTicket(user, payload) {
 
   return legacyService.createServiceRequestRecord({
     requester_id: user.user_id,
+    requester_name: user.full_name,
     requester_role: user.role,
     department_id: departmentId || null,
     ticket_type: catalogItem?.ticket_type || payload.ticket_type || "Incident",

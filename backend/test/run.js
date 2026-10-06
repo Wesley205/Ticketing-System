@@ -42,6 +42,7 @@ require('./ticketWorkflow.test');
 require('./ticketAttachments.test');
 require('./assetsMaintenance.test');
 require('./knowledgeBase.test');
+require('./knowledgeBaseSeed.test');
 require('./reporting.test');
 require('./frontendAccess.test');
 require('./frontendServing.test');

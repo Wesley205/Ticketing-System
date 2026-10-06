@@ -333,14 +333,19 @@
 }
 
 /* Roomier ticket request wizard. Scoped to avoid undoing compact app-wide density. */
-.ticket-create-modal {
-  width: min(94vw, 1080px);
-  max-height: min(88vh, 820px);
+.ui-modal.ticket-create-modal {
+  display: flex;
+  width: min(calc(100vw - 48px), 1120px);
+  height: min(90dvh, 860px);
+  max-height: 90dvh;
+  flex-direction: column;
   overflow: hidden;
   padding: 0;
 }
 
 .ticket-create-modal .ui-modal-head {
+  flex: 0 0 auto;
+  margin-bottom: 0;
   padding: 26px 34px 22px;
 }
 
@@ -349,16 +354,25 @@
 }
 
 .ticket-create-modal .ui-modal-body {
-  overflow: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0;
 }
 
 .ticket-create-modal .ui-modal-footer {
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  margin-top: 0;
   padding: 18px 34px;
 }
 
 .ticket-create-modal .ticket-create-secure {
-  grid-template-columns: minmax(460px, 1.15fr) minmax(320px, 0.85fr);
+  min-width: 0;
+  grid-template-columns: minmax(580px, 1.45fr) minmax(320px, 0.75fr);
   margin: 0;
 }
 
@@ -384,6 +398,7 @@
 
 .ticket-create-modal .ticket-create-form-pane,
 .ticket-create-modal .ticket-create-review-pane {
+  min-width: 0;
   padding: 34px 36px;
 }
 
@@ -410,7 +425,7 @@
 }
 
 .ticket-create-modal .ticket-form-grid {
-  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
   gap: 18px 22px;
 }
 
@@ -452,7 +467,14 @@
 
 .ticket-create-modal .ticket-suggestion-block {
   display: grid;
+  min-width: 0;
   gap: 18px;
+}
+
+.ticket-create-modal .ticket-create-section,
+.ticket-create-modal .ticket-suggestion-block,
+.ticket-create-modal .ui-feedback-empty {
+  overflow-wrap: anywhere;
 }
 
 .ticket-create-modal .ui-feedback-empty {
@@ -470,14 +492,25 @@
   padding: 14px;
 }
 
-@media (max-width: 960px) {
-  .ticket-create-modal {
-    width: min(94vw, 720px);
-    max-height: 92vh;
+@media (max-width: 1280px) {
+  .ui-modal.ticket-create-modal {
+    width: min(calc(100vw - 40px), 1080px);
   }
 
   .ticket-create-modal .ticket-create-secure {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(540px, 1.35fr) minmax(300px, 0.75fr);
+  }
+}
+
+@media (max-width: 1100px) {
+  .ui-modal.ticket-create-modal {
+    width: min(calc(100vw - 32px), 880px);
+    height: min(92dvh, 860px);
+    max-height: 92dvh;
+  }
+
+  .ticket-create-modal .ticket-create-secure {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .ticket-create-modal .ticket-create-steps,
@@ -495,25 +528,17 @@
   }
 }
 
-@media (max-width: 1120px) {
-  .ticket-create-modal {
-    width: min(94vw, 980px);
-  }
-
-  .ticket-create-modal .ticket-create-secure {
-    grid-template-columns: minmax(420px, 1fr) minmax(300px, 0.76fr);
-  }
-}
-
-@media (max-width: 1040px) {
+@media (max-width: 720px) {
   .ticket-create-modal .ticket-form-grid {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 560px) {
-  .ticket-create-modal {
-    width: 100%;
+  .ui-modal.ticket-create-modal {
+    width: calc(100vw - 16px);
+    height: calc(100dvh - 16px);
+    max-height: calc(100dvh - 16px);
   }
 
   .ticket-create-modal .ticket-create-steps {

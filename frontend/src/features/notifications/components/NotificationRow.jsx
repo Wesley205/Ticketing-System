@@ -4,7 +4,11 @@ import { notificationTarget, relativeNotificationTime } from '../services/notifi
 export function NotificationRow({ notification, onView }) {
   const target = notificationTarget(notification);
   const isUnread = !notification.read_at;
-  const actionLabel = target ? 'Open' : 'Recorded';
+  const isTicket = ['ticket', 'service_request', 'technician_ticket'].includes(notification.source_type);
+  const actionLabel = target ? (isTicket ? 'Open ticket' : 'Open') : 'Recorded';
+  const messageNamesActor = notification.actor_name && notification.message
+    .toLowerCase()
+    .includes(notification.actor_name.toLowerCase());
 
   const content = (
     <>
@@ -15,6 +19,9 @@ export function NotificationRow({ notification, onView }) {
       <span className="notification-row-copy">
         <strong>{notification.title}</strong>
         <small>{notification.message}</small>
+        {notification.actor_name && !messageNamesActor ? (
+          <small className="notification-row-actor">Changed by {notification.actor_name}</small>
+        ) : null}
       </span>
       <span className="notification-row-time">{relativeNotificationTime(notification.created_at)}</span>
       <span className="notification-row-view">{actionLabel}</span>

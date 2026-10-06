@@ -17,6 +17,7 @@ import {
   disableBrowserPushSubscription,
   fetchBrowserPushPublicKey,
   listBrowserPushSubscriptions,
+  restoreBrowserPushDevice,
   saveBrowserPushSubscription,
   sendBrowserPushTest,
 } from '../features/notifications/services/browser-push-api.js';
@@ -93,6 +94,28 @@ test('notification targets prefer backend action urls and route service requests
   );
 });
 
+test('ticket notification payloads preserve actor context and always open the associated ticket', () => {
+  const [notification] = normalizeNotificationsPayload([{
+    notification_id: 18,
+    title: 'Ticket updated',
+    message: 'Test ICT Officer changed the status.',
+    action_url: '/notifications',
+    payload_json: JSON.stringify({
+      ticket_id: 44,
+      actor_user_id: 2,
+      actor_name: 'Test ICT Officer',
+      actor_role: 'ict_officer',
+      change_type: 'status_changed',
+    }),
+  }]);
+
+  assert.equal(notification.source_type, 'service_request');
+  assert.equal(notification.source_id, 44);
+  assert.equal(notification.actor_name, 'Test ICT Officer');
+  assert.equal(notification.change_type, 'status_changed');
+  assert.equal(notificationTarget(notification), '/service-requests/44');
+});
+
 test('notification write APIs use backend-supported POST methods', async () => {
   const calls = [];
   globalThis.fetch = async (url, options = {}) => {
@@ -148,6 +171,10 @@ test('browser notification APIs use backend-supported endpoint surface', async (
   assert.equal(calls[4].body, '{}');
 
   delete globalThis.fetch;
+});
+
+test('browser notification restore is available for previously granted startup sessions', () => {
+  assert.equal(typeof restoreBrowserPushDevice, 'function');
 });
 
 test('browser notification VAPID key validation rejects malformed server keys', () => {

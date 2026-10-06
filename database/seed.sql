@@ -14,6 +14,8 @@
 --   Password: Password123!
 --
 -- This file is intended for local development/test databases only.
+-- After this account seed, run `npm run seed:knowledge-base` from backend
+-- to install the five general support articles and their protected images.
 
 BEGIN;
 

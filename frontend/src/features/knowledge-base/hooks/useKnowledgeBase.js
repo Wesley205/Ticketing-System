@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   DEFAULT_KB_FILTERS,
   createArticle,
@@ -8,7 +8,7 @@ import {
   updateArticle,
 } from '../services/knowledge-base-api.js';
 
-export function useKnowledgeBase({ canManage = false, enabled = true } = {}) {
+export function useKnowledgeBase({ canManage = false, enabled = true, routeArticleId = null, onArticleSelected } = {}) {
   const [filters, setFilters] = useState(DEFAULT_KB_FILTERS);
   const [articles, setArticles] = useState([]);
   const [selectedArticle, setSelectedArticle] = useState(null);
@@ -17,6 +17,9 @@ export function useKnowledgeBase({ canManage = false, enabled = true } = {}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [detailError, setDetailError] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const selectionCallbackRef = useRef(onArticleSelected);
+  selectionCallbackRef.current = onArticleSelected;
 
   async function loadArticles(nextFilters = filters) {
     if (!enabled) return [];
@@ -35,7 +38,7 @@ export function useKnowledgeBase({ canManage = false, enabled = true } = {}) {
     }
   }
 
-  async function selectArticle(articleId, { updateHash = true } = {}) {
+  async function selectArticle(articleId, { updateRoute = true } = {}) {
     if (!articleId) return null;
 
     setIsDetailLoading(true);
@@ -43,9 +46,7 @@ export function useKnowledgeBase({ canManage = false, enabled = true } = {}) {
     try {
       const detail = await fetchArticleDetail(articleId);
       setSelectedArticle(detail);
-      if (updateHash && typeof window !== 'undefined') {
-        window.location.hash = `article-${articleId}`;
-      }
+      if (updateRoute) selectionCallbackRef.current?.(detail.article_id);
       return detail;
     } catch (err) {
       setDetailError(err.message || 'Failed to load the selected article.');
@@ -62,9 +63,7 @@ export function useKnowledgeBase({ canManage = false, enabled = true } = {}) {
         ? await updateArticle(articleId, payload)
         : await createArticle(payload);
       setSelectedArticle(saved);
-      if (typeof window !== 'undefined') {
-        window.location.hash = `article-${saved.article_id}`;
-      }
+      selectionCallbackRef.current?.(saved.article_id);
       await loadArticles(filters);
       return saved;
     } finally {
@@ -78,7 +77,7 @@ export function useKnowledgeBase({ canManage = false, enabled = true } = {}) {
     setIsSubmitting(true);
     try {
       await submitArticleFeedback(selectedArticle.article_id, { is_helpful: isHelpful });
-      return selectArticle(selectedArticle.article_id, { updateHash: false });
+      return selectArticle(selectedArticle.article_id, { updateRoute: false });
     } finally {
       setIsSubmitting(false);
     }
@@ -88,18 +87,31 @@ export function useKnowledgeBase({ canManage = false, enabled = true } = {}) {
     setFilters((current) => ({ ...current, [key]: value }));
   }
 
-  useEffect(() => {
-    loadArticles(filters);
-  }, [enabled, canManage, filters.search, filters.category, filters.status]);
+  function clearFilters() {
+    setFilters(DEFAULT_KB_FILTERS);
+  }
 
   useEffect(() => {
-    if (!enabled || typeof window === 'undefined') return;
+    const timer = window.setTimeout(() => setDebouncedSearch(filters.search.trim()), 300);
+    return () => window.clearTimeout(timer);
+  }, [filters.search]);
 
-    const match = window.location.hash.match(/article-(\d+)/);
-    if (match) {
-      selectArticle(Number(match[1]), { updateHash: false }).catch(() => {});
-    }
-  }, [enabled]);
+  useEffect(() => {
+    loadArticles({ ...filters, search: debouncedSearch }).then((rows) => {
+      const isCompactView = typeof window !== 'undefined'
+        && typeof window.matchMedia === 'function'
+        && window.matchMedia('(max-width: 720px)').matches;
+      if (!isCompactView && !routeArticleId && !selectedArticle && rows[0]) {
+        selectArticle(rows[0].article_id).catch(() => {});
+      }
+    });
+  }, [enabled, canManage, debouncedSearch, filters.category, filters.status]);
+
+  useEffect(() => {
+    if (!enabled || !routeArticleId) return;
+    if (Number(selectedArticle?.article_id) === Number(routeArticleId)) return;
+    selectArticle(Number(routeArticleId), { updateRoute: false }).catch(() => {});
+  }, [enabled, routeArticleId]);
 
   return {
     filters,
@@ -110,7 +122,9 @@ export function useKnowledgeBase({ canManage = false, enabled = true } = {}) {
     isSubmitting,
     error,
     detailError,
+    debouncedSearch,
     updateFilter,
+    clearFilters,
     loadArticles,
     selectArticle,
     submitArticle,

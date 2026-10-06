@@ -227,6 +227,14 @@ export function AppRouter() {
           />
         ))}
         <Route
+          path="/knowledge-base/:articleId"
+          element={(
+            <ProtectedRoute permissionKey="can_access_knowledge_base">
+              <KnowledgeBasePage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
           path="/service-requests/:ticketId"
           element={(
             <ProtectedRoute permissionKey="can_access_service_desk">

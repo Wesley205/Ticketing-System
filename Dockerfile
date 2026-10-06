@@ -6,6 +6,8 @@ WORKDIR /app
 COPY backend ./backend
 COPY frontend/dist ./frontend/dist
 COPY database/migrations ./database/migrations
+COPY database/knowledge-base.seed.json ./database/knowledge-base.seed.json
+COPY database/seed-media ./database/seed-media
 
 RUN test -d ./backend/node_modules \
   && node -e "require('./backend/node_modules/dotenv'); require('./backend/node_modules/express'); require('./backend/node_modules/pg'); require('./backend/node_modules/bcrypt'); require('./backend/node_modules/web-push')" \

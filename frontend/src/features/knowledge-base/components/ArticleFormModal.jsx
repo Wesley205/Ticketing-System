@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Button } from '../../../components/forms/Button.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 import { FormField } from '../../../components/forms/FormField.jsx';
 import { Modal } from '../../../components/modals/Modal.jsx';
 import { IMAGE_MIME_TYPES, fileToDataUrl } from '../../../lib/media-files.js';
+import { fetchDepartments } from '../../departments/services/departments-api.js';
 import {
   ARTICLE_STATUSES,
   ARTICLE_VISIBILITY_SCOPES,
+  fetchArticleMediaBlob,
   splitRelations,
   slugifyTitle,
 } from '../services/knowledge-base-api.js';
@@ -35,6 +38,39 @@ function buildInitialForm(article) {
 
 const MAX_ARTICLE_IMAGES = 5;
 
+function ArticleMediaPreview({ articleId, item }) {
+  const [src, setSrc] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    let objectUrl = '';
+
+    async function load() {
+      try {
+        const blob = item.file || (item.media_id && articleId
+          ? await fetchArticleMediaBlob(articleId, item.media_id)
+          : null);
+        if (!blob || !active) return;
+        objectUrl = window.URL.createObjectURL(blob);
+        if (active) setSrc(objectUrl);
+      } catch {
+        if (active) setSrc('');
+      }
+    }
+
+    setSrc('');
+    load();
+    return () => {
+      active = false;
+      if (objectUrl) window.URL.revokeObjectURL(objectUrl);
+    };
+  }, [articleId, item.file, item.media_id]);
+
+  return src
+    ? <img className="article-media-editor-preview" src={src} alt="" />
+    : <span className="article-media-editor-placeholder"><AppIcon name="image" size={22} /></span>;
+}
+
 function buildInitialMedia(article) {
   return (article?.media || []).map((item, index) => ({
     media_id: item.media_id,
@@ -57,6 +93,8 @@ export function ArticleFormModal({
   const [media, setMedia] = useState(buildInitialMedia(article));
   const [error, setError] = useState('');
   const [mediaError, setMediaError] = useState('');
+  const [departments, setDepartments] = useState([]);
+  const [departmentError, setDepartmentError] = useState('');
 
   useEffect(() => {
     if (open) {
@@ -66,6 +104,21 @@ export function ArticleFormModal({
       setMediaError('');
     }
   }, [open, article?.article_id]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    let active = true;
+    fetchDepartments()
+      .then((rows) => {
+        if (active) setDepartments(rows);
+      })
+      .catch(() => {
+        if (active) setDepartmentError('Departments could not be loaded. Try reopening the form.');
+      });
+    return () => {
+      active = false;
+    };
+  }, [open]);
 
   function updateField(key, value) {
     setForm((current) => ({
@@ -111,6 +164,16 @@ export function ArticleFormModal({
     )));
   }
 
+  function moveMedia(index, direction) {
+    setMedia((current) => {
+      const target = index + direction;
+      if (target < 0 || target >= current.length) return current;
+      const next = [...current];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  }
+
   async function buildMediaPayload() {
     return Promise.all(media.map(async (item, index) => {
       const base = {
@@ -151,6 +214,10 @@ export function ArticleFormModal({
       setError('Article body is required.');
       return;
     }
+    if (form.visibility_scope === 'department' && !form.department_id) {
+      setError('Choose the department that can read this article.');
+      return;
+    }
 
     try {
       const mediaPayload = await buildMediaPayload();
@@ -166,6 +233,7 @@ export function ArticleFormModal({
       open={open}
       title={article ? `Edit Article - ${article.title}` : 'Create Knowledge Article'}
       onClose={onClose}
+      className="kb-article-modal"
       footer={(
         <>
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
@@ -214,8 +282,20 @@ export function ArticleFormModal({
               </select>
             </FormField>
 
-            <FormField label="Department ID, if needed" htmlFor="article-department">
-              <input id="article-department" type="number" min="1" className="ui-input" value={form.department_id} placeholder="Only for one department" onChange={(event) => updateField('department_id', event.target.value)} />
+            <FormField label="Department" htmlFor="article-department">
+              <select
+                id="article-department"
+                className="ui-input"
+                value={form.department_id}
+                disabled={form.visibility_scope !== 'department'}
+                onChange={(event) => updateField('department_id', event.target.value)}
+              >
+                <option value="">{form.visibility_scope === 'department' ? 'Choose a department' : 'Not required'}</option>
+                {departments.map((department) => (
+                  <option key={department.department_id} value={department.department_id}>{department.name}</option>
+                ))}
+              </select>
+              {departmentError ? <small className="ui-field-error">{departmentError}</small> : null}
             </FormField>
           </div>
         </section>
@@ -227,16 +307,21 @@ export function ArticleFormModal({
           </FormField>
 
           <FormField label="Steps or guidance" htmlFor="article-body">
-            <textarea id="article-body" className="ui-input" rows={10} value={form.body} placeholder="Write the steps, notes, and checks officers should follow." onChange={(event) => updateField('body', event.target.value)} required />
+            <textarea id="article-body" className="ui-input" rows={12} value={form.body} placeholder={'Use # headings, numbered steps, and - bullet points. Wrap commands in ``` code fences.'} onChange={(event) => updateField('body', event.target.value)} required />
+            <small className="react-copy">Structure long guides with headings and lists. Commands inside code fences get a copy button.</small>
           </FormField>
         </section>
 
         <section className="secure-modal-section">
           <h3>Images</h3>
           <div className="article-media-editor-head">
-            <p className="react-copy">Add up to 5 screenshots or photos. Captions appear below images in the article gallery.</p>
+            <div>
+              <p className="react-copy">Add screenshots or photos that make the steps easier to follow.</p>
+              <small>{media.length} of {MAX_ARTICLE_IMAGES} images · JPG, PNG, or WEBP</small>
+            </div>
             <label className="ticket-link-button">
-              Add Images
+              <AppIcon name="image" size={16} />
+              Add images
               <input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={addImages} />
             </label>
           </div>
@@ -244,9 +329,12 @@ export function ArticleFormModal({
           <div className="article-media-editor-list">
             {media.map((item, index) => (
               <article key={`${item.media_id || item.file_name}-${index}`} className="article-media-editor-row">
-                <div>
-                  <strong>{item.file_name}</strong>
-                  <small>{item.media_id ? 'Saved image' : 'New image'}</small>
+                <div className="article-media-editor-file">
+                  <ArticleMediaPreview articleId={article?.article_id} item={item} />
+                  <div>
+                    <strong>{item.file_name}</strong>
+                    <small>{item.media_id ? 'Saved image' : 'New image'}</small>
+                  </div>
                 </div>
                 <FormField label="Caption" htmlFor={`article-media-caption-${index}`}>
                   <input
@@ -267,9 +355,11 @@ export function ArticleFormModal({
                     required
                   />
                 </FormField>
-                <Button variant="secondary" size="sm" onClick={() => setMedia((current) => current.filter((_, itemIndex) => itemIndex !== index))}>
-                  Remove
-                </Button>
+                <div className="article-media-editor-actions">
+                  <Button variant="secondary" size="sm" className="ui-icon-button" title="Move image up" aria-label="Move image up" disabled={index === 0} onClick={() => moveMedia(index, -1)}><AppIcon name="arrow-up" size={16} /></Button>
+                  <Button variant="secondary" size="sm" className="ui-icon-button" title="Move image down" aria-label="Move image down" disabled={index === media.length - 1} onClick={() => moveMedia(index, 1)}><AppIcon name="arrow-down" size={16} /></Button>
+                  <Button variant="secondary" size="sm" className="ui-icon-button" title="Remove image" aria-label="Remove image" onClick={() => setMedia((current) => current.filter((_, itemIndex) => itemIndex !== index))}><AppIcon name="delete" size={16} /></Button>
+                </div>
               </article>
             ))}
             {!media.length ? <p className="react-copy">No article images added.</p> : null}

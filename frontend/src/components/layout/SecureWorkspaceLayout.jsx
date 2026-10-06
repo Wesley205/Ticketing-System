@@ -4,6 +4,10 @@ import { Button } from '../forms/Button.jsx';
 import { AppIcon } from '../icons/AppIcon.jsx';
 import { useAuth } from '../../features/auth/hooks/useAuth.js';
 import { useNotificationCount } from '../../features/notifications/hooks/useNotificationCount.js';
+import {
+  BrowserNotificationBootstrap,
+  clearBrowserNotificationSessionState,
+} from '../../features/notifications/components/BrowserNotificationBootstrap.jsx';
 import { canAccessRoute, getSecureWorkspaceLinks } from '../../permissions/access.js';
 
 function linkPath(to = '') {
@@ -47,6 +51,7 @@ export function SecureWorkspaceLayout({
 
   async function handleLogout() {
     setMobileNavOpen(false);
+    clearBrowserNotificationSessionState(auth.user?.user_id);
     await auth.logout();
     navigate('/login', { replace: true });
   }
@@ -161,6 +166,7 @@ export function SecureWorkspaceLayout({
         </header>
         <main className="technician-dashboard-content">{children}</main>
       </div>
+      <BrowserNotificationBootstrap userId={auth.user?.user_id} />
     </div>
   );
 }

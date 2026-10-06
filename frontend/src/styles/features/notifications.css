@@ -27,6 +27,40 @@
   align-items: center;
 }
 
+.ui-modal.browser-alert-prompt {
+  width: min(calc(100vw - 32px), 520px);
+  padding: 0;
+}
+
+.browser-alert-prompt .ui-modal-head,
+.browser-alert-prompt .ui-modal-footer {
+  margin: 0;
+  padding: 16px 18px;
+}
+
+.browser-alert-prompt .ui-modal-body {
+  padding: 18px;
+}
+
+.browser-alert-prompt-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.browser-alert-prompt-copy p,
+.browser-alert-prompt-copy small {
+  margin: 0;
+}
+
+.browser-alert-prompt-copy p {
+  color: #344037;
+  line-height: 1.55;
+}
+
+.browser-alert-prompt-copy small {
+  color: #68736b;
+}
+
 .browser-notification-panel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

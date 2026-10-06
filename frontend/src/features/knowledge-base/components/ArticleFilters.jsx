@@ -1,4 +1,3 @@
-import { Button } from '../../../components/forms/Button.jsx';
 import { FormField } from '../../../components/forms/FormField.jsx';
 import { ARTICLE_STATUSES } from '../services/knowledge-base-api.js';
 import {
@@ -6,9 +5,12 @@ import {
   getCategoryOptions,
 } from '../services/knowledge-base-copy.js';
 
-export function ArticleFilters({ filters, canManage = false, onChange, onCreate }) {
+export function ArticleFilters({ filters, canManage = false, resultCount = 0, onChange, onClear }) {
+  const hasActiveFilters = Boolean(filters.search || filters.category || (canManage && filters.status));
+
   return (
-    <section className="kb-filters responsive-filter-grid" aria-label="Knowledge-base filters">
+    <section className="kb-filter-shell" aria-label="Knowledge-base filters">
+      <div className="kb-filters responsive-filter-grid">
       <FormField label="Search" htmlFor="kb-search-react">
         <input
           id="kb-search-react"
@@ -20,19 +22,17 @@ export function ArticleFilters({ filters, canManage = false, onChange, onCreate 
       </FormField>
 
       <FormField label="Topic" htmlFor="kb-category-react">
-        <input
+        <select
           id="kb-category-react"
           className="ui-input"
           value={filters.category}
-          list="kb-category-options"
-          placeholder="All topics"
           onChange={(event) => onChange('category', event.target.value)}
-        />
-        <datalist id="kb-category-options">
+        >
+          <option value="">All topics</option>
           {getCategoryOptions(filters.category).map((category) => (
-            <option key={category} value={category} />
+            <option key={category} value={category}>{category}</option>
           ))}
-        </datalist>
+        </select>
       </FormField>
 
       {canManage ? (
@@ -49,11 +49,11 @@ export function ArticleFilters({ filters, canManage = false, onChange, onCreate 
         </FormField>
       ) : null}
 
-      {canManage ? (
-        <div className="kb-filter-actions">
-          <Button onClick={onCreate}>New Article</Button>
-        </div>
-      ) : null}
+      </div>
+      <div className="kb-filter-meta">
+        <span>{resultCount} article{resultCount === 1 ? '' : 's'}</span>
+        {hasActiveFilters ? <button type="button" onClick={onClear}>Clear filters</button> : null}
+      </div>
     </section>
   );
 }

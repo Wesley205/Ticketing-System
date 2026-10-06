@@ -11,6 +11,7 @@ export async function loginWithPassword({ identifier, password }, options = {}) 
   const session = await apiClient('/auth/login', {
     method: 'POST',
     body: { identifier, password },
+    includeAuth: false,
     clearSessionOnUnauthorized: false,
     storage: options.storage,
   });
@@ -28,6 +29,7 @@ export async function acceptInvitation(payload, options = {}) {
   const session = await apiClient('/invitations/accept', {
     method: 'POST',
     body: payload,
+    includeAuth: false,
     clearSessionOnUnauthorized: false,
     storage: options.storage,
   });

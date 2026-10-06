@@ -1,9 +1,15 @@
 import { EmptyState } from '../../../components/feedback/EmptyState.jsx';
 import { formatArticleStatus } from '../services/knowledge-base-copy.js';
 
-export function ArticleList({ articles = [], selectedArticleId = null, onSelect }) {
+export function ArticleList({ articles = [], selectedArticleId = null, hasActiveFilters = false, onSelect }) {
   if (!articles.length) {
-    return <EmptyState variant="search" title="No articles found" description="No knowledge-base articles match the current filters or visibility scope." />;
+    return (
+      <EmptyState
+        variant="search"
+        title={hasActiveFilters ? 'No matching articles' : 'No articles yet'}
+        description={hasActiveFilters ? 'Try a different search term or clear the filters.' : 'Published guidance will appear here.'}
+      />
+    );
   }
 
   return (
@@ -17,9 +23,7 @@ export function ArticleList({ articles = [], selectedArticleId = null, onSelect 
         >
           <strong>{article.title}</strong>
           <span>{article.summary || 'No summary available.'}</span>
-          <small>
-            {article.category || 'General support'} / {formatArticleStatus(article.status)} / Helpful {article.helpful_count} / Views {article.view_count}
-          </small>
+          <small>{article.category || 'General support'} · {formatArticleStatus(article.status)} · {article.view_count} views</small>
         </button>
       ))}
     </div>

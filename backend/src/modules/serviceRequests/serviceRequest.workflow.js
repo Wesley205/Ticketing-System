@@ -37,6 +37,23 @@ function isOperationalRole(user) {
   return ["admin", "ict_officer", "technician"].includes(user?.role);
 }
 
+function actorDisplayName(user) {
+  return user?.full_name || user?.username || "A user";
+}
+
+function ticketParticipantIds(request, actorUserId, additionalIds = []) {
+  return [
+    request?.requester_id,
+    request?.assigned_technician_id,
+    request?.assigned_ict_officer_id,
+    ...additionalIds,
+  ].filter((value, index, values) => (
+    value &&
+    Number(value) !== Number(actorUserId) &&
+    values.findIndex((candidate) => Number(candidate) === Number(value)) === index
+  ));
+}
+
 function canActorTransitionStatus(user, request, nextStatus) {
   if (!user || !request) return false;
 
@@ -130,6 +147,17 @@ async function insertNotifications(
   requestId,
   options = {},
 ) {
+  const actor = options.actor_user;
+  const payload = {
+    ...(options.payload || {}),
+    ...(actor ? {
+      actor_user_id: actor.user_id || null,
+      actor_name: actorDisplayName(actor),
+      actor_role: actor.role || null,
+    } : {}),
+    ticket_id: Number(requestId),
+  };
+
   await emitNotificationEvent(
     {
       type: notificationType,
@@ -138,7 +166,7 @@ async function insertNotifications(
       related_record_type: "service_request",
       related_record_id: requestId,
       recipient_user_ids: recipients,
-      payload: options.payload || {},
+      payload,
       severity: options.severity,
       action_url:
         options.action_url || `/service-requests/${requestId}`,
@@ -401,9 +429,17 @@ async function createServiceRequestRecord(data) {
         approvers.rows.map((row) => row.user_id),
         "approval_requested",
         `Approval required: ${ticketNumber}`,
-        `${data.subject} is waiting for approval.`,
+        `${data.requester_name || "A requester"} submitted ${data.subject} for approval.`,
         request.request_id,
-        { severity: "warning" },
+        {
+          severity: "warning",
+          actor_user: {
+            user_id: data.requester_id,
+            full_name: data.requester_name,
+            role: data.requester_role,
+          },
+          payload: { change_type: "approval_requested" },
+        },
       );
     }
 
@@ -472,9 +508,13 @@ async function decideServiceRequestApprovalRecord(requestId, actorUser, decision
       [request.requester_id],
       approvalStatus === "approved" ? "approval_approved" : "approval_rejected",
       `Request ${approvalStatus}: ${request.ticket_number}`,
-      decision.note || `${request.subject} was ${approvalStatus}.`,
+      `${actorDisplayName(actorUser)} ${approvalStatus} this request.${decision.note ? ` ${decision.note}` : ""}`,
       requestId,
-      { severity: approvalStatus === "approved" ? "success" : "error" },
+      {
+        severity: approvalStatus === "approved" ? "success" : "error",
+        actor_user: actorUser,
+        payload: { change_type: `approval_${approvalStatus}` },
+      },
     );
 
     return getServiceRequestDetails(client, requestId, actorUser);
@@ -603,22 +643,27 @@ async function assignServiceRequestRecord(
           : "Assignment removed"),
     });
 
-    const recipients = [previous.requester_id];
-    if (nextAssignee) recipients.push(nextAssignee);
+    const recipients = ticketParticipantIds(previous, actorUser.user_id, [
+      nextAssignee,
+      assignedIctOfficerId,
+      previous.assigned_technician_id,
+    ]);
     await insertNotifications(
       client,
       recipients,
       "ticket_assigned",
       nextAssignee ? "Ticket assignment updated" : "Ticket unassigned",
       nextAssignee
-        ? `Ticket ${updated.rows[0].ticket_number || requestId} has been assigned.`
-        : `Ticket ${updated.rows[0].ticket_number || requestId} is awaiting reassignment.`,
+        ? `${actorDisplayName(actorUser)} assigned ticket ${updated.rows[0].ticket_number || requestId}.`
+        : `${actorDisplayName(actorUser)} removed the ticket assignment.`,
       requestId,
       {
         payload: {
+          change_type: nextAssignee ? "assignment_updated" : "assignment_removed",
           assigned_technician_id: nextAssignee,
           expected_completion_at: details.expected_completion_at || null,
         },
+        actor_user: actorUser,
       },
     );
 
@@ -646,6 +691,7 @@ async function updateServiceRequestStatusRecord(
   return withTransaction(async (client) => {
     const existingResult = await client.query(
       `SELECT request_id, ticket_number, status, requester_id, assigned_technician_id,
+              assigned_ict_officer_id,
               first_response_at, date_resolved, closure_confirmation_required
        FROM service_requests
        WHERE request_id = $1
@@ -786,14 +832,19 @@ async function updateServiceRequestStatusRecord(
 
     await insertNotifications(
       client,
-      [previous.requester_id, previous.assigned_technician_id].filter(
-        (value) => Number(value) !== Number(actorUser.user_id),
-      ),
+      ticketParticipantIds(previous, actorUser.user_id),
       status === "Resolved" ? "ticket_resolved" : "ticket_updated",
       `Ticket ${updated.rows[0].ticket_number || requestId} updated`,
-      `The ticket status is now ${status}.`,
+      `${actorDisplayName(actorUser)} changed the status from ${previous.status} to ${status}.`,
       requestId,
-      { payload: { status } },
+      {
+        actor_user: actorUser,
+        payload: {
+          change_type: "status_changed",
+          previous_status: previous.status,
+          status,
+        },
+      },
     );
 
     await logAction(
@@ -846,14 +897,15 @@ async function addTicketCommentRecord(requestId, actorUser, body, isInternal) {
     if (!isInternal) {
       await insertNotifications(
         client,
-        [request.requester_id, request.assigned_technician_id].filter(
-          (value) => Number(value) !== Number(actorUser.user_id),
-        ),
+        ticketParticipantIds(request, actorUser.user_id),
         "ticket_comment",
         `New comment on ${request.ticket_number || `ticket ${requestId}`}`,
         `${actorUser.full_name || "A user"} added a comment.`,
         requestId,
-        { payload: { is_internal: false } },
+        {
+          actor_user: actorUser,
+          payload: { change_type: "comment_added", is_internal: false },
+        },
       );
     }
 
@@ -907,14 +959,15 @@ async function addTicketAttachmentRecord(requestId, actorUser, attachment) {
     if (!attachment.is_internal) {
       await insertNotifications(
         client,
-        [request.requester_id, request.assigned_technician_id].filter(
-          (value) => Number(value) !== Number(actorUser.user_id),
-        ),
+        ticketParticipantIds(request, actorUser.user_id),
         "ticket_attachment",
         `New attachment on ${request.ticket_number || `ticket ${requestId}`}`,
         `${actorUser.full_name || "A user"} uploaded ${attachment.fileName}.`,
         requestId,
-        { payload: { file_name: attachment.fileName } },
+        {
+          actor_user: actorUser,
+          payload: { change_type: "attachment_added", file_name: attachment.fileName },
+        },
       );
     }
 
@@ -954,7 +1007,8 @@ async function updateServiceRequestAssetRecord(
 ) {
   return withTransaction(async (client) => {
     const existing = await client.query(
-      `SELECT request_id, ticket_number, requester_id, affected_asset_id
+      `SELECT request_id, ticket_number, requester_id, affected_asset_id,
+              assigned_technician_id, assigned_ict_officer_id
        FROM service_requests
        WHERE request_id = $1
        FOR UPDATE`,
@@ -993,6 +1047,24 @@ async function updateServiceRequestAssetRecord(
         details: nextAssetId
           ? `Affected asset linked to asset_id ${nextAssetId}`
           : "Affected asset link removed",
+      },
+    );
+
+    await insertNotifications(
+      client,
+      ticketParticipantIds(previous, actorUser.user_id),
+      "ticket_updated",
+      `Ticket ${previous.ticket_number || requestId} updated`,
+      nextAssetId
+        ? `${actorDisplayName(actorUser)} linked an affected asset to this ticket.`
+        : `${actorDisplayName(actorUser)} removed the affected asset from this ticket.`,
+      requestId,
+      {
+        actor_user: actorUser,
+        payload: {
+          change_type: nextAssetId ? "asset_linked" : "asset_removed",
+          affected_asset_id: nextAssetId,
+        },
       },
     );
 
