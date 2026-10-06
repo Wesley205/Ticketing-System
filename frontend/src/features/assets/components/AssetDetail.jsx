@@ -30,6 +30,7 @@ export function AssetDetail({
             <div><span>Serial number</span><strong>{asset.serial_number || '-'}</strong></div>
             <div><span>Purchase date</span><strong>{formatDate(asset.purchase_date)}</strong></div>
             <div><span>Location</span><strong>{asset.location || '-'}</strong></div>
+            <div><span>Floor</span><strong>{asset.floor_label || '-'}</strong></div>
           </div>
           <p className="react-copy">{asset.description || 'No asset description recorded.'}</p>
         </DetailPanel>

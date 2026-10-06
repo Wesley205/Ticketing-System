@@ -47,6 +47,7 @@ try {
   const { ServiceRequestsPage } = await vite.ssrLoadModule('/src/features/service-requests/pages/ServiceRequestsPage.jsx');
   const { OperationalTicketDetail } = await vite.ssrLoadModule('/src/features/service-requests/components/OperationalTicketDetail.jsx');
   const { RequesterTicketDetail } = await vite.ssrLoadModule('/src/features/service-requests/components/RequesterTicketDetail.jsx');
+  const { TicketActionCenter } = await vite.ssrLoadModule('/src/features/service-requests/components/TicketActionCenter.jsx');
 
   const listHtml = renderWithAuth(AuthContext, createElement(ServiceRequestsPage), 'admin', '/service-requests');
   const operationalDetailHtml = renderWithAuth(
@@ -82,6 +83,45 @@ try {
   assert.match(operationalDetailHtml, /Admin Override Controls/i);
   assert.match(requesterDetailHtml, /Confirm resolved/i);
   assert.match(requesterDetailHtml, /Messages/i);
+
+  const assignedActionsHtml = renderWithAuth(
+    AuthContext,
+    createElement(TicketActionCenter, {
+      ticket: { status: 'Assigned', technician_name: 'Aisha Lawal', permissions: { allowed_status_transitions: ['Accepted', 'Pending', 'In Progress'] } },
+      onStatusSubmit: async () => {},
+    }),
+    'technician',
+    '/technician/work/ticket/7'
+  );
+  assert.match(assignedActionsHtml, /Accept/i);
+  assert.match(assignedActionsHtml, /Unavailable/i);
+  assert.doesNotMatch(assignedActionsHtml, /Start work/i);
+
+  const acceptedActionsHtml = renderWithAuth(
+    AuthContext,
+    createElement(TicketActionCenter, {
+      ticket: { status: 'Accepted', technician_name: 'Aisha Lawal', permissions: { allowed_status_transitions: ['In Progress'] } },
+      onStatusSubmit: async () => {},
+    }),
+    'technician',
+    '/technician/work/ticket/7'
+  );
+  assert.match(acceptedActionsHtml, /Start work/i);
+  assert.doesNotMatch(acceptedActionsHtml, /Resolve ticket/i);
+
+  const inProgressActionsHtml = renderWithAuth(
+    AuthContext,
+    createElement(TicketActionCenter, {
+      ticket: { status: 'In Progress', technician_name: 'Aisha Lawal', permissions: { allowed_status_transitions: ['Waiting for User', 'Waiting for Parts', 'Resolved'] } },
+      onStatusSubmit: async () => {},
+    }),
+    'technician',
+    '/technician/work/ticket/7'
+  );
+  assert.match(inProgressActionsHtml, /Waiting for user/i);
+  assert.match(inProgressActionsHtml, /Waiting for parts/i);
+  assert.match(inProgressActionsHtml, /Resolve ticket/i);
+  assert.doesNotMatch(inProgressActionsHtml, /Accept/i);
 
   console.log('Service-request secure workspace smoke check passed.');
 } finally {

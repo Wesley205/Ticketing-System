@@ -5,6 +5,14 @@ const FILTER_LABELS = {
   category: 'Category',
   ticket_type: 'Type',
   mine: 'My tickets',
+  queue: 'Queue',
+};
+
+const QUEUE_LABELS = {
+  unassigned: 'Unassigned',
+  sla_risk: 'SLA risk',
+  overdue: 'Overdue',
+  pending_approval: 'Approvals',
 };
 
 export function hasActiveFilters(filters = {}) {
@@ -20,7 +28,7 @@ export function ActiveFilterChips({ filters = {}, onRemove, onClear }) {
       {entries.map(([key, value]) => (
         <button key={key} type="button" onClick={() => onRemove(key)}>
           <span>{FILTER_LABELS[key] || key}</span>
-          <strong>{key === 'mine' ? 'On' : value}</strong>
+          <strong>{key === 'mine' ? 'On' : key === 'queue' ? QUEUE_LABELS[value] || value : value}</strong>
           <b aria-hidden="true">x</b>
         </button>
       ))}

@@ -18,6 +18,13 @@ const {
 
 const BODY_METHODS = new Set(['POST', 'PUT', 'PATCH']);
 
+function normalizeOrigin(value) {
+  return String(value || '')
+    .trim()
+    .replace(/^(https?):\/(?!\/)/i, '$1://')
+    .replace(/\/+$/, '');
+}
+
 function configureTrustProxy(app, env = process.env) {
   const raw = env.TRUST_PROXY;
 
@@ -41,6 +48,7 @@ function configureTrustProxy(app, env = process.env) {
 function contentTypeGuard(req, res, next) {
   if (!BODY_METHODS.has(req.method)) return next();
   if (!req.headers['content-length'] && !req.headers['transfer-encoding']) return next();
+  if (req.headers['content-length'] === '0' && !req.headers['transfer-encoding']) return next();
   if (req.is('application/json') || req.is('application/x-www-form-urlencoded')) return next();
 
   return next(new AppError({
@@ -48,6 +56,37 @@ function contentTypeGuard(req, res, next) {
     statusCode: 415,
     message: 'Unsupported content type. Use application/json or application/x-www-form-urlencoded.',
   }));
+}
+
+function isSameHostOrigin(req, origin) {
+  const host = req.get?.('host') || req.headers?.host;
+  if (!host || !origin) return false;
+
+  try {
+    const parsedOrigin = new URL(normalizeOrigin(origin));
+    if (!['http:', 'https:'].includes(parsedOrigin.protocol)) return false;
+
+    return parsedOrigin.host.toLowerCase() === String(host).toLowerCase();
+  } catch {
+    return false;
+  }
+}
+
+function createCorsOptionsDelegate(env = process.env) {
+  const baseOptions = getCorsOptions(env);
+
+  return (req, callback) => {
+    callback(null, {
+      ...baseOptions,
+      origin(origin, corsCallback) {
+        if (!origin || isSameHostOrigin(req, origin)) {
+          return corsCallback(null, true);
+        }
+
+        return baseOptions.origin(origin, corsCallback);
+      },
+    });
+  };
 }
 
 function createSecurityMiddleware(env = process.env) {
@@ -62,7 +101,7 @@ function createSecurityMiddleware(env = process.env) {
     requestTimer,
     requestLogger,
     securityHeaders,
-    cors(getCorsOptions(env)),
+    cors(createCorsOptionsDelegate(env)),
     rateLimit,
     contentTypeGuard,
     express.json({ limit: config.jsonBodyLimit }),
@@ -75,6 +114,8 @@ module.exports = {
   buildContentSecurityPolicy,
   configureTrustProxy,
   contentTypeGuard,
+  createCorsOptionsDelegate,
   createSecurityMiddleware,
+  isSameHostOrigin,
   securityHeaders,
 };

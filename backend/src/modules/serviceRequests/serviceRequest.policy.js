@@ -21,7 +21,10 @@ function buildTicketPermissions(user, request, allowedStatusTransitions = []) {
     can_add_internal_note: canAddInternalTicketNote(user),
     can_manage_attachments: canManageTicketAttachments(user, request),
     can_view_internal_artifacts: canViewInternalTicketArtifacts(user, request),
-    can_assign: canManageServiceRequestAssignments(user),
+    can_assign: canManageServiceRequestAssignments(user) && !['pending', 'rejected'].includes(request?.approval_status),
+    can_approve: request?.approval_status === 'pending' && (
+      user?.role === 'admin' || user?.role === request?.approval_role
+    ),
     can_update_status: canUpdateServiceRequest(user, request),
     allowed_status_transitions: allowedStatusTransitions,
   };

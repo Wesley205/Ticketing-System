@@ -34,6 +34,9 @@ export function StaffDetailPanel({ user, canManage = false, invitations = [], on
         <div><span>Last login</span><strong>{formatDateTime(user.last_login_at)}</strong></div>
         <div><span>Account start</span><strong>{formatDate(user.account_start_date)}</strong></div>
         <div><span>Sponsor</span><strong>{user.sponsor_name || '-'}</strong></div>
+        {user.role === 'technician' ? <div><span>Assigned floor</span><strong>{user.floor_label || 'Not assigned'}</strong></div> : null}
+        {user.role === 'technician' ? <div><span>Availability</span><strong>{String(user.technician_availability || 'available').replaceAll('_', ' ')}</strong></div> : null}
+        {user.role === 'technician' ? <div><span>Active ticket capacity</span><strong>{user.technician_capacity || 8}</strong></div> : null}
       </div>
 
       <section className="staff-pending-invitations">

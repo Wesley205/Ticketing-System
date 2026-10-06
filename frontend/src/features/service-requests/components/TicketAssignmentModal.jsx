@@ -67,7 +67,20 @@ export function TicketAssignmentModal({
       .join(' ')
       .toLowerCase()
       .includes(search.trim().toLowerCase())
-  );
+  ).sort((left, right) => {
+    const ticketFloorId = ticket?.floor_id ? String(ticket.floor_id) : '';
+    const leftSameFloor = ticketFloorId && String(left.floor_id || '') === ticketFloorId;
+    const rightSameFloor = ticketFloorId && String(right.floor_id || '') === ticketFloorId;
+    if (leftSameFloor !== rightSameFloor) return leftSameFloor ? -1 : 1;
+
+    const leftAvailability = technicianAvailability(left, workloadCounts);
+    const rightAvailability = technicianAvailability(right, workloadCounts);
+    if (leftAvailability.activeCount !== rightAvailability.activeCount) {
+      return leftAvailability.activeCount - rightAvailability.activeCount;
+    }
+
+    return String(left.full_name || '').localeCompare(String(right.full_name || ''));
+  });
 
   return (
     <Modal
@@ -86,7 +99,11 @@ export function TicketAssignmentModal({
       <form id="ticket-assignment-form" className="assignment-secure-form" onSubmit={handleSubmit}>
         <div className="assignment-ticket-head">
           <strong>{ticket?.ticket_number || `#${ticket?.request_id || ''}`}</strong>
-          <p>Choose a technician, set expected completion, and add handoff notes.</p>
+          <p>
+            {ticket?.floor_label
+              ? `Same-floor technicians for ${ticket.floor_label} are suggested first. Officers can still assign anyone.`
+              : 'Choose a technician, set expected completion, and add handoff notes.'}
+          </p>
         </div>
 
         <FormField label="Search technician" htmlFor="assign-technician-search" error={errorMessage}>
@@ -103,6 +120,7 @@ export function TicketAssignmentModal({
           {visibleTechnicians.map((technician) => {
             const availability = technicianAvailability(technician, workloadCounts);
             const selected = String(assignedTechnicianId) === String(technician.user_id);
+            const sameFloor = ticket?.floor_id && String(technician.floor_id || '') === String(ticket.floor_id);
             return (
               <button
                 type="button"
@@ -112,8 +130,8 @@ export function TicketAssignmentModal({
               >
                 <span aria-hidden="true" />
                 <strong>{technician.full_name}</strong>
-                <small>{availability.label}</small>
-                <b>{availability.state}</b>
+                <small>{technician.routing_reason || `${technician.floor_label ? `Covers ${technician.floor_label}` : 'No floor assigned'}; ${availability.label}`}</small>
+                <b>{technician.recommended ? 'Recommended' : sameFloor ? 'Floor match' : availability.state}</b>
               </button>
             );
           })}

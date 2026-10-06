@@ -39,6 +39,9 @@ test('content security policy allows current React frontend requirements', () =>
 
   assert.match(policy, /default-src 'self'/);
   assert.match(policy, /script-src 'self' 'unsafe-inline' https:\/\/cdnjs\.cloudflare\.com/);
+  assert.match(policy, /style-src 'self' 'unsafe-inline' https:\/\/fonts\.googleapis\.com/);
+  assert.match(policy, /style-src-elem 'self' 'unsafe-inline' https:\/\/fonts\.googleapis\.com/);
+  assert.match(policy, /font-src 'self' data: https:\/\/fonts\.gstatic\.com/);
   assert.match(policy, /frame-ancestors 'none'/);
   assert.match(policy, /form-action 'self'/);
 });

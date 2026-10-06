@@ -27,7 +27,7 @@ export function DashboardPage() {
   return (
     <SecureWorkspaceLayout
       title={secureTitle(role)}
-      subtitle={role === 'staff' ? 'ICT Service Hub' : 'Admin Portal'}
+      subtitle="ICT Service Hub"
     >
       {role === 'admin' ? (
         <AdminDashboardPage dashboard={dashboard} />

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '../../../components/forms/Button.jsx';
 import { FormField } from '../../../components/forms/FormField.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 
 export function InvitationForm({ onSubmit, errorMessage, isSubmitting = false, initialToken = '' }) {
   const [token, setToken] = useState(initialToken);
@@ -29,7 +30,7 @@ export function InvitationForm({ onSubmit, errorMessage, isSubmitting = false, i
     <form className="ui-stack-md auth-form" onSubmit={handleSubmit}>
       {hasError ? (
         <div className="auth-inline-error" role="alert">
-          <span aria-hidden="true">×</span>
+          <span aria-hidden="true">!</span>
           <strong>{errorMessage}</strong>
         </div>
       ) : null}
@@ -66,7 +67,7 @@ export function InvitationForm({ onSubmit, errorMessage, isSubmitting = false, i
           className="ui-input auth-input"
           type="text"
           autoComplete="tel"
-          placeholder="e.g. +1 (555) 0199"
+          placeholder="e.g. +234 800 000 0000"
           value={phone}
           onChange={(event) => setPhone(event.target.value)}
         />
@@ -75,7 +76,7 @@ export function InvitationForm({ onSubmit, errorMessage, isSubmitting = false, i
       <FormField
         label="Choose Password"
         htmlFor="activation-password"
-        hint="Password requirements are set by your administrator. Recommended 12+ characters."
+        hint="Password requirements are set by your administrator. Use at least 12 characters when possible."
       >
         <div className="auth-password-wrap">
           <input
@@ -85,7 +86,7 @@ export function InvitationForm({ onSubmit, errorMessage, isSubmitting = false, i
             autoComplete="new-password"
             minLength={6}
             required
-            placeholder="••••••••••••"
+            placeholder="************"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
@@ -95,7 +96,7 @@ export function InvitationForm({ onSubmit, errorMessage, isSubmitting = false, i
             onClick={() => setShowPassword((current) => !current)}
             aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
-            {showPassword ? 'HIDE' : 'SHOW'}
+            <AppIcon name={showPassword ? 'view-off' : 'view'} size={18} />
           </button>
         </div>
       </FormField>
@@ -113,7 +114,7 @@ export function InvitationForm({ onSubmit, errorMessage, isSubmitting = false, i
             autoComplete="new-password"
             minLength={6}
             required
-            placeholder="••••••••••••"
+            placeholder="************"
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
           />
@@ -123,7 +124,7 @@ export function InvitationForm({ onSubmit, errorMessage, isSubmitting = false, i
             onClick={() => setShowConfirmPassword((current) => !current)}
             aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
           >
-            {showConfirmPassword ? 'HIDE' : 'SHOW'}
+            <AppIcon name={showConfirmPassword ? 'view-off' : 'view'} size={18} />
           </button>
         </div>
       </FormField>

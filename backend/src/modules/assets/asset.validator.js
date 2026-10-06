@@ -38,6 +38,7 @@ const createAsset = [
   body('condition').optional({ nullable: true }).isIn(ASSET_CONDITIONS).withMessage('Invalid condition.'),
   body('status').optional({ nullable: true }).isIn(ASSET_STATUSES).withMessage('Invalid status value.'),
   body('department_id').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Department id must be a positive integer.'),
+  body('floor_id').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Floor id must be a positive integer.'),
   body('assigned_to').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Assigned user id must be a positive integer.'),
   sendFirstValidationError,
 ];
@@ -48,6 +49,7 @@ const updateAsset = [
   body('condition').optional({ nullable: true }).isIn(ASSET_CONDITIONS).withMessage('Invalid condition.'),
   body('status').optional({ nullable: true }).isIn(ASSET_STATUSES).withMessage('Invalid status value.'),
   body('department_id').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Department id must be a positive integer.'),
+  body('floor_id').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Floor id must be a positive integer.'),
   body('assigned_to').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Assigned user id must be a positive integer.'),
   sendFirstValidationError,
 ];

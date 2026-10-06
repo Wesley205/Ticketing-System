@@ -101,7 +101,27 @@ test('knowledge-base payload normalization preserves backend field names', () =>
       { relation_type: 'asset_type', asset_type: 'Laptop' },
       { relation_type: 'ticket_category', ticket_category: 'Access Request' },
     ],
+    media: [],
   });
+});
+
+test('knowledge-base payload preserves captioned article images', () => {
+  const media = [{
+    file_name: 'router-lights.webp',
+    mime_type: 'image/webp',
+    content_base64: 'data:image/webp;base64,AAAA',
+    caption: 'Expected status lights',
+    alt_text: 'Router with green power and network lights',
+    sort_order: 0,
+  }];
+
+  const payload = normalizeArticlePayload({
+    title: 'Check router lights',
+    body: 'Compare the lights with the reference image.',
+    media,
+  });
+
+  assert.deepEqual(payload.media, media);
 });
 
 test('knowledge-base route is available to authenticated users while management remains scoped', () => {

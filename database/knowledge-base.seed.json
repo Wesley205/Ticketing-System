@@ -1,0 +1,77 @@
+[
+  {
+    "title": "Secure your account with a strong password and MFA",
+    "slug": "secure-account-password-mfa",
+    "summary": "Use a unique password and multi-factor authentication to protect your work account from unauthorized access.",
+    "category": "Account access",
+    "search_keywords": "password mfa multi-factor authentication sign in account security verification",
+    "body": "# Create a strong password\n\n- Use a long passphrase that is difficult to guess.\n- Do not reuse a password from a personal or another work account.\n- Never share your password by email, chat, or telephone.\n\n# Enable multi-factor authentication\n\n1. Sign in through the approved organization portal.\n2. Open your account security settings.\n3. Register your approved authenticator method.\n4. Complete a test sign-in before closing the setup page.\n\n# If you receive an unexpected prompt\n\n- Deny the request.\n- Change your password from a trusted device.\n- Report the event to the ICT Service Desk immediately.\n\nDo not approve an authentication prompt that you did not initiate.",
+    "asset_types": ["Computer", "Mobile"],
+    "ticket_categories": ["Account access", "Security"],
+    "image": {
+      "file_name": "secure-account-mfa.png",
+      "caption": "A secure sign-in uses both a strong password and a second verification step.",
+      "alt_text": "Laptop password screen and mobile verification prompt connected through a security shield"
+    }
+  },
+  {
+    "title": "Restore a Wi-Fi connection",
+    "slug": "restore-wifi-connection",
+    "summary": "Follow these checks when a laptop or phone cannot connect to the office wireless network.",
+    "category": "Network issues",
+    "search_keywords": "wifi wireless network internet offline router cannot connect connection",
+    "body": "# Check the affected device\n\n1. Confirm that Wi-Fi is turned on and airplane mode is off.\n2. Select the approved office network and reconnect.\n3. Move closer to the nearest access point if the signal is weak.\n\n# Isolate the problem\n\n- Check whether another approved device can use the same network.\n- Restart the affected device once.\n- Do not reset, unplug, or reconfigure shared network equipment.\n\n# Contact ICT\n\nCreate a service request if the connection still fails. Include your floor, room, device name, network name, and any error message shown.",
+    "asset_types": ["Computer", "Mobile", "Network"],
+    "ticket_categories": ["Network issues"],
+    "image": {
+      "file_name": "wifi-troubleshooting.png",
+      "caption": "Check the device, wireless signal, access point, and internet path in that order.",
+      "alt_text": "Laptop connected through a wireless router to the internet with diagnostic check marks"
+    }
+  },
+  {
+    "title": "Fix common office printer problems",
+    "slug": "fix-common-printer-problems",
+    "summary": "Resolve basic paper, queue, toner, and connection problems without changing printer administration settings.",
+    "category": "Printers",
+    "search_keywords": "printer printing paper jam toner queue offline network print job",
+    "body": "# Check the printer\n\n1. Confirm that the printer is powered on and shows no warning message.\n2. Load the correct paper size and close every tray firmly.\n3. Remove visible paper only when it can be reached safely. Do not force internal rollers or covers.\n\n# Check your computer\n\n1. Confirm that the correct office printer is selected.\n2. Cancel duplicate jobs in your personal print queue.\n3. Send one test page.\n\n# Contact ICT\n\nCreate a service request when the printer remains offline, repeatedly jams, reports a toner fault, or affects several users. Include the printer name, location, and displayed error.",
+    "asset_types": ["Printer"],
+    "ticket_categories": ["Printers", "Hardware and devices"],
+    "image": {
+      "file_name": "printer-troubleshooting.png",
+      "caption": "Inspect paper, toner status, network connection, and the print queue before escalating.",
+      "alt_text": "Office printer surrounded by paper, toner, network, and print queue diagnostic checks"
+    }
+  },
+  {
+    "title": "Recognize and report a phishing message",
+    "slug": "recognize-report-phishing-message",
+    "summary": "Treat unexpected links, attachments, payment requests, and sign-in prompts as suspicious until verified.",
+    "category": "Security steps",
+    "search_keywords": "phishing suspicious email link attachment report scam password security",
+    "body": "# Warning signs\n\n- The sender address does not match the person or organization shown.\n- The message creates unusual urgency or asks for secrecy.\n- A link opens an unexpected sign-in page.\n- An attachment or payment request was not expected.\n\n# Respond safely\n\n1. Do not click links, open attachments, reply, or forward the message.\n2. Use the approved reporting option in your email application, or contact the ICT Service Desk.\n3. Keep the message available so ICT can inspect its technical details.\n\n# If you already interacted with it\n\nDisconnect from the network if instructed by ICT, change the affected password from a trusted device, and report exactly what was opened or entered. Prompt reporting helps contain the incident.",
+    "asset_types": ["Computer", "Mobile"],
+    "ticket_categories": ["Security"],
+    "image": {
+      "file_name": "phishing-reporting.png",
+      "caption": "Do not interact with a suspicious link; report the original message for security review.",
+      "alt_text": "Laptop showing a suspicious email link, warning symbol, and protected reporting action"
+    }
+  },
+  {
+    "title": "First checks for a slow computer",
+    "slug": "first-checks-slow-computer",
+    "summary": "Use these safe first steps when an office computer becomes unusually slow or unresponsive.",
+    "category": "Hardware and devices",
+    "search_keywords": "slow computer performance frozen storage restart application laptop desktop",
+    "body": "# Record the symptoms\n\nNote when the slowdown started, which application is affected, and any error message. This information helps ICT distinguish a device problem from a service outage.\n\n# Perform safe checks\n\n1. Save your work and close applications you are not using.\n2. Pause large approved downloads or file transfers.\n3. Restart the computer once using the normal restart command.\n4. Confirm that the device has power and a stable network connection.\n\n# Avoid risky changes\n\nDo not install cleanup tools, delete system files, disable security software, or open the device casing.\n\n# Contact ICT\n\nCreate a service request if the issue returns. Include the device asset tag, affected application, time of occurrence, and a screenshot of any error.",
+    "asset_types": ["Computer"],
+    "ticket_categories": ["Hardware and devices", "Software and apps"],
+    "image": {
+      "file_name": "slow-computer-checks.png",
+      "caption": "Record symptoms, close unused applications, check storage, restart once, and report recurring problems.",
+      "alt_text": "Desktop computer performance dashboard with memory, storage, restart, and checklist indicators"
+    }
+  }
+]

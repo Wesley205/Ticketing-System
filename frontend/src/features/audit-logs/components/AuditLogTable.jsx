@@ -41,11 +41,47 @@ const columns = [
 ];
 
 export function AuditLogTable({ rows = [] }) {
+  const normalizedRows = rows.map((row) => ({ ...row, key: row.log_id }));
+  const mobileRows = normalizedRows.slice(0, 25);
+
+  if (!rows.length) {
+    return (
+      <div className="ui-table-empty">
+        <EmptyState variant="search" title="No audit records found" description="No records match the current audit filters or authorized scope." />
+      </div>
+    );
+  }
+
   return (
-    <DataTable
-      columns={columns}
-      rows={rows.map((row) => ({ ...row, key: row.log_id }))}
-      emptyState={<EmptyState variant="search" title="No audit records found" description="No records match the current audit filters or authorized scope." />}
-    />
+    <>
+      <DataTable
+        columns={columns}
+        rows={normalizedRows}
+      />
+      <div className="audit-mobile-list" aria-label="Audit records">
+        {mobileRows.map((row) => (
+          <article className="audit-mobile-card" key={row.key}>
+            <div className="audit-mobile-card-head">
+              <time>{formatDateTime(row.created_at)}</time>
+              <span className="audit-action-pill">{row.action}</span>
+            </div>
+            <div className="audit-mobile-actor">
+              <strong>{row.user_name || 'System'}</strong>
+              <span>{row.user_role || '-'}</span>
+            </div>
+            <p>{row.details || '-'}</p>
+            <div className="audit-mobile-card-foot">
+              <span className="audit-entity-link">
+                {row.record_type || '-'}{row.record_id ? ` #${row.record_id}` : ''}
+              </span>
+              <span>{row.ip_address || row.ip || '-'}</span>
+            </div>
+          </article>
+        ))}
+        {normalizedRows.length > mobileRows.length ? (
+          <p className="audit-mobile-limit-note">Showing the first {mobileRows.length} records. Use filters to narrow the audit trail.</p>
+        ) : null}
+      </div>
+    </>
   );
 }

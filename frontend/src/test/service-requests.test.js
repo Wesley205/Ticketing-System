@@ -19,9 +19,10 @@ test('service-request query builder preserves supported backend filters only', (
       category: 'Network',
       ticket_type: 'Incident',
       mine: true,
+      queue: 'sla_risk',
       search: 'ignored on backend',
     }).toString(),
-    'status=Assigned&priority=High&category=Network&ticket_type=Incident&mine=true'
+    'status=Assigned&priority=High&category=Network&ticket_type=Incident&mine=true&queue=sla_risk'
   );
 });
 
@@ -63,6 +64,8 @@ test('simplified ticket creation maps classification and severity to backend fie
     description: 'Primary uplink is not responding.',
     affected_asset_id: '',
     closure_confirmation_required: true,
+    catalog_item_id: null,
+    catalog_responses: {},
   });
 
   assert.deepEqual(payload, {
@@ -76,6 +79,8 @@ test('simplified ticket creation maps classification and severity to backend fie
     description: 'Primary uplink is not responding.',
     affected_asset_id: null,
     closure_confirmation_required: true,
+    catalog_item_id: null,
+    catalog_responses: {},
   });
 });
 
@@ -96,6 +101,32 @@ test('technician availability is derived from active workload counts', () => {
   assert.deepEqual(counts, { 4: 2 });
   assert.deepEqual(
     technicianAvailability({ user_id: 4 }, counts, 3),
-    { activeCount: 2, state: 'Busy', isAvailable: true, label: '2 actives - busy' }
+    {
+      activeCount: 2,
+      capacity: 3,
+      utilizationPercent: 67,
+      state: 'Busy',
+      isAvailable: true,
+      label: '2 of 3 active - busy',
+    }
+  );
+});
+
+test('explicit technician availability overrides workload-derived availability', () => {
+  assert.deepEqual(
+    technicianAvailability({
+      user_id: 7,
+      active_count: 1,
+      technician_capacity: 8,
+      technician_availability: 'on_leave',
+    }),
+    {
+      activeCount: 1,
+      capacity: 8,
+      utilizationPercent: 13,
+      state: 'On leave',
+      isAvailable: false,
+      label: '1 of 8 active - on leave',
+    }
   );
 });

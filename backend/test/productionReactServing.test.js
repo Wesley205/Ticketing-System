@@ -35,10 +35,11 @@ function createTempFrontend() {
 
   fs.mkdirSync(path.join(distPath, 'assets'), { recursive: true });
   fs.writeFileSync(
-    path.join(distPath, 'react-shell.html'),
-    '<!doctype html><html><body><div id="root"></div><script type="module" src="/assets/shell.js"></script></body></html>'
+    path.join(distPath, 'index.html'),
+    '<!doctype html><html><body><div id="root"></div><script type="module" src="/assets/main.js"></script></body></html>'
   );
-  fs.writeFileSync(path.join(distPath, 'assets', 'shell.js'), 'window.__NSC_REACT_SHELL__=true;');
+  fs.writeFileSync(path.join(distPath, 'react-shell.html'), '<!doctype html><html><body>legacy shell</body></html>');
+  fs.writeFileSync(path.join(distPath, 'assets', 'main.js'), 'window.__NSC_REACT_SHELL__=true;');
 
   return rootDir;
 }
@@ -102,7 +103,7 @@ test('production serving returns the React shell for direct navigation and refre
       const response = await requestText(`${baseUrl}${route}`);
       assert.equal(response.statusCode, 200, route);
       assert.match(response.body, /id="root"/, route);
-      assert.match(response.body, /\/assets\/shell\.js/, route);
+      assert.match(response.body, /\/assets\/main\.js/, route);
     }
   });
 });
@@ -123,7 +124,8 @@ test('production serving preserves api routes and does not fallback api misses t
 
 test('production serving preserves React assets and redirects legacy static page URLs', async () => {
   await withServer(async (baseUrl) => {
-    const reactAsset = await requestText(`${baseUrl}/assets/shell.js`);
+    const reactAsset = await requestText(`${baseUrl}/assets/main.js`);
+    const missingReactStylesheet = await requestText(`${baseUrl}/assets/missing.css`);
     const legacyDashboard = await requestText(`${baseUrl}/dashboard.html`);
     const legacyActivation = await requestText(`${baseUrl}/register.html?token=abc123`);
     const legacyScript = await requestText(`${baseUrl}/js/api.js`);
@@ -131,6 +133,9 @@ test('production serving preserves React assets and redirects legacy static page
 
     assert.equal(reactAsset.statusCode, 200);
     assert.match(reactAsset.body, /__NSC_REACT_SHELL__/);
+    assert.equal(missingReactStylesheet.statusCode, 404);
+    assert.match(missingReactStylesheet.headers['content-type'], /text\/plain/);
+    assert.doesNotMatch(missingReactStylesheet.headers['content-type'], /application\/json/);
     assert.equal(legacyDashboard.statusCode, 308);
     assert.equal(legacyDashboard.headers.location, '/dashboard');
     assert.equal(legacyActivation.statusCode, 308);

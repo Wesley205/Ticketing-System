@@ -3,6 +3,7 @@ import { EmptyState } from '../../../components/feedback/EmptyState.jsx';
 import { PriorityBadge } from '../../../components/status/PriorityBadge.jsx';
 import { StatusBadge } from '../../../components/status/StatusBadge.jsx';
 import { formatDateTime } from '../../../lib/formatting.js';
+import { ticketSlaState } from '../../service-requests/services/sla-labels.js';
 
 export function SecureRequestTable({ rows = [], title = 'Recent requests', detailBasePath = '/service-requests', mode = 'staff' }) {
   if (!rows.length) {
@@ -33,7 +34,10 @@ export function SecureRequestTable({ rows = [], title = 'Recent requests', detai
             </tr>
           </thead>
           <tbody>
-            {rows.slice(0, 6).map((ticket) => (
+            {rows.slice(0, 6).map((ticket) => {
+              const slaState = ticketSlaState(ticket);
+
+              return (
               <tr key={ticket.request_id || ticket.ticket_number}>
                 <td>
                   <Link to={`${detailBasePath}/${ticket.request_id}`}>
@@ -44,9 +48,16 @@ export function SecureRequestTable({ rows = [], title = 'Recent requests', detai
                 <td><StatusBadge value={ticket.status} /></td>
                 <td><PriorityBadge value={ticket.priority} /></td>
                 {mode !== 'staff' ? <td>{ticket.requester_name || '-'}</td> : null}
-                <td>{mode === 'staff' ? formatDateTime(ticket.updated_at || ticket.date_submitted) : (ticket.sla?.resolutionOverdue ? 'Warning' : 'On track')}</td>
+                <td>
+                  {mode === 'staff' ? (
+                    formatDateTime(ticket.updated_at || ticket.date_submitted)
+                  ) : (
+                    <span className={`secure-sla-text secure-sla-text-${slaState.tone}`}>{slaState.label}</span>
+                  )}
+                </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

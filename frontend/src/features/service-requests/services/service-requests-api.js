@@ -1,5 +1,6 @@
 import { apiClient, apiDownload } from '../../../lib/api-client.js';
 import { buildQueryParams } from '../../../lib/query-params.js';
+import { imageFileToUploadPayload } from '../../../lib/media-files.js';
 
 export function mapSimplifiedTicketPayload(form) {
   const [category, subcategory] = String(form.classification || '').split('|');
@@ -16,6 +17,8 @@ export function mapSimplifiedTicketPayload(form) {
     description: form.description,
     affected_asset_id: form.affected_asset_id || null,
     closure_confirmation_required: Boolean(form.closure_confirmation_required),
+    catalog_item_id: form.catalog_item_id || null,
+    catalog_responses: form.catalog_responses || {},
   };
 }
 
@@ -29,15 +32,21 @@ export function technicianWorkloadCounts(tickets = []) {
 }
 
 export function technicianAvailability(technician = {}, workloadCounts = {}, capacityLimit = 8) {
-  const activeCount = Number(workloadCounts[technician.user_id] || technician.open_requests || 0);
-  const ratio = activeCount / capacityLimit;
-  const state = ratio >= 1 ? 'Near capacity' : ratio >= 0.65 ? 'Busy' : 'Available';
+  const activeCount = Number(workloadCounts[technician.user_id] || technician.active_count || technician.open_requests || 0);
+  const capacity = Number(technician.technician_capacity || capacityLimit || 8);
+  const explicitState = String(technician.technician_availability || 'available');
+  const ratio = activeCount / capacity;
+  const state = explicitState !== 'available'
+    ? explicitState.replaceAll('_', ' ').replace(/^./, (letter) => letter.toUpperCase())
+    : ratio >= 1 ? 'At capacity' : ratio >= 0.65 ? 'Busy' : 'Available';
 
   return {
     activeCount,
+    capacity,
+    utilizationPercent: Math.round(ratio * 100),
     state,
-    isAvailable: ratio < 1,
-    label: `${activeCount} active${activeCount === 1 ? '' : 's'} - ${state.toLowerCase()}`,
+    isAvailable: explicitState === 'available' && ratio < 1,
+    label: `${activeCount} of ${capacity} active - ${state.toLowerCase()}`,
   };
 }
 
@@ -52,6 +61,7 @@ export function buildTicketListQuery(filters = {}) {
     category: filters.category || '',
     ticket_type: filters.ticket_type || '',
     mine: filters.mine ? 'true' : '',
+    queue: filters.queue || '',
   });
 }
 
@@ -118,6 +128,10 @@ export async function fetchAssignmentHistory(ticketId) {
   return apiClient(`/service-requests/${ticketId}/assignment-history`);
 }
 
+export async function fetchRoutingSuggestions(ticketId) {
+  return apiClient(`/service-requests/${ticketId}/routing-suggestions`);
+}
+
 export async function createTicket(payload) {
   return apiClient('/service-requests', {
     method: 'POST',
@@ -128,6 +142,13 @@ export async function createTicket(payload) {
 export async function assignTicket(ticketId, payload) {
   return apiClient(`/service-requests/${ticketId}/assign`, {
     method: 'PATCH',
+    body: payload,
+  });
+}
+
+export async function decideTicketApproval(ticketId, payload) {
+  return apiClient(`/service-requests/${ticketId}/approval`, {
+    method: 'POST',
     body: payload,
   });
 }
@@ -158,6 +179,10 @@ export async function uploadTicketAttachment(ticketId, payload) {
     method: 'POST',
     body: payload,
   });
+}
+
+export async function uploadTicketImage(ticketId, file, extra = {}) {
+  return uploadTicketAttachment(ticketId, await imageFileToUploadPayload(file, extra));
 }
 
 export async function downloadTicketAttachment(ticketId, attachmentId) {

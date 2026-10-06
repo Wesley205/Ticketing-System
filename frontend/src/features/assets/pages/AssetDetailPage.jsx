@@ -149,7 +149,7 @@ export function AssetDetailPage() {
                   showToast({ tone: 'success', title: 'Asset deleted' });
                   navigate('/assets', { replace: true });
                 }} disabled={detailState.isMutating}>
-                  More actions
+                  Delete Asset
                 </Button>
               ) : null}
             </div>
@@ -157,7 +157,12 @@ export function AssetDetailPage() {
         </div>
 
         {detailState.error ? (
-          <ErrorState title="Asset detail unavailable" description={detailState.error} onRetry={detailState.refresh} />
+          <ErrorState
+            variant={String(detailState.error).toLowerCase().includes('not found') ? 'not-found' : 'data'}
+            title="Asset detail unavailable"
+            description={detailState.error}
+            onRetry={detailState.refresh}
+          />
         ) : detailState.isLoading ? (
           <LoadingState variant="detail" description="Loading asset detail..." />
         ) : (

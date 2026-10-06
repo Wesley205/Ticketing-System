@@ -12,6 +12,7 @@ function buildInitialState(asset) {
     model: asset?.model || '',
     serial_number: asset?.serial_number || '',
     department_id: asset?.department_id || '',
+    floor_id: asset?.floor_id || '',
     assigned_to: asset?.assigned_to || '',
     purchase_date: asset?.purchase_date ? String(asset.purchase_date).slice(0, 10) : '',
     condition: asset?.condition || 'Good',
@@ -66,6 +67,7 @@ export function AssetFormModal({
         model: form.model.trim() || null,
         serial_number: form.serial_number.trim() || null,
         department_id: form.department_id || null,
+        floor_id: form.floor_id || null,
         assigned_to: form.assigned_to || null,
         purchase_date: form.purchase_date || null,
         condition: form.condition || null,
@@ -133,6 +135,14 @@ export function AssetFormModal({
                 <option value="">No department</option>
                 {(lookups.departments || []).map((department) => (
                   <option key={department.department_id} value={department.department_id}>{department.name}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Floor" htmlFor="asset-form-floor" hint="Used for technician routing suggestions.">
+              <select id="asset-form-floor" className="ui-input" value={form.floor_id} onChange={(event) => updateField('floor_id', event.target.value)}>
+                <option value="">No floor</option>
+                {(lookups.floors || []).map((floor) => (
+                  <option key={floor.floor_id} value={floor.floor_id}>{floor.floor_label}</option>
                 ))}
               </select>
             </FormField>

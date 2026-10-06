@@ -7,6 +7,7 @@ import {
   filterIctOfficers,
   filterStaffBySearch,
   paginateStaff,
+  resendInvitation,
 } from '../features/staff/services/staff-api.js';
 
 test('staff query builder preserves supported backend filters only', () => {
@@ -59,4 +60,22 @@ test('staff pagination stays deterministic for array-backed responses', () => {
     totalPages: 2,
     items: [{ id: 3 }],
   });
+});
+
+test('invitation resend API posts to backend resend endpoint', async () => {
+  const calls = [];
+  globalThis.fetch = async (url, options = {}) => {
+    calls.push({ url: String(url), method: options.method || 'GET' });
+    return new Response(JSON.stringify({ invitation_id: 9, email_delivery_status: 'pending' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+
+  await resendInvitation(9);
+
+  assert.equal(calls[0].method, 'POST');
+  assert.match(calls[0].url, /\/invitations\/9\/resend$/);
+
+  delete globalThis.fetch;
 });

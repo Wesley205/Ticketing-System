@@ -1,6 +1,11 @@
 const pool = require('../../config/db');
 const { withTransaction } = require('../../utils/transactions');
 const { logAction } = require('../../utils/audit');
+const {
+  removeArticleMediaFile,
+  resolveArticleMediaPath,
+  saveArticleMediaFile,
+} = require('../../utils/imageMedia');
 const mapper = require('./knowledgeBase.mapper');
 const policy = require('./knowledgeBase.policy');
 const repository = require('./knowledgeBase.repository');
@@ -72,6 +77,30 @@ function parseRelations(rawRelations) {
   }));
 }
 
+const MAX_ARTICLE_MEDIA = 5;
+
+function normalizeMediaItems(rawMedia) {
+  if (!Array.isArray(rawMedia)) return [];
+  if (rawMedia.length > MAX_ARTICLE_MEDIA) {
+    throw new Error(`Knowledge articles can include up to ${MAX_ARTICLE_MEDIA} images.`);
+  }
+
+  return rawMedia.map((item, index) => ({
+    media_id: item.media_id ? Number(item.media_id) : null,
+    file_name: item.file_name,
+    mime_type: item.mime_type,
+    content_base64: item.content_base64,
+    caption: String(item.caption || '').trim(),
+    alt_text: String(item.alt_text || item.caption || '').trim(),
+    sort_order: Number.isFinite(Number(item.sort_order)) ? Number(item.sort_order) : index,
+  })).map((item) => {
+    if (!item.alt_text) {
+      throw new Error('Alt text is required for each article image.');
+    }
+    return item;
+  });
+}
+
 async function loadKnowledgeArticle(executor, articleId) {
   return mapper.mapArticleRow(await repository.loadKnowledgeArticle(executor, articleId));
 }
@@ -80,13 +109,14 @@ async function buildKnowledgeArticleDetail(executor, articleId) {
   const article = await repository.loadKnowledgeArticle(executor, articleId);
   if (!article) return null;
 
-  const [relations, feedback, revisions] = await Promise.all([
+  const [relations, feedback, revisions, media] = await Promise.all([
     repository.loadKnowledgeArticleRelations(executor, articleId),
     repository.loadKnowledgeArticleFeedbackSummary(executor, articleId),
     repository.loadKnowledgeArticleRevisions(executor, articleId),
+    repository.loadKnowledgeArticleMedia(executor, articleId),
   ]);
 
-  return mapper.mapArticleDetail(article, relations, feedback, revisions);
+  return mapper.mapArticleDetail(article, relations, feedback, revisions, media);
 }
 
 async function listKnowledgeBaseArticles(executor, options = {}, actorUser = null) {
@@ -102,9 +132,11 @@ async function createKnowledgeBaseArticle(data, actorUserId) {
     const normalizedData = {
       ...data,
       relations: parseRelations(data.relations),
+      media: normalizeMediaItems(data.media),
     };
     const article = await repository.insertKnowledgeBaseArticle(client, normalizedData, actorUserId);
     await repository.replaceKnowledgeArticleRelations(client, article.article_id, normalizedData.relations);
+    await saveKnowledgeArticleMediaSet(client, article.article_id, normalizedData.media, actorUserId);
     await repository.insertKnowledgeArticleRevision(
       client,
       article.article_id,
@@ -132,6 +164,7 @@ async function updateKnowledgeBaseArticle(articleId, data, actorUserId) {
     const normalizedData = {
       ...data,
       relations: parseRelations(data.relations),
+      media: normalizeMediaItems(data.media),
     };
     const currentRevisionNumber = Number(existing.current_revision_number || 1) + 1;
     const article = await repository.updateKnowledgeBaseArticle(
@@ -143,6 +176,7 @@ async function updateKnowledgeBaseArticle(articleId, data, actorUserId) {
     );
 
     await repository.replaceKnowledgeArticleRelations(client, articleId, normalizedData.relations);
+    await saveKnowledgeArticleMediaSet(client, articleId, normalizedData.media, actorUserId);
     await repository.insertKnowledgeArticleRevision(
       client,
       articleId,
@@ -160,6 +194,56 @@ async function updateKnowledgeBaseArticle(articleId, data, actorUserId) {
     );
     return buildKnowledgeArticleDetail(client, articleId);
   });
+}
+
+async function saveKnowledgeArticleMediaSet(client, articleId, mediaItems, actorUserId) {
+  const retainedIds = mediaItems.filter((item) => item.media_id).map((item) => item.media_id);
+  const deletedRows = await repository.softDeleteKnowledgeArticleMediaNotIn(client, articleId, retainedIds);
+
+  for (const row of deletedRows) {
+    await removeArticleMediaFile(row.storage_key);
+  }
+
+  for (const item of mediaItems) {
+    if (item.media_id) {
+      await repository.updateKnowledgeArticleMedia(client, articleId, item.media_id, item);
+      continue;
+    }
+
+    const saved = await saveArticleMediaFile(articleId, item);
+    try {
+      await repository.insertKnowledgeArticleMedia(
+        client,
+        articleId,
+        {
+          file_name: saved.fileName,
+          storage_key: saved.storageKey,
+          mime_type: saved.mimeType,
+          file_size_bytes: saved.buffer.length,
+          caption: item.caption,
+          alt_text: item.alt_text,
+          sort_order: item.sort_order,
+        },
+        actorUserId
+      );
+    } catch (err) {
+      await removeArticleMediaFile(saved.storageKey);
+      throw err;
+    }
+  }
+}
+
+async function getKnowledgeArticleMediaDownload(executor, articleId, mediaId) {
+  const [article, media] = await Promise.all([
+    repository.loadKnowledgeArticle(executor, articleId),
+    repository.loadKnowledgeArticleMediaById(executor, articleId, mediaId),
+  ]);
+  if (!article || !media || media.deleted_at) return null;
+  return {
+    article: mapper.mapArticleRow(article),
+    media,
+    fullPath: resolveArticleMediaPath(media.storage_key),
+  };
 }
 
 async function incrementKnowledgeArticleView(articleId, executor = pool) {
@@ -220,12 +304,14 @@ module.exports = {
   addKnowledgeBaseFeedback,
   buildKnowledgeArticleDetail,
   createKnowledgeBaseArticle,
+  getKnowledgeArticleMediaDownload,
   getAssetTypeById,
   getKnowledgeBaseAnalytics,
   incrementKnowledgeArticleView,
   listKnowledgeBaseArticles,
   loadKnowledgeArticle,
   normalizeSearchText,
+  normalizeMediaItems,
   parseRelations,
   scoreKnowledgeBaseSuggestion,
   suggestKnowledgeBaseArticles,

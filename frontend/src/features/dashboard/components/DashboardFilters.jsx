@@ -11,7 +11,7 @@ export function DashboardFilters({
   onReset,
 }) {
   return (
-    <div className="dashboard-filters">
+    <div className="dashboard-filters responsive-filter-grid">
       <FormField label="From" htmlFor="dashboard-date-from">
         <input
           id="dashboard-date-from"

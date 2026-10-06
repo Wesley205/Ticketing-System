@@ -6,6 +6,7 @@ import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
 import { PriorityBadge } from '../../../components/status/PriorityBadge.jsx';
 import { StatusBadge } from '../../../components/status/StatusBadge.jsx';
 import { TechnicianDashboardLayout } from '../components/TechnicianDashboardLayout.jsx';
+import { useAuth } from '../../auth/hooks/useAuth.js';
 import { useTechnicianWork } from '../hooks/useTechnicianWork.js';
 
 function workSubject(ticket) {
@@ -61,16 +62,22 @@ function PriorityQueue({ rows }) {
 }
 
 export function TechnicianDashboardPage() {
+  const auth = useAuth();
   const workState = useTechnicianWork();
   const dashboard = workState.dashboard;
   const nextAction = dashboard.nextAction;
+  const assignedFloor = auth.user?.floor_label || null;
 
   return (
     <TechnicianDashboardLayout>
       <section className="technician-dashboard-hero">
         <div>
           <h2>Next Actionable Work</h2>
-          <p>Focus on the most urgent tickets first and protect SLA compliance.</p>
+          <p>
+            {assignedFloor
+              ? `You are assigned to ${assignedFloor}. Same-floor work is prioritized when officers dispatch tickets.`
+              : 'No floor is assigned to your technician profile yet. Contact an ICT officer if this is incorrect.'}
+          </p>
         </div>
         {nextAction ? (
           <Link to={nextAction.href}>

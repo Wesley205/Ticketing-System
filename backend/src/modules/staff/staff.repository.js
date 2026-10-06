@@ -1,10 +1,12 @@
 const STAFF_SELECT = `
   SELECT u.user_id, u.full_name, u.email, u.username, u.role, u.user_type, u.phone,
          u.is_active, u.account_status, u.created_at, u.last_login_at, u.department_id,
-         d.name AS department_name, u.sponsor_name, u.account_start_date,
+         d.name AS department_name, u.floor_id, f.floor_label,
+         u.technician_availability, u.technician_capacity, u.sponsor_name, u.account_start_date,
          u.account_expiration_date, u.deactivated_at, u.deactivation_reason
   FROM users u
   LEFT JOIN departments d ON d.department_id = u.department_id
+  LEFT JOIN floors f ON f.floor_id = u.floor_id
 `;
 
 function buildStaffListQuery(filters = {}) {
@@ -43,7 +45,21 @@ async function listStaff(executor, filters = {}) {
 
 async function listTechnicians(executor) {
   const result = await executor.query(
-    "SELECT user_id, full_name FROM users WHERE role = 'technician' AND is_active = TRUE ORDER BY full_name"
+    `SELECT u.user_id, u.full_name, u.email, u.username, u.floor_id, f.floor_label,
+            u.technician_availability, u.technician_capacity,
+            COALESCE(workload.active_count, 0) AS active_count
+     FROM users u
+     LEFT JOIN floors f ON f.floor_id = u.floor_id
+     LEFT JOIN (
+       SELECT assigned_technician_id, COUNT(*)::integer AS active_count
+       FROM service_requests
+       WHERE assigned_technician_id IS NOT NULL
+         AND status NOT IN ('Resolved', 'Closed', 'Cancelled')
+       GROUP BY assigned_technician_id
+     ) workload ON workload.assigned_technician_id = u.user_id
+     WHERE u.role = 'technician'
+       AND u.is_active = TRUE
+     ORDER BY f.sort_order NULLS LAST, u.full_name`
   );
   return result.rows;
 }
@@ -52,10 +68,12 @@ async function insertStaffAccount(client, data) {
   const result = await client.query(
     `INSERT INTO users
       (full_name, email, username, password_hash, role, user_type, department_id, phone,
-       is_active, account_status, sponsor_name, supervisor_user_id, account_start_date, account_expiration_date)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,TRUE,'active',$9,$10,COALESCE($11, CURRENT_DATE),$12)
+       floor_id, technician_availability, technician_capacity, is_active, account_status,
+       sponsor_name, supervisor_user_id, account_start_date, account_expiration_date)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,TRUE,'active',$12,$13,COALESCE($14, CURRENT_DATE),$15)
      RETURNING user_id, full_name, email, username, role, user_type, department_id, phone,
-               sponsor_name, account_start_date, account_expiration_date, is_active, account_status`,
+               floor_id, technician_availability, technician_capacity, sponsor_name,
+               account_start_date, account_expiration_date, is_active, account_status`,
     [
       data.full_name,
       data.email,
@@ -65,6 +83,9 @@ async function insertStaffAccount(client, data) {
       data.user_type,
       data.department_id,
       data.phone,
+      data.floor_id,
+      data.technician_availability,
+      data.technician_capacity,
       data.sponsor_name,
       data.supervisor_user_id,
       data.account_start_date,
@@ -83,14 +104,18 @@ async function updateStaffAccount(client, userId, data) {
       user_type = COALESCE($4, user_type),
       department_id = $5,
       phone = $6,
-      sponsor_name = $7,
-      supervisor_user_id = $8,
-      account_start_date = COALESCE($9, account_start_date),
-      account_expiration_date = $10,
+      floor_id = $7,
+      technician_availability = $8,
+      technician_capacity = $9,
+      sponsor_name = $10,
+      supervisor_user_id = $11,
+      account_start_date = COALESCE($12, account_start_date),
+      account_expiration_date = $13,
       session_version = session_version + 1
-     WHERE user_id = $11
+     WHERE user_id = $14
      RETURNING user_id, full_name, email, username, role, user_type, department_id, phone,
-               sponsor_name, account_start_date, account_expiration_date, is_active, account_status`,
+               floor_id, technician_availability, technician_capacity, sponsor_name,
+               account_start_date, account_expiration_date, is_active, account_status`,
     [
       data.full_name,
       data.email,
@@ -98,6 +123,9 @@ async function updateStaffAccount(client, userId, data) {
       data.user_type,
       data.department_id,
       data.phone,
+      data.floor_id,
+      data.technician_availability,
+      data.technician_capacity,
       data.sponsor_name,
       data.supervisor_user_id,
       data.account_start_date,

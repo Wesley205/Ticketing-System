@@ -38,10 +38,27 @@ const articleDetail = [
   sendFirstValidationError,
 ];
 
+const articleMedia = [
+  ...articleIdParamOnly,
+  param('mediaId').isInt({ min: 1 }).withMessage('Article image id must be a positive integer.'),
+  sendFirstValidationError,
+];
+
 const relationValidation = [
   body('relations').optional().isArray().withMessage('Article relations must be an array.'),
   body('relations.*.relation_type').optional().isIn(KNOWLEDGE_BASE_RELATION_TYPES).withMessage('Invalid article relation type.'),
   body('relations.*.asset_id').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Relation asset id must be a positive integer.'),
+];
+
+const mediaValidation = [
+  body('media').optional().isArray({ max: 5 }).withMessage('Articles can include up to 5 images.'),
+  body('media.*.media_id').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Article image id must be a positive integer.'),
+  body('media.*.file_name').optional().trim().isLength({ max: 180 }).withMessage('Image file name is too long.'),
+  body('media.*.mime_type').optional().isIn(['image/jpeg', 'image/png', 'image/webp']).withMessage('Only JPG, PNG, and WEBP images are allowed.'),
+  body('media.*.content_base64').optional().trim().notEmpty().withMessage('Image content is required.'),
+  body('media.*.caption').optional().trim().isLength({ max: 500 }).withMessage('Image caption is too long.'),
+  body('media.*.alt_text').optional().trim().isLength({ max: 500 }).withMessage('Image alt text is too long.'),
+  body('media.*.sort_order').optional().isInt({ min: 0, max: 100 }).withMessage('Image sort order must be valid.'),
 ];
 
 const createArticle = [
@@ -52,6 +69,7 @@ const createArticle = [
   body('visibility_scope').optional().isIn(ARTICLE_VISIBILITY_SCOPES).withMessage(KNOWLEDGE_BASE_ERROR_MESSAGES.invalidVisibility),
   body('department_id').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Department id must be a positive integer.'),
   ...relationValidation,
+  ...mediaValidation,
   sendFirstValidationError,
 ];
 
@@ -61,6 +79,7 @@ const updateArticle = [
   body('visibility_scope').optional().isIn(ARTICLE_VISIBILITY_SCOPES).withMessage(KNOWLEDGE_BASE_ERROR_MESSAGES.invalidVisibility),
   body('department_id').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Department id must be a positive integer.'),
   ...relationValidation,
+  ...mediaValidation,
   sendFirstValidationError,
 ];
 
@@ -73,6 +92,7 @@ const feedback = [
 
 module.exports = {
   articleDetail,
+  articleMedia,
   createArticle,
   feedback,
   listArticles,

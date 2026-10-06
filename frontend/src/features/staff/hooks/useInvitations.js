@@ -3,6 +3,7 @@ import {
   INVITATION_STATUSES,
   createInvitation,
   fetchInvitations,
+  resendInvitation,
   revokeInvitation,
 } from '../services/staff-api.js';
 
@@ -60,6 +61,21 @@ export function useInvitations({ enabled = true } = {}) {
     }
   }
 
+  async function resend(invitationId) {
+    setIsSubmitting(true);
+    setError('');
+    try {
+      const result = await resendInvitation(invitationId);
+      await loadInvitations(statusFilter);
+      return result;
+    } catch (resendError) {
+      setError(resendError.message || 'Failed to resend invitation email.');
+      throw resendError;
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return {
     error,
     invitationStatuses: INVITATION_STATUSES,
@@ -68,6 +84,7 @@ export function useInvitations({ enabled = true } = {}) {
     isSubmitting,
     loadInvitations,
     revoke,
+    resend,
     setStatusFilter,
     statusFilter,
     submitInvitation,

@@ -10,6 +10,7 @@ import {
   filterAssetsBySearch,
   paginateAssets,
 } from '../services/assets-api.js';
+import { fetchFloors } from '../../floors/services/floors-api.js';
 
 const DEFAULT_FILTERS = {
   search: '',
@@ -27,6 +28,7 @@ export function useAssets({ pageSize = 8 } = {}) {
   const [error, setError] = useState('');
   const [lookups, setLookups] = useState({
     departments: [],
+    floors: [],
     staff: [],
     statuses: ASSET_STATUSES,
     asset_types: ASSET_TYPES,
@@ -35,20 +37,23 @@ export function useAssets({ pageSize = 8 } = {}) {
 
   async function loadLookups() {
     try {
-      const [departments, staff] = await Promise.all([
+      const [departments, floors, staff] = await Promise.all([
         fetchDepartments().catch(() => []),
+        fetchFloors().catch(() => []),
         fetchStaff().catch(() => []),
       ]);
 
       setLookups((current) => ({
         ...current,
         departments: Array.isArray(departments) ? departments : [],
+        floors: Array.isArray(floors) ? floors : [],
         staff: Array.isArray(staff) ? staff : [],
       }));
     } catch {
       setLookups((current) => ({
         ...current,
         departments: [],
+        floors: [],
         staff: [],
       }));
     }

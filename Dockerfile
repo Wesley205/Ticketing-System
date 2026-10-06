@@ -1,20 +1,19 @@
-FROM node:20-bookworm-slim AS dependencies
-
-WORKDIR /app/backend
-COPY backend/package*.json ./
-RUN npm ci --omit=dev
-
 FROM node:20-bookworm-slim
 
 ENV NODE_ENV=production
 WORKDIR /app
 
-COPY --from=dependencies /app/backend/node_modules ./backend/node_modules
 COPY backend ./backend
-COPY frontend ./frontend
+COPY frontend/dist ./frontend/dist
 COPY database/migrations ./database/migrations
+COPY database/knowledge-base.seed.json ./database/knowledge-base.seed.json
+COPY database/seed-media ./database/seed-media
 
-RUN mkdir -p /app/storage/ticket-attachments \
+RUN test -d ./backend/node_modules \
+  && node -e "require('./backend/node_modules/dotenv'); require('./backend/node_modules/express'); require('./backend/node_modules/pg'); require('./backend/node_modules/bcrypt'); require('./backend/node_modules/web-push')" \
+  && test -f ./frontend/dist/index.html \
+  && mkdir -p /app/storage/ticket-attachments \
+  && mkdir -p /app/storage/article-media \
   && chown -R node:node /app
 
 USER node

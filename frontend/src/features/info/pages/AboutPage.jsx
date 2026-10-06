@@ -1,6 +1,7 @@
 import { PageHero } from '../../../components/layout/PageHero.jsx';
 import { Panel } from '../../../components/layout/Panel.jsx';
 import { SecureWorkspaceLayout } from '../../../components/layout/SecureWorkspaceLayout.jsx';
+import { useAuth } from '../../auth/hooks/useAuth.js';
 
 const problemItems = [
   'Manual or spreadsheet-based ICT equipment tracking that is hard to search and audit.',
@@ -46,6 +47,9 @@ function InfoList({ items }) {
 }
 
 export function AboutPage() {
+  const auth = useAuth();
+  const isAdmin = auth.user?.role === 'admin';
+
   return (
     <SecureWorkspaceLayout title="About the System" subtitle="ICT Service Hub">
       <div className="ui-stack-lg about-page-react">
@@ -53,7 +57,7 @@ export function AboutPage() {
           eyebrow="System"
           title="About the System"
           description="The NSC ICT Service Desk centralizes internal ICT support, asset tracking, maintenance, knowledge sharing, and operational oversight."
-          meta={['Internal system', 'React frontend', 'Express API', 'PostgreSQL']}
+          meta={['Internal system', 'Service desk', 'Asset registry', 'Audit trail']}
         />
 
       <Panel title="Purpose">
@@ -73,22 +77,27 @@ export function AboutPage() {
           <InfoList items={featureItems} />
         </Panel>
 
-        <Panel title="Technology Stack">
-          <InfoList items={technologyItems} />
-        </Panel>
+        {isAdmin ? (
+          <>
+            <Panel title="System Information">
+              <InfoList items={technologyItems} />
+            </Panel>
 
-        <Panel title="Current Limitations">
-          <InfoList items={limitationItems} />
-        </Panel>
+            <Panel title="Operations Notes">
+              <InfoList items={limitationItems} />
+            </Panel>
+          </>
+        ) : null}
       </div>
 
-      <Panel title="Database and Deployment">
-        <p className="react-copy">
-          PostgreSQL schema changes are handled through versioned migrations in the database folder.
-          Production serving now uses the React build while preserving `/api` routing and legacy static
-          files for rollback and verification during the migration window.
-        </p>
-      </Panel>
+      {isAdmin ? (
+        <Panel title="Deployment Notes">
+          <p className="react-copy">
+            Schema changes are handled through versioned migrations. Confirm environment variables,
+            database connectivity, HTTPS termination, and backup procedures before production updates.
+          </p>
+        </Panel>
+      ) : null}
       </div>
     </SecureWorkspaceLayout>
   );

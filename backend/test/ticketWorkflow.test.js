@@ -12,6 +12,7 @@ test('assigned technician can move a ticket through active work states', () => {
   const request = { requester_id: 10, assigned_technician_id: 4, status: 'Assigned' };
 
   assert.equal(canActorTransitionStatus(technician, request, 'Accepted'), true);
+  assert.equal(canActorTransitionStatus(technician, request, 'Pending'), true);
   assert.equal(canActorTransitionStatus(technician, request, 'In Progress'), true);
   assert.equal(canActorTransitionStatus(technician, request, 'Closed'), false);
 });

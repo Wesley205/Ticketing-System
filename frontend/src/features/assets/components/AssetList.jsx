@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { EmptyState } from '../../../components/feedback/EmptyState.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 import { DataTable } from '../../../components/tables/DataTable.jsx';
 import { StatusBadge } from '../../../components/status/StatusBadge.jsx';
 
@@ -49,6 +50,11 @@ export function AssetList({
           render: (asset) => asset.department_name || '-',
         },
         {
+          key: 'floor_label',
+          label: 'Floor',
+          render: (asset) => asset.floor_label || '-',
+        },
+        {
           key: 'assigned_staff_name',
           label: 'Assigned To',
           render: (asset) => asset.assigned_staff_name || '-',
@@ -64,21 +70,27 @@ export function AssetList({
           label: 'Actions',
           render: (asset) => (
             <div className="secure-row-actions">
-              <Link className="secure-action-button" to={`/assets/${asset.asset_id}`}>Actions</Link>
+              <Link className="secure-action-button ui-icon-button" to={`/assets/${asset.asset_id}`} aria-label={`View ${asset.asset_tag}`} title="View asset">
+                <AppIcon name="view" size={16} />
+              </Link>
               {canManage ? (
                 <>
-                  <button type="button" onClick={() => onEdit(asset)}>Edit</button>
-                  <button type="button" onClick={() => onAssign(asset)}>
-                    {asset.assigned_to ? 'Reassign' : 'Assign'}
+                  <button type="button" className="ui-icon-button" onClick={() => onEdit(asset)} aria-label={`Edit ${asset.asset_tag}`} title="Edit asset">
+                    <AppIcon name="edit" size={16} />
+                  </button>
+                  <button type="button" className="ui-icon-button" onClick={() => onAssign(asset)} aria-label={`${asset.assigned_to ? 'Reassign' : 'Assign'} ${asset.asset_tag}`} title={asset.assigned_to ? 'Reassign asset' : 'Assign asset'}>
+                    <AppIcon name="user-add" size={16} />
                   </button>
                   {asset.assigned_to ? (
-                    <button type="button" onClick={() => onReturn(asset)}>Return</button>
+                    <button type="button" className="ui-icon-button" onClick={() => onReturn(asset)} aria-label={`Return ${asset.asset_tag}`} title="Return asset">
+                      <AppIcon name="return" size={16} />
+                    </button>
                   ) : null}
                 </>
               ) : null}
               {canDelete ? (
-                <button type="button" onClick={() => onDelete(asset)}>
-                  Delete
+                <button type="button" className="ui-icon-button secure-icon-danger" onClick={() => onDelete(asset)} aria-label={`Delete ${asset.asset_tag}`} title="Delete asset">
+                  <AppIcon name="delete" size={16} />
                 </button>
               ) : null}
             </div>

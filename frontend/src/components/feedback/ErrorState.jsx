@@ -1,34 +1,17 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../forms/Button.jsx';
+import { AppIcon } from '../icons/AppIcon.jsx';
 
 function ErrorIcon({ variant }) {
   if (variant === 'access') {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <rect x="6" y="10" width="12" height="10" rx="2" />
-        <path d="M8 10V8a4 4 0 0 1 8 0v2" />
-      </svg>
-    );
+    return <AppIcon name="lock" size={22} />;
   }
 
   if (variant === 'not-found') {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="10" cy="10" r="6" />
-        <path d="m15 15 5 5" />
-        <path d="m8 8 4 4" />
-        <path d="m12 8-4 4" />
-      </svg>
-    );
+    return <AppIcon name="search" size={22} />;
   }
 
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 4 3 20h18L12 4Z" />
-      <path d="M12 9v5" />
-      <path d="M12 17h.01" />
-    </svg>
-  );
+  return <AppIcon name="alert" size={22} />;
 }
 
 export function ErrorState({
@@ -41,8 +24,9 @@ export function ErrorState({
 }) {
   const navigate = useNavigate();
   const isAccess = variant === 'access';
-  const primaryLabel = actionLabel || (isAccess ? 'Go Back' : 'Retry Connection');
-  const handleAction = isAccess ? (onBack || (() => navigate(-1))) : onRetry;
+  const isNotFound = variant === 'not-found';
+  const primaryLabel = actionLabel || (isAccess ? 'Go Back' : isNotFound ? 'Go Back' : 'Retry');
+  const handleAction = isAccess || isNotFound ? (onBack || (() => navigate(-1))) : onRetry;
 
   return (
     <section className={`ui-feedback ui-feedback-error ui-feedback-error-${variant}`} role="alert">
@@ -55,7 +39,8 @@ export function ErrorState({
       </div>
       {handleAction ? (
         <div className="ui-feedback-actions">
-          <Button variant={isAccess ? 'secondary' : 'primary'} onClick={handleAction}>
+          <Button variant={isAccess || isNotFound ? 'secondary' : 'primary'} onClick={handleAction}>
+            <AppIcon name={isAccess || isNotFound ? 'previous' : 'refresh'} size={16} />
             {primaryLabel}
           </Button>
         </div>

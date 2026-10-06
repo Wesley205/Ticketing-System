@@ -27,14 +27,14 @@ export function AdminDashboardPage({ dashboard }) {
       {dashboard.error ? <ErrorState title="Dashboard unavailable" description={dashboard.error} onRetry={() => dashboard.loadDashboard(dashboard.filters)} /> : null}
       {dashboard.isLoading ? <LoadingState variant="table" description="Loading administrator dashboard..." /> : null}
 
-      <section className="secure-dashboard-metric-grid secure-dashboard-metric-grid-four">
+      <section className="secure-dashboard-metric-grid secure-dashboard-metric-grid-four responsive-grid-4">
         <SecureDashboardMetricCard label="Unassigned" value={stats.pending_requests || 0} hint="Awaiting dispatch operations" tone="danger" />
         <SecureDashboardMetricCard label="Overdue" value={stats.overdue_requests || 0} hint="Exceeded response limits" tone="danger" />
         <SecureDashboardMetricCard label="Escalated" value={stats.escalated_requests || 0} hint="Awaiting executive evaluation" tone="warning" />
         <SecureDashboardMetricCard label="Major-Risk Operational Items" value={stats.due_maintenance_schedules || 0} hint="Critical maintenance, SLA drift, or access anomalies" tone="warning" />
       </section>
 
-      <section className="secure-dashboard-metric-grid">
+      <section className="secure-dashboard-metric-grid responsive-grid-3">
         <SecureDashboardMetricCard label="Pending invites" value="3" hint="New registrations awaiting approval" actionLabel="Review invites" to="/staff" tone="warning" />
         <SecureDashboardMetricCard label="Access anomalies" value="1" hint="Suspicious login patterns or role mismatches" actionLabel="Investigate" to="/audit-logs" tone="danger" />
         <SecureDashboardMetricCard label="Active accounts" value={stats.active_assets || 47} hint="Active staff with active access" actionLabel="Manage staff" to="/staff" tone="success" />

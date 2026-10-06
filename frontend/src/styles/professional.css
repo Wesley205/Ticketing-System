@@ -1,0 +1,881 @@
+/* Final visual-system layer. Keep page-specific behavior in components.css. */
+
+html {
+  background: var(--surface-subtle);
+}
+
+body {
+  background: var(--surface-subtle);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  letter-spacing: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin-top: 0;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  letter-spacing: 0;
+}
+
+.app-icon {
+  display: block;
+  flex: 0 0 auto;
+  stroke-width: 1.9;
+}
+
+.ui-icon-button {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  height: 40px;
+  justify-content: center;
+  padding: 0;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+  width: 40px;
+}
+
+.ui-icon-button:hover {
+  background: var(--surface-muted);
+  border-color: var(--border);
+}
+
+.technician-dashboard-nav-close {
+  font-size: 0;
+}
+
+.secure-row-actions .ui-icon-button,
+.secure-row-actions .secure-action-button.ui-icon-button {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--brand-deep);
+  display: inline-flex;
+  height: 34px;
+  justify-content: center;
+  padding: 0;
+  width: 34px;
+}
+
+.secure-row-actions .ui-icon-button:hover,
+.secure-row-actions .secure-action-button.ui-icon-button:hover {
+  background: var(--brand-soft);
+  border-color: var(--brand-border);
+}
+
+.secure-row-actions .secure-icon-danger {
+  color: var(--red);
+}
+
+.secure-row-actions .secure-icon-danger:hover {
+  background: #fff0ed;
+  border-color: #edc0b7;
+}
+
+.ui-button {
+  align-items: center;
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+  display: inline-flex;
+  font-weight: 650;
+  gap: var(--space-2);
+  justify-content: center;
+  line-height: 1;
+  min-height: 40px;
+  padding-inline: var(--space-4);
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 100ms ease;
+}
+
+.ui-button-sm {
+  min-height: 34px;
+  padding-inline: var(--space-3);
+}
+
+.ui-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.ui-button .app-icon {
+  margin: 0;
+}
+
+.ui-input {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 1px rgb(15 23 42 / 3%);
+  color: var(--text);
+  min-height: 42px;
+  padding: 9px 12px;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.ui-input:hover {
+  border-color: #b9c2bb;
+}
+
+.ui-input:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgb(10 125 62 / 12%);
+  outline: none;
+}
+
+.ui-field-label,
+.ui-field label {
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.react-panel,
+.secure-data-panel,
+.secure-filter-bar,
+.secure-dashboard-panel,
+.service-desk-secure-panel,
+.browser-notification-panel,
+.ui-detail-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.technician-dashboard-shell {
+  background: var(--surface-subtle);
+  min-height: 100vh;
+}
+
+.technician-dashboard-sidebar {
+  background: #064d2a;
+  border-right: 1px solid rgb(255 255 255 / 8%);
+  padding: var(--space-6) var(--space-4);
+  width: 252px;
+}
+
+.technician-dashboard-brand {
+  border-bottom: 1px solid rgb(255 255 255 / 12%);
+  margin-bottom: var(--space-5);
+  padding: 0 var(--space-2) var(--space-5);
+}
+
+.technician-dashboard-brand-mark {
+  border-radius: var(--radius-sm);
+  height: 38px;
+  width: 38px;
+}
+
+.technician-dashboard-brand strong {
+  font-size: 0.9rem;
+  letter-spacing: 0;
+}
+
+.technician-dashboard-brand small,
+.technician-dashboard-session small {
+  letter-spacing: 0.04em;
+}
+
+.technician-dashboard-nav {
+  gap: 4px;
+}
+
+.technician-dashboard-nav-link {
+  border-radius: var(--radius-sm);
+  gap: var(--space-3);
+  min-height: 44px;
+  padding: 10px 12px;
+}
+
+.technician-dashboard-nav-link .app-icon {
+  color: #c7e9d5;
+}
+
+.technician-dashboard-nav-link:hover {
+  background: rgb(255 255 255 / 8%);
+}
+
+.technician-dashboard-nav-link.active {
+  background: rgb(255 255 255 / 13%);
+  color: #fff;
+}
+
+.technician-dashboard-nav-link.active .app-icon {
+  color: #fff;
+}
+
+.technician-dashboard-nav-link.active::after {
+  border-radius: 2px;
+  height: 20px;
+  right: 7px;
+  width: 3px;
+}
+
+.technician-dashboard-session {
+  border-top: 1px solid rgb(255 255 255 / 12%);
+  grid-template-columns: 40px minmax(0, 1fr);
+  padding: var(--space-5) var(--space-2) 0;
+}
+
+.technician-dashboard-logout {
+  align-items: center;
+  display: inline-flex;
+  gap: var(--space-2);
+  justify-content: flex-start;
+}
+
+.technician-dashboard-main {
+  margin-left: 252px;
+  min-width: 0;
+}
+
+.technician-dashboard-topbar {
+  background: rgb(255 255 255 / 96%);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgb(20 35 27 / 4%);
+  min-height: 68px;
+  padding: 0 clamp(20px, 3vw, 40px);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.technician-dashboard-title-lockup h1 {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.technician-dashboard-window-dots {
+  display: none;
+}
+
+.technician-dashboard-notification-link,
+.technician-dashboard-menu-button,
+.technician-dashboard-nav-close {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.technician-dashboard-notification-link {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  height: 40px;
+  width: 40px;
+}
+
+.technician-dashboard-notification-link:hover,
+.technician-dashboard-notification-link.active {
+  background: var(--brand-soft);
+  border-color: var(--brand-border);
+  color: var(--brand);
+}
+
+.technician-dashboard-user-pill {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  min-height: 40px;
+  padding: 0 14px;
+}
+
+.technician-dashboard-content {
+  margin: 0 auto;
+  max-width: 1480px;
+  padding: clamp(24px, 3vw, 40px);
+  width: 100%;
+}
+
+.service-desk-secure-head,
+.secure-dashboard-head {
+  align-items: flex-end;
+  margin-bottom: var(--space-6);
+}
+
+.service-desk-secure-head h2,
+.secure-dashboard-head h2 {
+  font-size: clamp(1.55rem, 2vw, 2rem);
+  line-height: 1.18;
+  margin-bottom: var(--space-1);
+}
+
+.service-desk-secure-head p,
+.secure-dashboard-head p {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin-bottom: 0;
+}
+
+.service-desk-secure-actions {
+  gap: var(--space-2);
+}
+
+.secure-filter-bar,
+.service-request-command-bar {
+  margin-bottom: var(--space-5);
+  padding: var(--space-4);
+}
+
+.secure-data-panel,
+.service-desk-secure-panel,
+.secure-dashboard-panel {
+  overflow: hidden;
+}
+
+.ui-table th,
+.secure-data-panel table th,
+.secure-dashboard-table th {
+  background: #f5f6f3;
+  color: #516057;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.ui-table td,
+.secure-data-panel table td,
+.secure-dashboard-table td {
+  border-bottom-color: var(--border-subtle);
+  padding-block: 13px;
+}
+
+.ui-modal-overlay {
+  backdrop-filter: blur(3px);
+  background: rgb(8 20 13 / 52%);
+  padding: var(--space-4);
+}
+
+.ui-modal {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-modal);
+}
+
+.ui-modal-head {
+  border-bottom: 1px solid var(--border);
+  min-height: 60px;
+  padding: 14px 18px;
+}
+
+.ui-modal-head h3 {
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.ui-modal-body {
+  padding: 18px;
+}
+
+.ui-modal-footer {
+  background: var(--surface-muted);
+  border-top: 1px solid var(--border);
+  padding: 14px 18px;
+}
+
+.ui-pagination {
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ui-pagination .ui-button {
+  padding-inline: 10px;
+}
+
+.ui-pagination-label {
+  color: var(--muted);
+  font-size: 0.78rem;
+  min-width: 88px;
+  text-align: center;
+}
+
+.auth-password-toggle {
+  align-items: center;
+  border-radius: var(--radius-xs);
+  display: inline-flex;
+  height: 34px;
+  justify-content: center;
+  padding: 0;
+  width: 38px;
+}
+
+@media (max-width: 900px) {
+  .technician-dashboard-main {
+    margin-left: 0;
+  }
+
+  .technician-dashboard-sidebar {
+    box-shadow: 12px 0 36px rgb(4 30 17 / 25%);
+    width: min(82vw, 300px);
+  }
+
+  .technician-dashboard-content {
+    padding: 24px 20px;
+  }
+
+  .technician-dashboard-secure-indicator {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
+
+  .technician-dashboard-topbar {
+    min-height: 58px;
+    padding: 0 12px;
+  }
+
+  .technician-dashboard-title-lockup {
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .technician-dashboard-title-lockup h1 {
+    font-size: 0.92rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .technician-dashboard-user-pill {
+    max-width: 132px;
+    overflow: hidden;
+    padding-inline: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .technician-dashboard-content {
+    padding: 22px 16px 36px;
+  }
+
+  .service-desk-secure-head,
+  .secure-dashboard-head {
+    align-items: stretch;
+    gap: var(--space-4);
+  }
+
+  .service-desk-secure-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .service-desk-secure-actions > :only-child {
+    grid-column: 1 / -1;
+  }
+
+  .service-desk-secure-actions .ui-button {
+    min-width: 0;
+    padding-inline: 10px;
+    width: 100%;
+  }
+
+  .secure-filter-bar,
+  .service-request-command-bar {
+    padding: 14px;
+  }
+
+  .ui-modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .ui-modal {
+    border-bottom: 0;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    max-height: 92vh;
+    width: 100%;
+  }
+}
+
+/* Compact operational density pass. Keep this at the end so older feature CSS cannot re-expand controls. */
+.ui-button {
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 12px;
+}
+
+.ui-button-md {
+  padding: 0 12px;
+}
+
+.ui-button-sm,
+.ui-pagination .ui-button {
+  font-size: 0.82rem;
+  min-height: 30px;
+  padding: 0 9px;
+}
+
+.ui-button .app-icon {
+  height: 16px;
+  width: 16px;
+}
+
+.ui-icon-button,
+.technician-dashboard-notification-link,
+.technician-dashboard-menu-button {
+  height: 36px;
+  width: 36px;
+}
+
+.secure-row-actions .ui-icon-button,
+.secure-row-actions .secure-action-button.ui-icon-button {
+  height: 30px;
+  width: 30px;
+}
+
+.ui-input,
+select.ui-input,
+textarea.ui-input {
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  min-height: 36px;
+  padding: 7px 10px;
+}
+
+textarea.ui-input {
+  min-height: 92px;
+}
+
+.ui-field {
+  gap: 5px;
+}
+
+.ui-field-label,
+.ui-field label {
+  font-size: 0.74rem;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+.service-desk-secure-head,
+.secure-dashboard-head,
+.notification-inbox-head,
+.technician-assigned-head,
+.asset-detail-secure-head {
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.service-desk-secure-head h2,
+.secure-dashboard-head h2,
+.notification-inbox-head h2,
+.technician-assigned-head h2 {
+  font-size: clamp(1.35rem, 1.7vw, 1.75rem);
+}
+
+.service-desk-secure-actions,
+.report-filter-actions,
+.dashboard-filter-actions,
+.audit-log-filter-actions,
+.kb-filter-actions,
+.staff-detail-actions,
+.secure-admin-actions,
+.ui-inline-actions {
+  gap: 8px;
+}
+
+.secure-filter-bar,
+.service-desk-secure-filters,
+.service-request-command-bar,
+.report-filters,
+.dashboard-filters,
+.maintenance-filters,
+.staff-filter-row,
+.kb-filters,
+.audit-log-filters,
+.asset-filter-grid {
+  gap: 10px;
+}
+
+.secure-filter-bar,
+.service-desk-secure-filters,
+.service-request-command-bar {
+  margin-bottom: 14px;
+  padding: 10px;
+}
+
+.service-request-command-primary,
+.service-request-command-more,
+.secure-filter-bar .asset-filter-grid,
+.secure-filter-bar .maintenance-filters {
+  gap: 10px;
+}
+
+.service-request-more-filter-button,
+.service-request-mine-toggle,
+.audit-filter-toggle {
+  min-height: 36px;
+}
+
+.service-request-filter-chips {
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.service-request-filter-chips button,
+.secure-tab-row button,
+.notification-filter-tabs .ui-button {
+  min-height: 28px;
+  padding: 4px 8px;
+}
+
+.secure-data-panel,
+.service-desk-secure-panel,
+.secure-dashboard-panel,
+.secure-modal-section,
+.ui-detail-panel,
+.service-request-preview-section,
+.service-request-action-center,
+.service-request-technical-details,
+.ticket-block,
+.ticket-card,
+.ticket-suggestion-card,
+.browser-notification-panel {
+  border-radius: var(--radius-md);
+}
+
+.secure-modal-section,
+.service-request-preview-section,
+.service-request-action-center,
+.service-request-technical-details,
+.ticket-block,
+.ticket-card,
+.ticket-suggestion-card,
+.browser-notification-panel,
+.department-secure-detail,
+.staff-profile-card {
+  padding: 12px;
+}
+
+.secure-dashboard-card,
+.secure-dashboard-action-card,
+.secure-dashboard-panel,
+.secure-dashboard-article-card,
+.secure-dashboard-sla-grid article,
+.report-kpi-grid article,
+.maintenance-schedule-card,
+.department-kpi-grid article {
+  padding: 12px;
+}
+
+.ui-table th,
+.ui-table td,
+.secure-data-panel table th,
+.secure-data-panel table td,
+.secure-dashboard-table th,
+.secure-dashboard-table td {
+  padding: 9px 10px;
+}
+
+.ui-table th,
+.secure-data-panel table th,
+.secure-dashboard-table th {
+  font-size: 0.66rem;
+}
+
+.ui-badge {
+  font-size: 0.72rem;
+  gap: 6px;
+  padding: 3px 8px 3px 7px;
+}
+
+.ui-badge::before {
+  height: 6px;
+  width: 6px;
+}
+
+.ui-modal-head {
+  min-height: 52px;
+  padding: 12px 16px;
+}
+
+.ui-modal-body {
+  gap: 12px;
+  padding: 16px;
+}
+
+.ui-modal-footer {
+  padding: 12px 16px;
+}
+
+.technician-dashboard-content {
+  padding: clamp(20px, 2.4vw, 32px);
+}
+
+.technician-dashboard-topbar {
+  min-height: 60px;
+}
+
+.technician-dashboard-nav-link {
+  min-height: 38px;
+  padding: 8px 10px;
+}
+
+.technician-dashboard-user-pill {
+  min-height: 36px;
+  padding: 0 12px;
+}
+
+@media (max-width: 640px) {
+  .ui-button {
+    min-height: 38px;
+    padding-inline: 11px;
+  }
+
+  .ui-icon-button,
+  .technician-dashboard-notification-link,
+  .technician-dashboard-menu-button {
+    height: 38px;
+    width: 38px;
+  }
+
+  .ui-input,
+  select.ui-input {
+    min-height: 40px;
+  }
+
+  .secure-filter-bar,
+  .service-desk-secure-filters,
+  .service-request-command-bar {
+    padding: 10px;
+  }
+
+  .technician-dashboard-content {
+    padding: 18px 14px 32px;
+  }
+}
+
+/* Desktop shell correction: keep mobile drawer controls out of wide layouts. */
+@media (min-width: 901px) {
+  .technician-dashboard-shell {
+    display: grid;
+    grid-template-columns: 244px minmax(0, 1fr);
+  }
+
+  .technician-dashboard-sidebar {
+    box-sizing: border-box;
+    width: 244px;
+    max-width: 244px;
+    overflow-x: hidden;
+  }
+
+  .technician-dashboard-main {
+    margin-left: 0;
+    min-width: 0;
+  }
+
+  .technician-dashboard-menu-button,
+  .technician-dashboard-nav-close,
+  .technician-dashboard-sidebar-backdrop {
+    display: none;
+  }
+
+  .technician-dashboard-topbar {
+    min-height: 56px;
+    padding: 0 28px;
+  }
+
+  .technician-dashboard-content {
+    max-width: 1280px;
+    padding: 24px 28px 36px;
+  }
+
+  .technician-dashboard-brand {
+    gap: 10px;
+  }
+
+  .technician-dashboard-brand strong {
+    font-size: 0.86rem;
+  }
+
+  .technician-dashboard-brand small {
+    font-size: 0.68rem;
+    line-height: 1.35;
+  }
+
+  .technician-dashboard-nav-link {
+    min-height: 36px;
+    padding: 7px 10px;
+  }
+}
+
+/* Dashboard density correction after visual review. */
+.secure-dashboard-page {
+  gap: 16px;
+}
+
+.secure-dashboard-head {
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.secure-dashboard-head p {
+  max-width: 720px;
+}
+
+.secure-dashboard-action-grid,
+.secure-dashboard-metric-grid,
+.secure-dashboard-sla-grid,
+.secure-dashboard-article-grid {
+  gap: 12px;
+}
+
+.secure-dashboard-card,
+.secure-dashboard-action-card {
+  gap: 7px;
+  min-height: 96px;
+  padding: 12px;
+}
+
+.secure-dashboard-card span {
+  font-size: 0.66rem;
+}
+
+.secure-dashboard-card strong {
+  font-size: 1.8rem;
+}
+
+.secure-dashboard-card small {
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.secure-dashboard-two-column {
+  gap: 14px;
+}
+
+.secure-dashboard-panel-head {
+  margin-bottom: 10px;
+}
+

@@ -34,4 +34,12 @@ router.post(
   controller.revoke
 );
 
+router.post(
+  '/:id/resend',
+  requireAuth,
+  requirePermission(policy.canIssueInvitation, INVITATION_ERROR_MESSAGES.createForbidden),
+  validator.revoke,
+  controller.resend
+);
+
 module.exports = router;

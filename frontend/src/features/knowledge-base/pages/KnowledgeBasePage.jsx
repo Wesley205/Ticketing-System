@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { AppIcon } from "../../../components/icons/AppIcon.jsx";
+import { EmptyState } from "../../../components/feedback/EmptyState.jsx";
 import { Button } from "../../../components/forms/Button.jsx";
 import { ErrorState } from "../../../components/feedback/ErrorState.jsx";
 import { LoadingState } from "../../../components/feedback/LoadingState.jsx";
@@ -13,6 +16,8 @@ import { ArticleList } from "../components/ArticleList.jsx";
 import { useKnowledgeBase } from "../hooks/useKnowledgeBase.js";
 
 export function KnowledgeBasePage() {
+  const navigate = useNavigate();
+  const { articleId } = useParams();
   const auth = useAuth();
   const { showToast } = useToast();
   const canManage = hasPermission(
@@ -26,11 +31,14 @@ export function KnowledgeBasePage() {
   const kb = useKnowledgeBase({
     canManage,
     enabled: auth.isReady && auth.isAuthenticated,
+    routeArticleId: articleId,
+    onArticleSelected: (selectedId) => navigate(`/knowledge-base/${selectedId}`),
   });
   const [formOpen, setFormOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState(null);
   const hasArticles = kb.articles.length > 0;
-  const showDetailPanel = Boolean(kb.selectedArticle) || !hasArticles;
+  const hasActiveFilters = Boolean(kb.filters.search || kb.filters.category || (canManage && kb.filters.status));
+  const showEmptyLibrary = !kb.isLoading && !kb.error && !hasArticles && !hasActiveFilters;
 
   async function handleSubmit(payload) {
     const saved = await kb.submitArticle(
@@ -61,19 +69,22 @@ export function KnowledgeBasePage() {
       <div className="kb-page-react secure-registry-page">
         <div className="service-desk-secure-head">
           <div>
-            <h2>Standard Operating Procedures</h2>
+            <h2>Knowledge Base</h2>
             <p>
-              Find step-by-step guides for secure operations, hardware setup,
+              Find short guides for service requests, hardware setup,
               and network troubleshooting.
             </p>
           </div>
-          <div className="service-desk-secure-actions">
+          <div className="service-desk-secure-actions responsive-action-row">
             <Button
               variant="secondary"
               size="sm"
+              className="ui-icon-button"
+              aria-label="Refresh articles"
+              title="Refresh articles"
               onClick={() => kb.loadArticles(kb.filters)}
             >
-              Refresh
+              <AppIcon name="refresh" size={17} />
             </Button>
             {canManage ? (
               <Button
@@ -82,7 +93,8 @@ export function KnowledgeBasePage() {
                   setFormOpen(true);
                 }}
               >
-                Edit Library
+                <AppIcon name="plus" size={17} />
+                New Article
               </Button>
             ) : null}
           </div>
@@ -96,16 +108,25 @@ export function KnowledgeBasePage() {
           />
         ) : null}
 
-        <div className={`kb-layout-react ${showDetailPanel ? '' : 'kb-layout-list-only'}`.trim()}>
+        {showEmptyLibrary ? (
+          <EmptyState
+            title="No knowledge articles yet"
+            description="Create the first approved guide for common ICT tasks and support issues."
+            actionLabel={canManage ? 'Create article' : ''}
+            onAction={() => {
+              setEditingArticle(null);
+              setFormOpen(true);
+            }}
+          />
+        ) : (
+        <div className={`kb-layout-react ${articleId ? 'kb-has-selection' : ''}`.trim()}>
           <section className="secure-data-panel">
             <ArticleFilters
               filters={kb.filters}
               canManage={canManage}
+              resultCount={kb.articles.length}
               onChange={kb.updateFilter}
-              onCreate={() => {
-                setEditingArticle(null);
-                setFormOpen(true);
-              }}
+              onClear={kb.clearFilters}
             />
             {kb.isLoading ? (
               <LoadingState
@@ -116,7 +137,8 @@ export function KnowledgeBasePage() {
               <ArticleList
                 articles={kb.articles}
                 selectedArticleId={kb.selectedArticle?.article_id}
-                onSelect={(articleId) => kb.selectArticle(articleId)}
+                hasActiveFilters={hasActiveFilters}
+                onSelect={(selectedId) => navigate(`/knowledge-base/${selectedId}`)}
               />
             )}
           </section>
@@ -128,6 +150,7 @@ export function KnowledgeBasePage() {
             canManage={canManage}
             canFeedback={canFeedback}
             hasArticles={hasArticles}
+            onBack={() => navigate('/knowledge-base')}
             onRetry={() =>
               kb.selectedArticle?.article_id &&
               kb.selectArticle(kb.selectedArticle.article_id)
@@ -139,6 +162,7 @@ export function KnowledgeBasePage() {
             onFeedback={handleFeedback}
           />
         </div>
+        )}
       </div>
 
       {canManage ? (

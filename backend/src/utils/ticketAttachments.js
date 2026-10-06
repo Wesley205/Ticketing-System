@@ -13,6 +13,16 @@ const ALLOWED_MIME_TYPES = new Set([
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ]);
+const IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const MAX_TICKET_IMAGE_ATTACHMENTS = Number(process.env.TICKET_IMAGE_ATTACHMENT_LIMIT || 3);
+
+function detectImageMimeType(buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.length < 12) return null;
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return 'image/jpeg';
+  if (buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'image/png';
+  if (buffer.subarray(0, 4).toString('ascii') === 'RIFF' && buffer.subarray(8, 12).toString('ascii') === 'WEBP') return 'image/webp';
+  return null;
+}
 
 function sanitizeFileName(fileName) {
   return String(fileName || 'attachment')
@@ -44,6 +54,13 @@ function validateAttachmentInput({ file_name, mime_type, content_base64 }) {
 
   if (buffer.length > MAX_ATTACHMENT_BYTES) {
     throw new Error(`Attachment exceeds the ${MAX_ATTACHMENT_BYTES} byte limit.`);
+  }
+
+  if (IMAGE_MIME_TYPES.has(mime_type)) {
+    const detectedMimeType = detectImageMimeType(buffer);
+    if (!detectedMimeType || detectedMimeType !== mime_type) {
+      throw new Error('Image content does not match the declared file type.');
+    }
   }
 
   return { safeFileName, buffer };
@@ -94,7 +111,10 @@ async function removeAttachmentFile(storageKey) {
 
 module.exports = {
   ALLOWED_MIME_TYPES,
+  IMAGE_MIME_TYPES,
   MAX_ATTACHMENT_BYTES,
+  MAX_TICKET_IMAGE_ATTACHMENTS,
+  detectImageMimeType,
   removeAttachmentFile,
   resolveAttachmentPath,
   saveAttachmentFile,

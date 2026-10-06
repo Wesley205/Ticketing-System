@@ -34,17 +34,17 @@ export function StaffPage() {
             <h2>Staff Directory</h2>
             <p>Account lifecycle, internal directory visibility, and administrator-issued invitations.</p>
           </div>
-          <div className="service-desk-secure-actions">
+          <div className="service-desk-secure-actions responsive-action-row">
             <Button size="sm" variant="secondary" onClick={() => staffState.loadStaff(staffState.filters)}>Refresh</Button>
             {canManage ? (
               <>
-                <Button size="sm" variant="secondary" onClick={() => setInviteOpen(true)}>Invite Staff</Button>
+                <Button size="sm" variant="secondary" onClick={() => setInviteOpen(true)}>Send Invitation</Button>
                 <Button size="sm" onClick={() => {
                   setEditingUser(null);
                   setFormOpen(true);
                 }}
                 >
-                  Add Account
+                  Create Account
                 </Button>
               </>
             ) : null}
@@ -53,7 +53,7 @@ export function StaffPage() {
 
       <div className="staff-secure-layout">
         <section className="secure-data-panel">
-        <div className="staff-filter-row">
+        <div className="staff-filter-row responsive-filter-grid">
           <input
             className="ui-input"
             placeholder="Search name, email, username..."
@@ -138,7 +138,7 @@ export function StaffPage() {
         <Panel
           title="Pending Invitations"
           actions={(
-            <div className="ui-inline-actions">
+            <div className="ui-inline-actions responsive-action-row">
               <select
                 className="ui-input staff-invitation-filter"
                 value={invitationsState.statusFilter}
@@ -163,6 +163,10 @@ export function StaffPage() {
               onRevoke={async (row) => {
                 await invitationsState.revoke(row.invitation_id);
                 showToast({ tone: 'success', title: 'Invitation revoked' });
+              }}
+              onResend={async (row) => {
+                await invitationsState.resend(row.invitation_id);
+                showToast({ tone: 'success', title: 'Invitation email queued' });
               }}
             />
           )}

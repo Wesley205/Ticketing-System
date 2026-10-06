@@ -80,7 +80,11 @@ npm install
 npm run migrate
 cd ..
 psql -U postgres -d nsc_ict_system -f database/seed.sql
+cd backend
+npm run seed:knowledge-base
 ```
+
+The Knowledge Base seed installs five general support articles and copies their bundled images into protected article-media storage. It is idempotent and can be rerun safely after migrations.
 
 `npm run migrate` is the authoritative schema setup path for new local databases. `database/schema.sql` is kept as a legacy reference and should not be run against a database that contains data.
 
@@ -176,7 +180,7 @@ Access rules:
 
 ## 7. Demo Data
 
-Seeded demo accounts exist for administrator, ICT officer, technician, and staff roles. Use the existing seed and internal project instructions for local testing rather than public onboarding.
+Seeded demo accounts exist for administrator, ICT officer, and technician roles. The optional Knowledge Base seed adds five published general support articles with captioned images. Use these development seeds and internal project instructions for local testing rather than public onboarding.
 
 ## 8. Role Permissions Summary
 

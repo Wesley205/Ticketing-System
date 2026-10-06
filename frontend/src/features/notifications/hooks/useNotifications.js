@@ -6,6 +6,7 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from '../services/notifications-api.js';
+import { emitNotificationCountChanged } from './useNotificationCount.js';
 
 export function useNotifications() {
   const [notifications, setNotifications] = useState([]);
@@ -50,6 +51,7 @@ export function useNotifications() {
           : notification
       ));
       await markNotificationRead(notificationId);
+      emitNotificationCountChanged();
     } finally {
       setIsMutating(false);
     }
@@ -60,7 +62,9 @@ export function useNotifications() {
     try {
       const readAt = new Date().toISOString();
       setNotifications((current) => current.map((notification) => ({ ...notification, read_at: notification.read_at || readAt })));
-      await markAllNotificationsRead();
+      const result = await markAllNotificationsRead();
+      emitNotificationCountChanged(0);
+      return result;
     } finally {
       setIsMutating(false);
     }

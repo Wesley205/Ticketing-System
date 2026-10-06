@@ -1,14 +1,18 @@
 import { useState } from 'react';
-import { Button } from '../../../components/forms/Button.jsx';
-import { AttachmentList } from '../../../components/status/AttachmentList.jsx';
-import { EmptyState } from '../../../components/feedback/EmptyState.jsx';
+import { ImageGallery } from '../../../components/media/ImageGallery.jsx';
+import { formatBytes, isSupportedImageType } from '../../../lib/media-files.js';
 import { normalizeApiError } from '../../../lib/error-handling.js';
+
+const MAX_TICKET_IMAGES = 3;
 
 function mapAttachments(attachments = []) {
   return attachments.map((attachment) => ({
     id: attachment.attachment_id,
     fileName: attachment.file_name,
-    sizeLabel: `${attachment.file_size_bytes || 0} bytes`,
+    sizeLabel: formatBytes(attachment.file_size_bytes),
+    mimeType: attachment.mime_type,
+    caption: attachment.file_name,
+    altText: attachment.file_name,
     timestamp: attachment.created_at,
     is_internal: attachment.is_internal,
     uploadedByName: attachment.uploaded_by_name || 'System',
@@ -21,27 +25,34 @@ export function TicketAttachments({
   canAddInternal = false,
   onUpload,
   onDownload,
+  onLoadImage,
   isSubmitting = false,
 }) {
-  const [file, setFile] = useState(null);
   const [isInternal, setIsInternal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  async function handleUpload(event) {
-    event.preventDefault();
-    if (!file) {
-      setErrorMessage('Choose a file first.');
+  const mappedAttachments = mapAttachments(attachments);
+  const imageAttachments = mappedAttachments.filter((attachment) => isSupportedImageType(attachment.mimeType));
+  const documentAttachments = mappedAttachments.filter((attachment) => !isSupportedImageType(attachment.mimeType));
+  const imageSlotsRemaining = Math.max(0, MAX_TICKET_IMAGES - imageAttachments.length);
+
+  async function handleAddImages(files) {
+    setErrorMessage('');
+
+    if (files.some((file) => !isSupportedImageType(file.type))) {
+      setErrorMessage('Only JPG, PNG, or WEBP images can be added.');
+      return;
+    }
+    if (files.length > imageSlotsRemaining) {
+      setErrorMessage(`You can add ${imageSlotsRemaining} more image${imageSlotsRemaining === 1 ? '' : 's'}.`);
       return;
     }
 
-    setErrorMessage('');
-
     try {
-      await onUpload({ file, is_internal: canAddInternal ? isInternal : false });
-      setFile(null);
+      for (const image of files) {
+        await onUpload({ file: image, is_internal: canAddInternal ? isInternal : false });
+      }
       setIsInternal(false);
-      const input = document.getElementById('ticket-attachment-input');
-      if (input) input.value = '';
     } catch (error) {
       setErrorMessage(normalizeApiError(error, 'Failed to upload the attachment.').message);
     }
@@ -49,13 +60,8 @@ export function TicketAttachments({
 
   return (
     <div className="ui-stack-md">
-      {canUpload ? (
-        <form className="ui-stack-md" onSubmit={handleUpload}>
-          <input
-            id="ticket-attachment-input"
-            type="file"
-            onChange={(event) => setFile(event.target.files?.[0] || null)}
-          />
+      {canUpload && canAddInternal ? (
+        <div className="media-gallery-options">
           <label className="ticket-checkbox">
             <input
               type="checkbox"
@@ -65,21 +71,33 @@ export function TicketAttachments({
             />
             <span>Internal attachment</span>
           </label>
-          {errorMessage ? <p className="ui-field-error">{errorMessage}</p> : null}
-          <div className="ui-inline-actions">
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Uploading...' : 'Upload Attachment'}
-            </Button>
-            <span className="react-copy ticket-muted-note">
-              Allowed types: PDF, PNG, JPG, WEBP, TXT, DOCX, XLSX.
-            </span>
-          </div>
-        </form>
+          <span className="react-copy ticket-muted-note">Mark new images as visible only to authorized ICT users.</span>
+        </div>
       ) : null}
 
-      {attachments.length ? (
+      {errorMessage ? <p className="ui-field-error" role="alert">{errorMessage}</p> : null}
+
+      <ImageGallery
+        title="Image evidence"
+        emptyTitle="No evidence images yet."
+        emptyDescription={canUpload ? 'Add screenshots or photos that give more context to this ticket.' : 'Images added to this ticket will appear here.'}
+        items={imageAttachments}
+        loadImage={onLoadImage || onDownload}
+        onDownload={(attachment) => onDownload(attachment.id, attachment.fileName)}
+        onAddImages={canUpload ? handleAddImages : undefined}
+        remainingSlots={imageSlotsRemaining}
+        isAdding={isSubmitting}
+      />
+
+      {canUpload ? (
+        <span className="react-copy ticket-muted-note">
+          JPG, PNG, or WEBP. {imageSlotsRemaining} of {MAX_TICKET_IMAGES} image slots available.
+        </span>
+      ) : null}
+
+      {documentAttachments.length ? (
         <div className="ui-stack-md">
-          {mapAttachments(attachments).map((attachment) => (
+          {documentAttachments.map((attachment) => (
             <div key={attachment.id} className="ui-attachment-item">
               {attachment.is_internal ? <div className="ticket-flag">Internal Attachment</div> : null}
               <strong>{attachment.fileName}</strong>
@@ -94,9 +112,8 @@ export function TicketAttachments({
             </div>
           ))}
         </div>
-      ) : (
-        <EmptyState title="No attachments yet." description="Upload files to keep ticket evidence and technical artifacts together." />
-      )}
+      ) : null}
+
     </div>
   );
 }

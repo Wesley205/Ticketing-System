@@ -45,11 +45,11 @@ async function main() {
       ),
     );
 
-    assert.match(html, /Maintenance Desk/i);
+    assert.match(html, /Maintenance/i);
     assert.match(html, /Maintenance Records/i);
     assert.match(html, /Records/i);
     assert.match(html, /Schedules/i);
-    assert.match(html, /New Maintenance/i);
+    assert.match(html, /Log Maintenance/i);
     assert.match(html, /Create Schedule/i);
     console.log('Maintenance page smoke check passed.');
   } finally {
