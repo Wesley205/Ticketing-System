@@ -61,9 +61,9 @@ export function KnowledgeBasePage() {
       <div className="kb-page-react secure-registry-page">
         <div className="service-desk-secure-head">
           <div>
-            <h2>Standard Operating Procedures</h2>
+            <h2>Knowledge Base</h2>
             <p>
-              Find step-by-step guides for secure operations, hardware setup,
+              Find short guides for service requests, hardware setup,
               and network troubleshooting.
             </p>
           </div>
@@ -82,7 +82,7 @@ export function KnowledgeBasePage() {
                   setFormOpen(true);
                 }}
               >
-                Edit Library
+                New Article
               </Button>
             ) : null}
           </div>

@@ -1,4 +1,5 @@
 import { Button } from '../../../components/forms/Button.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 import { SlaIndicator } from './SlaIndicator.jsx';
 
 function actionIcon(status) {
@@ -128,13 +129,13 @@ export function TicketActionCenter({ ticket, isAdmin = false, canAssign = false,
             onClick={() => submitStatus(action)}
             disabled={isMutating}
           >
-            <span className={`nsc-action-icon nsc-action-icon-${actionIcon(action.status)}`} aria-hidden="true" />
+            <AppIcon name={actionIcon(action.status)} />
             {action.label}
           </Button>
         ))}
         {canAssign && !hasAssignWorkflow ? (
           <Button variant="secondary" className="ui-button-with-icon" onClick={onAssignOpen}>
-            <span className="nsc-action-icon nsc-action-icon-user" aria-hidden="true" />
+            <AppIcon name="user" />
             {ticket?.assigned_technician_id ? 'Reassign' : 'Assign technician'}
           </Button>
         ) : null}

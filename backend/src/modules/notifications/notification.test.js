@@ -15,6 +15,13 @@ test('notification module exposes configured event metadata', () => {
   assert.equal(event.supportsEmail, true);
 });
 
+test('notification module treats pre-breach SLA warnings as critical delivery events', () => {
+  const event = service.getNotificationEventConfig('ticket_sla_warning');
+  assert.equal(event.category, 'sla');
+  assert.equal(event.critical, true);
+  assert.equal(event.severity, 'warning');
+});
+
 test('notification mapper nests delivery target preferences', () => {
   const row = {
     user_id: 3,
@@ -80,7 +87,29 @@ test('notification repository lists due browser push deliveries per active endpo
   assert.equal(rows[0].notification_delivery_id, 9);
   assert.match(calls[0].sql, /browser_push/i);
   assert.match(calls[0].sql, /bps\.endpoint = nd\.recipient_address/i);
-  assert.deepEqual(calls[0].params, [4]);
+  assert.deepEqual(calls[0].params, [4, 50]);
+});
+
+test('notification repository can target one browser push notification for immediate dispatch', async () => {
+  const calls = [];
+  const executor = {
+    async query(sql, params) {
+      calls.push({ sql, params });
+      return { rows: [{ notification_delivery_id: 11, channel: 'browser_push' }] };
+    },
+  };
+
+  const rows = await repository.listDueBrowserPushDeliveries(executor, 5, {
+    notificationId: 20,
+    recipientUserId: 6,
+    limit: 5,
+  });
+
+  assert.equal(rows[0].notification_delivery_id, 11);
+  assert.match(calls[0].sql, /nd\.notification_id = \$2/i);
+  assert.match(calls[0].sql, /nd\.recipient_user_id = \$3/i);
+  assert.match(calls[0].sql, /LIMIT \$4/i);
+  assert.deepEqual(calls[0].params, [5, 20, 6, 5]);
 });
 
 test('notification repository lists due email deliveries with capped batch query', async () => {

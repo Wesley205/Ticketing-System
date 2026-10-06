@@ -4,6 +4,7 @@ import { notificationTarget, relativeNotificationTime } from '../services/notifi
 export function NotificationRow({ notification, onView }) {
   const target = notificationTarget(notification);
   const isUnread = !notification.read_at;
+  const actionLabel = target ? 'Open' : 'Recorded';
 
   const content = (
     <>
@@ -16,7 +17,7 @@ export function NotificationRow({ notification, onView }) {
         <small>{notification.message}</small>
       </span>
       <span className="notification-row-time">{relativeNotificationTime(notification.created_at)}</span>
-      <span className="notification-row-view">View</span>
+      <span className="notification-row-view">{actionLabel}</span>
     </>
   );
 

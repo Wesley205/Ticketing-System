@@ -28,6 +28,7 @@ services:
       NODE_ENV: production
       PORT: 5000
       INTERNAL_APP_BASE_URL: ${NSC_INTERNAL_APP_BASE_URL:-http://localhost:5000}
+      SMOKE_BASE_URL: ${NSC_SMOKE_BASE_URL:-http://127.0.0.1:5000}
       CORS_ALLOWED_ORIGINS: ${NSC_CORS_ALLOWED_ORIGINS:-http://localhost:5000}
       PGHOST: postgres
       PGPORT: 5432
@@ -49,7 +50,9 @@ services:
       ORGANIZATION_EMAIL_DOMAINS: nscict.local
     volumes:
       - attachment-data:/app/storage/ticket-attachments
+      - article-media-data:/app/storage/article-media
 
 volumes:
   postgres-data:
   attachment-data:
+  article-media-data:

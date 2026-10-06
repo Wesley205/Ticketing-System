@@ -8,7 +8,22 @@ import { TicketActionCenter } from './TicketActionCenter.jsx';
 import { TicketActivityTimeline } from './TicketActivityTimeline.jsx';
 import { TicketAttachments } from './TicketAttachments.jsx';
 import { TicketCommentsThread } from './TicketCommentsThread.jsx';
+import { TicketApprovalPanel } from './TicketApprovalPanel.jsx';
 import { ticketId } from './service-request-formatters.js';
+
+const REQUESTER_STATUS_COPY = {
+  New: ['Request received', 'ICT has received your request and will review it.'],
+  Pending: ['Under review', 'Your request is waiting for triage or approval.'],
+  Assigned: ['Assigned to ICT', 'A technician has been assigned to your request.'],
+  Accepted: ['Work acknowledged', 'The assigned technician has accepted the request.'],
+  'In Progress': ['Work in progress', 'ICT is actively working on your request.'],
+  'Waiting for User': ['Action needed', 'ICT needs information or action from you.'],
+  'Waiting for Parts': ['Waiting for resources', 'Work will continue when the required parts are available.'],
+  Resolved: ['Resolution ready', 'Review the resolution and confirm whether the request can be closed.'],
+  Closed: ['Request closed', 'This request has been completed.'],
+  Reopened: ['Request reopened', 'ICT will review the issue again.'],
+  Cancelled: ['Request cancelled', 'This request will not proceed.'],
+};
 
 export function ServiceRequestFullDetail({
   ticket,
@@ -21,11 +36,14 @@ export function ServiceRequestFullDetail({
   onCommentSubmit,
   onAttachmentUpload,
   onAttachmentDownload,
+  onAttachmentLoad,
   onAssetSave,
+  onApprovalSubmit,
   isMutating = false,
 }) {
   const canAssign = Boolean(ticket.permissions?.can_assign);
   const canEditAsset = isOperational && Boolean(onAssetSave);
+  const requesterStatus = REQUESTER_STATUS_COPY[ticket.status] || [ticket.status, 'Check the activity history for the latest update.'];
 
   return (
     <div className="service-request-detail-layout responsive-detail-grid">
@@ -44,9 +62,26 @@ export function ServiceRequestFullDetail({
           </div>
         </header>
 
+        {!isOperational ? (
+          <section className="requester-status-summary" aria-live="polite">
+            <span>Current progress</span>
+            <strong>{requesterStatus[0]}</strong>
+            <p>{requesterStatus[1]}</p>
+          </section>
+        ) : null}
+
+        <TicketApprovalPanel ticket={ticket} onDecision={onApprovalSubmit} isSubmitting={isMutating} />
+
         <section className="service-request-detail-section">
           <h3>Description</h3>
           <p>{ticket.description || 'No description provided.'}</p>
+          {Object.keys(ticket.catalog_responses || {}).length ? (
+            <dl className="service-request-definition-list ticket-catalog-responses">
+              {Object.entries(ticket.catalog_responses).map(([key, value]) => (
+                <div key={key}><dt>{key.replaceAll('_', ' ')}</dt><dd>{String(value)}</dd></div>
+              ))}
+            </dl>
+          ) : null}
         </section>
 
         <section className="service-request-detail-section">
@@ -96,6 +131,7 @@ export function ServiceRequestFullDetail({
             canAddInternal={ticket.permissions?.can_add_internal_note}
             onUpload={onAttachmentUpload}
             onDownload={onAttachmentDownload}
+            onLoadImage={onAttachmentLoad}
             isSubmitting={isMutating}
           />
         </section>
@@ -128,6 +164,7 @@ export function ServiceRequestFullDetail({
           <dl className="service-request-definition-list">
             <div><dt>Requester</dt><dd>{ticket.requester_name || '-'}</dd></div>
             <div><dt>Department</dt><dd>{ticket.department_name || '-'}</dd></div>
+            <div><dt>Floor</dt><dd>{ticket.floor_label || '-'}</dd></div>
             <div><dt>Assignee</dt><dd>{ticket.technician_name || 'Unassigned'}</dd></div>
             <div><dt>Assigned by</dt><dd>{ticket.assigned_by_name || '-'}</dd></div>
           </dl>
@@ -142,6 +179,7 @@ export function ServiceRequestFullDetail({
             <div><dt>Urgency</dt><dd>{ticket.urgency || '-'}</dd></div>
             <div><dt>Created</dt><dd>{formatDateTime(ticket.date_submitted)}</dd></div>
             <div><dt>Expected</dt><dd>{formatDateTime(ticket.expected_completion_at)}</dd></div>
+            <div><dt>Service</dt><dd>{ticket.catalog_item_name || ticket.subcategory || 'General support'}</dd></div>
           </dl>
         </section>
       </aside>

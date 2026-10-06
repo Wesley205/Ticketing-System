@@ -1,10 +1,16 @@
 const fs = require("fs");
 const pool = require("../../config/db");
 const legacyService = require("./serviceRequest.workflow");
-const { resolveAttachmentPath, saveAttachmentFile } = require("../../utils/ticketAttachments");
+const {
+  IMAGE_MIME_TYPES,
+  MAX_TICKET_IMAGE_ATTACHMENTS,
+  resolveAttachmentPath,
+  saveAttachmentFile,
+} = require("../../utils/ticketAttachments");
 const policy = require("./serviceRequest.policy");
 const mapper = require("./serviceRequest.mapper");
 const repository = require("./serviceRequest.repository");
+const serviceCatalog = require("../serviceCatalog/serviceCatalog.service");
 
 function forbidden(message) {
   const err = new Error(message);
@@ -79,6 +85,33 @@ async function getAssignmentHistory(user, requestId) {
   return legacyService.loadAssignmentHistory(pool, requestId);
 }
 
+function describeRoutingCandidate(candidate) {
+  const reasons = [];
+  if (candidate.floor_match) reasons.push("Assigned to this floor");
+  else if (candidate.floor_label) reasons.push(`Assigned to ${candidate.floor_label}`);
+  else reasons.push("No floor assignment");
+
+  reasons.push(`${candidate.active_count} of ${candidate.technician_capacity} active tickets`);
+  reasons.push(String(candidate.technician_availability || "available").replaceAll("_", " "));
+  return reasons.join("; ");
+}
+
+async function getRoutingSuggestions(user, requestId) {
+  if (!policy.canManageServiceRequestAssignments(user)) {
+    throw forbidden("You do not have permission to view assignment suggestions.");
+  }
+  await loadRequestOrThrow(requestId);
+  const rows = await repository.listRoutingSuggestions(pool, requestId);
+  return rows.map((row, index) => ({
+    ...row,
+    active_count: Number(row.active_count || 0),
+    technician_capacity: Number(row.technician_capacity || 8),
+    utilization_percent: Number(row.utilization_percent || 0),
+    routing_reason: describeRoutingCandidate(row),
+    recommended: index === 0 && row.technician_availability === "available",
+  }));
+}
+
 async function getTicketDetail(user, requestId) {
   const request = await loadRequestOrThrow(requestId);
   if (!policy.canViewServiceRequest(user, request)) {
@@ -102,25 +135,46 @@ async function createTicket(user, payload) {
     throw forbidden("You may only create requests for your own department.");
   }
 
-  await validateAffectedAsset(
+  const affectedAsset = await validateAffectedAsset(
     user,
     payload.affected_asset_id,
     "You do not have permission to link that asset to this ticket.",
   );
 
+  const catalogItem = payload.catalog_item_id
+    ? await serviceCatalog.getCatalogItem(payload.catalog_item_id)
+    : null;
+  if (payload.catalog_item_id && !catalogItem) {
+    throw badRequest("The selected service catalog item is unavailable.");
+  }
+
+  const catalogResponses = payload.catalog_responses && typeof payload.catalog_responses === "object"
+    ? payload.catalog_responses
+    : {};
+  for (const field of catalogItem?.form_schema || []) {
+    if (field.required && !String(catalogResponses[field.key] || "").trim()) {
+      throw badRequest(`${field.label || field.key} is required for this service.`);
+    }
+  }
+
   return legacyService.createServiceRequestRecord({
     requester_id: user.user_id,
     requester_role: user.role,
     department_id: departmentId || null,
-    ticket_type: payload.ticket_type || "Incident",
-    category: payload.category,
-    subcategory: payload.subcategory,
+    ticket_type: catalogItem?.ticket_type || payload.ticket_type || "Incident",
+    category: catalogItem?.category || payload.category,
+    subcategory: catalogItem?.name || payload.subcategory,
     subject: payload.subject,
     description: payload.description,
-    priority: payload.priority || "Medium",
-    impact: payload.impact || payload.priority || "Medium",
-    urgency: payload.urgency || payload.priority || "Medium",
+    priority: catalogItem?.default_priority || payload.priority || "Medium",
+    impact: catalogItem?.default_priority || payload.impact || payload.priority || "Medium",
+    urgency: catalogItem?.default_priority || payload.urgency || payload.priority || "Medium",
     affected_asset_id: payload.affected_asset_id || null,
+    floor_id: payload.floor_id || affectedAsset?.floor_id || null,
+    catalog_item_id: catalogItem?.catalog_item_id || null,
+    catalog_responses: catalogResponses,
+    approval_status: catalogItem?.approval_required ? "pending" : "not_required",
+    approval_role: catalogItem?.approval_required ? catalogItem.approver_role : null,
     closure_confirmation_required: !!payload.closure_confirmation_required,
     source_channel: payload.source_channel || "portal",
   });
@@ -131,7 +185,13 @@ async function assignTicket(user, requestId, payload) {
     throw forbidden("You do not have permission to assign service requests.");
   }
 
-  await loadRequestOrThrow(requestId);
+  const request = await loadRequestOrThrow(requestId);
+  if (request.approval_status === "pending") {
+    throw badRequest("This request must be approved before it can be assigned.");
+  }
+  if (request.approval_status === "rejected") {
+    throw badRequest("Rejected requests cannot be assigned.");
+  }
 
   if (payload.assigned_technician_id) {
     const technician = await repository.getActiveTechnicianById(pool, payload.assigned_technician_id);
@@ -177,6 +237,9 @@ async function updateStatus(user, requestId, payload) {
   if (payload.status === "Assigned") {
     throw badRequest("Use the assignment action to select a technician before assigning a ticket.");
   }
+  if (request.approval_status === "pending" && payload.status !== "Cancelled") {
+    throw badRequest("This request is awaiting approval and cannot enter active work.");
+  }
 
   return legacyService.updateServiceRequestStatusRecord(
     requestId,
@@ -184,6 +247,14 @@ async function updateStatus(user, requestId, payload) {
     { note: payload.note, resolution: payload.resolution },
     user,
   );
+}
+
+async function decideApproval(user, requestId, payload) {
+  if (payload.decision === "rejected" && !payload.note?.trim()) {
+    throw badRequest("A rejection reason is required.");
+  }
+
+  return legacyService.decideServiceRequestApprovalRecord(requestId, user, payload);
 }
 
 async function addComment(user, requestId, payload) {
@@ -210,6 +281,20 @@ async function addAttachment(user, requestId, payload) {
   }
   if (payload.is_internal && !policy.canAddInternalTicketNote(user)) {
     throw forbidden("Only ICT operational users may add internal attachments.");
+  }
+
+  if (IMAGE_MIME_TYPES.has(payload.mime_type)) {
+    const countResult = await pool.query(
+      `SELECT COUNT(*)::integer AS image_count
+       FROM ticket_attachments
+       WHERE request_id = $1
+         AND deleted_at IS NULL
+         AND mime_type = ANY($2::text[])`,
+      [requestId, Array.from(IMAGE_MIME_TYPES)],
+    );
+    if (Number(countResult.rows[0]?.image_count || 0) >= MAX_TICKET_IMAGE_ATTACHMENTS) {
+      throw badRequest(`Tickets can include up to ${MAX_TICKET_IMAGE_ATTACHMENTS} images.`);
+    }
   }
 
   const saved = await saveAttachmentFile(requestId, payload);
@@ -248,9 +333,11 @@ module.exports = {
   addComment,
   assignTicket,
   createTicket,
+  decideApproval,
   getAssignmentHistory,
   getAttachmentDownload,
   getMetadata,
+  getRoutingSuggestions,
   getTicketDetail,
   listAssignedToMe,
   listTickets,

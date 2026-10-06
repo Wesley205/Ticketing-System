@@ -1,5 +1,6 @@
 const service = require('./notification.service');
 const { NOTIFICATION_ERROR_MESSAGES } = require('./notification.constants');
+const { processBrowserPushQueue } = require('../../utils/notificationProcessor');
 
 function logAndSend(res, err, message) {
   console.error(err);
@@ -112,7 +113,20 @@ async function deleteBrowserSubscription(req, res) {
 async function sendBrowserTest(req, res) {
   try {
     const notification = await service.enqueueBrowserTestNotification(req.user);
-    res.status(202).json({ queued: Boolean(notification), notification });
+    const processed = notification
+      ? await processBrowserPushQueue(undefined, {
+        notificationId: notification.notification_id,
+        recipientUserId: req.user.user_id,
+        limit: 5,
+      })
+      : 0;
+
+    res.status(200).json({
+      queued: Boolean(notification),
+      dispatched: processed > 0,
+      processed,
+      notification,
+    });
   } catch (err) {
     logAndSend(res, err, NOTIFICATION_ERROR_MESSAGES.browserTestFailed);
   }

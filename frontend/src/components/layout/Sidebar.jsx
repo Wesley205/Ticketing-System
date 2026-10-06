@@ -30,7 +30,7 @@ export function Sidebar() {
         <span className="react-brand-mark">NSC</span>
         <div>
           <strong>ICT Service Desk</strong>
-          <small>React Migration Shell</small>
+          <small>Secure workspace</small>
         </div>
       </div>
       <nav className="react-nav">

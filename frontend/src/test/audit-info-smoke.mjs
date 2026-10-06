@@ -76,7 +76,8 @@ async function main() {
     assert.match(staffAudit, /does not have permission/i);
     assert.doesNotMatch(staffAudit, /<h3>Audit Records<\/h3>/i);
     assert.match(about, /About the System/i);
-    assert.match(about, /React frontend/i);
+    assert.match(about, /Service Desk and Asset Management System/i);
+    assert.doesNotMatch(about, /React frontend/i);
     console.log('Audit logs and informational pages smoke check passed.');
   } finally {
     await vite.close();

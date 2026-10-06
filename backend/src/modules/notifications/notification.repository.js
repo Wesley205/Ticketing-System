@@ -266,7 +266,22 @@ async function deactivateBrowserSubscriptionByEndpoint(executor, endpoint) {
   );
 }
 
-async function listDueBrowserPushDeliveries(executor, maxAttempts) {
+async function listDueBrowserPushDeliveries(executor, maxAttempts, options = {}) {
+  const params = [maxAttempts];
+  const filters = [];
+
+  if (options.notificationId) {
+    params.push(Number(options.notificationId));
+    filters.push(`AND nd.notification_id = $${params.length}`);
+  }
+
+  if (options.recipientUserId) {
+    params.push(Number(options.recipientUserId));
+    filters.push(`AND nd.recipient_user_id = $${params.length}`);
+  }
+
+  params.push(Math.max(1, Math.min(Number(options.limit) || 50, 50)));
+
   const result = await executor.query(
     `SELECT nd.notification_delivery_id, nd.notification_id, nd.recipient_user_id, nd.channel,
             nd.delivery_status, nd.subject, nd.body_text, nd.attempt_count, nd.max_attempts,
@@ -281,9 +296,10 @@ async function listDueBrowserPushDeliveries(executor, maxAttempts) {
        AND nd.delivery_status IN ('pending', 'deferred', 'failed')
        AND nd.next_attempt_at <= NOW()
        AND nd.attempt_count < LEAST(nd.max_attempts, $1)
+       ${filters.join('\n       ')}
      ORDER BY nd.queued_at ASC
-     LIMIT 50`,
-    [maxAttempts]
+     LIMIT $${params.length}`,
+    params
   );
 
   return result.rows;

@@ -1,5 +1,6 @@
 import { Button } from '../../../components/forms/Button.jsx';
 import { FormField } from '../../../components/forms/FormField.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 
 export function AuditLogFilters({ filters, isLoading = false, onChange, onReset, onApply }) {
   return (
@@ -62,11 +63,11 @@ export function AuditLogFilters({ filters, isLoading = false, onChange, onReset,
 
       <div className="audit-log-filter-actions">
         <Button className="ui-button-with-icon" onClick={onApply} disabled={isLoading}>
-          <span className="nsc-action-icon nsc-action-icon-check" aria-hidden="true" />
+          <AppIcon name="check" />
           Apply
         </Button>
         <Button variant="secondary" className="ui-button-with-icon" onClick={onReset} disabled={isLoading}>
-          <span className="nsc-action-icon nsc-action-icon-x" aria-hidden="true" />
+          <AppIcon name="close" />
           Clear
         </Button>
       </div>

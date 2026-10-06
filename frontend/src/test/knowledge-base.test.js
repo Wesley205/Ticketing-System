@@ -101,6 +101,7 @@ test('knowledge-base payload normalization preserves backend field names', () =>
       { relation_type: 'asset_type', asset_type: 'Laptop' },
       { relation_type: 'ticket_category', ticket_category: 'Access Request' },
     ],
+    media: [],
   });
 });
 

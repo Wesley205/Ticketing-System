@@ -32,7 +32,7 @@ export function NotificationFeed({ groups, onView }) {
       <NotificationGroup label="Earlier" rows={groups.earlier} onView={onView} />
       <div className="notification-inbox-tip">
         <strong>Inbox tips</strong>
-        <span>Use the View button to open a notification. It will automatically mark the item as read.</span>
+        <span>Open a notification to review its related record. It will be marked as read automatically.</span>
       </div>
     </div>
   );

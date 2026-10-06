@@ -68,11 +68,41 @@ test("service request repository builds scoped list queries without executing SQ
   assert.deepEqual(calls[0].params, [3, "Assigned"]);
 });
 
+test("service request repository applies operational SLA queue filters", async () => {
+  const calls = [];
+  const client = {
+    async query(sql, params) {
+      calls.push({ sql, params });
+      return { rows: [] };
+    },
+  };
+
+  await repository.listServiceRequests(
+    client,
+    { user_id: 1, role: "admin", user_type: "employee", is_active: true, account_status: "active" },
+    { queue: "sla_risk" },
+  );
+
+  assert.match(calls[0].sql, /response_warning_level > 0/);
+  assert.match(calls[0].sql, /sla_resolution_due_at < NOW\(\)/);
+});
+
 test("service request service keeps legacy workflow helpers available", () => {
   assert.equal(service.buildTicketNumber(42, new Date("2026-08-24T10:00:00Z")), "NSC-2026-00042");
   assert.equal(typeof service.createTicket, "function");
   assert.equal(typeof service.assignTicket, "function");
   assert.equal(typeof service.updateStatus, "function");
+});
+
+test("service request approvals require a reason when rejected", async () => {
+  await assert.rejects(
+    service.decideApproval(
+      { user_id: 1, role: "admin" },
+      42,
+      { decision: "rejected", note: "   " },
+    ),
+    /A rejection reason is required/,
+  );
 });
 
 test("service request router composes route middleware in the module", () => {

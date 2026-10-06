@@ -47,6 +47,7 @@ export function filterAssetsBySearch(assets = [], searchTerm = '') {
       asset.model,
       asset.serial_number,
       asset.department_name,
+      asset.floor_label,
       asset.assigned_staff_name,
       asset.location,
       asset.status,

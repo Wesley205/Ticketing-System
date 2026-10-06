@@ -15,6 +15,10 @@ function mapStaffRow(row) {
     last_login_at: row.last_login_at,
     department_id: row.department_id,
     department_name: row.department_name,
+    floor_id: row.floor_id,
+    floor_label: row.floor_label,
+    technician_availability: row.technician_availability,
+    technician_capacity: Number(row.technician_capacity || 8),
     sponsor_name: row.sponsor_name,
     account_start_date: row.account_start_date,
     account_expiration_date: row.account_expiration_date,
@@ -28,6 +32,13 @@ function mapTechnicianRow(row) {
   return {
     user_id: row.user_id,
     full_name: row.full_name,
+    email: row.email,
+    username: row.username,
+    floor_id: row.floor_id,
+    floor_label: row.floor_label,
+    technician_availability: row.technician_availability || 'available',
+    technician_capacity: Number(row.technician_capacity || 8),
+    active_count: Number(row.active_count || 0),
   };
 }
 

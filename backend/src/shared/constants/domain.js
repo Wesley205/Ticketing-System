@@ -38,6 +38,9 @@ const TICKET_HISTORY_EVENT_TYPES = Object.freeze([
   'imported',
   'sla_breached',
   'escalated',
+  'approval_requested',
+  'approved',
+  'rejected',
 ]);
 
 const ASSET_STATUSES = Object.freeze([
@@ -59,6 +62,13 @@ const MAINTENANCE_FREQUENCY_UNITS = Object.freeze(['days', 'weeks', 'months']);
 
 const USER_ROLES = Object.freeze(['admin', 'ict_officer', 'technician', 'staff']);
 const USER_TYPES = Object.freeze(['employee', 'intern', 'corper', 'contractor', 'guest']);
+const TECHNICIAN_AVAILABILITY_STATES = Object.freeze([
+  'available',
+  'busy',
+  'away',
+  'on_leave',
+  'offline',
+]);
 const TEMPORARY_USER_TYPES = Object.freeze(['intern', 'corper', 'contractor', 'guest']);
 const ACCOUNT_STATUSES = Object.freeze(['active', 'deactivated', 'suspended']);
 const INVITATION_STATUSES = Object.freeze(['pending', 'accepted', 'revoked', 'expired']);
@@ -69,8 +79,12 @@ const NOTIFICATION_TYPES = Object.freeze([
   'ticket_resolved',
   'ticket_comment',
   'ticket_attachment',
+  'ticket_sla_warning',
   'ticket_overdue',
   'ticket_escalated',
+  'approval_requested',
+  'approval_approved',
+  'approval_rejected',
   'maintenance_created',
   'maintenance_completed',
   'maintenance_due',
@@ -124,6 +138,7 @@ module.exports = {
   TICKET_SOURCE_CHANNELS,
   TICKET_STATUSES,
   TICKET_TYPES,
+  TECHNICIAN_AVAILABILITY_STATES,
   USER_ROLES,
   USER_TYPES,
 };

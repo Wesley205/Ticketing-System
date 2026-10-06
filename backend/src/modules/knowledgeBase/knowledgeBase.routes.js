@@ -10,6 +10,7 @@ router.get('/suggestions', requireAuth, validator.suggestions, controller.sugges
 router.get('/:id', requireAuth, validator.articleDetail, controller.detail);
 router.post('/', requireAuth, validator.createArticle, controller.create);
 router.put('/:id', requireAuth, validator.updateArticle, controller.update);
+router.get('/:id/media/:mediaId/download', requireAuth, validator.articleMedia, controller.downloadMedia);
 router.get('/:id/revisions', requireAuth, validator.articleDetail, controller.revisions);
 router.post('/:id/feedback', requireAuth, validator.feedback, controller.feedback);
 

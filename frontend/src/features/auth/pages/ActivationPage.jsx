@@ -31,7 +31,7 @@ export function ActivationPage() {
   return (
     <div className="auth-screen">
       <div className="auth-layout-card">
-        <section className="auth-brand-panel" aria-label="NSC ICT secure access gateway">
+        <section className="auth-brand-panel" aria-label="NSC ICT account activation">
           <div className="auth-brand-grid" aria-hidden="true" />
           <div className="auth-logo-lockup">
             <span className="auth-logo-mark">N</span>
@@ -39,11 +39,11 @@ export function ActivationPage() {
           </div>
           <div className="auth-brand-copy">
             <h1>Invitation Activation</h1>
-            <p>Activate your official NSC account using your administrative token.</p>
+            <p>Use your invitation link to create your username and password.</p>
           </div>
           <div className="auth-security-meta" aria-label="Security classification">
-            <span>Gateway Secure</span>
-            <span>Level 4 Security Req</span>
+            <span>Invitation only</span>
+            <span>ICT account setup</span>
           </div>
         </section>
 
@@ -51,7 +51,7 @@ export function ActivationPage() {
           <div className="auth-card-react">
             <div className="auth-form-heading">
               <h2 className="auth-card-title">Activate Invitation</h2>
-              <p>Create your account credentials from an administrator-issued activation link.</p>
+              <p>Create your sign-in details from the activation link sent by ICT.</p>
             </div>
             <InvitationForm
               onSubmit={handleSubmit}

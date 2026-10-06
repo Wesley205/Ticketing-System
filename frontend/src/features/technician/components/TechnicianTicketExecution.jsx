@@ -1,9 +1,14 @@
 import { useState } from 'react';
 import { Button } from '../../../components/forms/Button.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
+import { ImageGallery } from '../../../components/media/ImageGallery.jsx';
 import { FormField } from '../../../components/forms/FormField.jsx';
 import { PriorityBadge } from '../../../components/status/PriorityBadge.jsx';
 import { StatusBadge } from '../../../components/status/StatusBadge.jsx';
 import { formatDateTime } from '../../../lib/formatting.js';
+import { formatBytes, isSupportedImageType } from '../../../lib/media-files.js';
+
+const MAX_TICKET_IMAGES = 3;
 
 function buildTechnicianStatusActions(ticket = {}) {
   const transitions = ticket.permissions?.allowed_status_transitions || ticket.allowed_status_transitions || [];
@@ -12,25 +17,25 @@ function buildTechnicianStatusActions(ticket = {}) {
 
   if (status === 'Assigned') {
     return [
-      hasTransition('Accepted') ? { label: 'Accept', status: 'Accepted' } : null,
-      hasTransition('Pending') ? { label: 'Unavailable', status: 'Pending', note: 'Technician marked unavailable for this assigned ticket.' } : null,
+      hasTransition('Accepted') ? { label: 'Accept', status: 'Accepted', icon: 'check' } : null,
+      hasTransition('Pending') ? { label: 'Unavailable', status: 'Pending', icon: 'pause', note: 'Technician marked unavailable for this assigned ticket.' } : null,
     ].filter(Boolean);
   }
 
   if (status === 'Accepted') {
-    return hasTransition('In Progress') ? [{ label: 'Start Work', status: 'In Progress', primary: true }] : [];
+    return hasTransition('In Progress') ? [{ label: 'Start Work', status: 'In Progress', icon: 'play', primary: true }] : [];
   }
 
   if (status === 'In Progress') {
     return [
-      hasTransition('Waiting for User') ? { label: 'Waiting for User', status: 'Waiting for User' } : null,
-      hasTransition('Waiting for Parts') ? { label: 'Waiting for Parts', status: 'Waiting for Parts' } : null,
-      hasTransition('Resolved') ? { label: 'Resolve Ticket', status: 'Resolved', primary: true } : null,
+      hasTransition('Waiting for User') ? { label: 'Waiting for User', status: 'Waiting for User', icon: 'clock' } : null,
+      hasTransition('Waiting for Parts') ? { label: 'Waiting for Parts', status: 'Waiting for Parts', icon: 'pause' } : null,
+      hasTransition('Resolved') ? { label: 'Resolve Ticket', status: 'Resolved', icon: 'check', primary: true } : null,
     ].filter(Boolean);
   }
 
   if (status === 'Waiting for User' || status === 'Waiting for Parts') {
-    return hasTransition('In Progress') ? [{ label: 'Resume Work', status: 'In Progress', primary: true }] : [];
+    return hasTransition('In Progress') ? [{ label: 'Resume Work', status: 'In Progress', icon: 'play', primary: true }] : [];
   }
 
   return transitions.map((nextStatus) => ({
@@ -40,11 +45,15 @@ function buildTechnicianStatusActions(ticket = {}) {
 }
 
 
-function attachmentSize(attachment) {
-  const bytes = Number(attachment.file_size_bytes || 0);
-  if (!bytes) return '-';
-  if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+function mapAttachment(attachment) {
+  return {
+    id: attachment.attachment_id,
+    fileName: attachment.file_name,
+    mimeType: attachment.mime_type,
+    caption: attachment.file_name,
+    altText: attachment.file_name,
+    sizeLabel: formatBytes(attachment.file_size_bytes),
+  };
 }
 
 export function TechnicianTicketExecution({
@@ -53,6 +62,7 @@ export function TechnicianTicketExecution({
   onCommentSubmit,
   onAttachmentUpload,
   onAttachmentDownload,
+  onAttachmentLoad,
   isMutating = false,
 }) {
   const [note, setNote] = useState('');
@@ -62,9 +72,13 @@ export function TechnicianTicketExecution({
     root_cause: '',
     resolution: '',
   });
-  const [file, setFile] = useState(null);
 
   const statusActions = buildTechnicianStatusActions(ticket);
+  const canResolve = statusActions.some((action) => action.status === 'Resolved');
+  const mappedAttachments = (ticket.attachments || []).map(mapAttachment);
+  const imageAttachments = mappedAttachments.filter((attachment) => isSupportedImageType(attachment.mimeType));
+  const otherAttachments = mappedAttachments.filter((attachment) => !isSupportedImageType(attachment.mimeType));
+  const imageSlotsRemaining = Math.max(0, MAX_TICKET_IMAGES - imageAttachments.length);
 
   async function submitStatus(action) {
     const status = action.status;
@@ -88,13 +102,15 @@ export function TechnicianTicketExecution({
     setNote('');
   }
 
-  async function submitAttachment(event) {
-    event.preventDefault();
-    if (!file) return;
-    await onAttachmentUpload({ file, is_internal: true });
-    setFile(null);
-    const input = document.getElementById('technician-evidence-upload');
-    if (input) input.value = '';
+  async function addEvidenceImages(files) {
+    if (files.length > imageSlotsRemaining) return;
+    try {
+      for (const file of files) {
+        await onAttachmentUpload({ file, is_internal: true });
+      }
+    } catch {
+      // The work-item hook exposes the upload error in the page error state.
+    }
   }
 
   return (
@@ -129,10 +145,12 @@ export function TechnicianTicketExecution({
               {statusActions.map((action) => (
                 <Button
                   key={action.status}
+                  className="ui-button-with-icon"
                   variant={action.primary ? 'primary' : 'secondary'}
                   disabled={isMutating}
                   onClick={() => submitStatus(action)}
                 >
+                  {action.icon ? <AppIcon name={action.icon} /> : null}
                   {action.label}
                 </Button>
               ))}
@@ -155,7 +173,7 @@ export function TechnicianTicketExecution({
                 onChange={(event) => setNote(event.target.value)}
               />
               <div className="technician-execution-card-footer">
-                <small>Internal notes are only visible to security officers</small>
+                <small>{noteInternal ? 'Internal notes are visible to authorized ICT users.' : 'Public comments are visible on the ticket thread.'}</small>
                 <Button size="sm" type="submit" disabled={isMutating || !note.trim()}>
                   {noteInternal ? 'Add Note' : 'Add Comment'}
                 </Button>
@@ -165,33 +183,34 @@ export function TechnicianTicketExecution({
 
           <article className="technician-execution-card">
             <div className="technician-execution-card-head">
-              <h3>Evidence Files</h3>
-              <form onSubmit={submitAttachment}>
-                <label className="ticket-link-button" htmlFor="technician-evidence-upload">Upload File</label>
-                <input
-                  id="technician-evidence-upload"
-                  className="technician-execution-file-input"
-                  type="file"
-                  onChange={(event) => setFile(event.target.files?.[0] || null)}
-                />
-                {file ? <Button size="sm" type="submit" disabled={isMutating}>Save</Button> : null}
-              </form>
+              <h3>Evidence Images</h3>
             </div>
+            <ImageGallery
+              title="Image evidence"
+              emptyTitle="No evidence images yet."
+              emptyDescription="Add screenshots or photos captured while working on this ticket."
+              items={imageAttachments}
+              loadImage={onAttachmentLoad}
+              onDownload={(attachment) => onAttachmentDownload(attachment.id, attachment.fileName)}
+              onAddImages={ticket.permissions?.can_manage_attachments ? addEvidenceImages : undefined}
+              remainingSlots={imageSlotsRemaining}
+              isAdding={isMutating}
+            />
             <div className="technician-execution-file-list">
-              {(ticket.attachments || []).map((attachment) => (
+              {otherAttachments.map((attachment) => (
                 <button
                   type="button"
-                  key={attachment.attachment_id}
-                  onClick={() => onDownloadAttachment(attachment.attachment_id, attachment.file_name)}
+                  key={attachment.id}
+                  onClick={() => onAttachmentDownload(attachment.id, attachment.fileName)}
                 >
-                  <span>{attachment.file_name}</span>
-                  <small>{attachmentSize(attachment)}</small>
+                  <span>{attachment.fileName}</span>
+                  <small>{attachment.sizeLabel}</small>
                 </button>
               ))}
-              {!(ticket.attachments || []).length ? <p>No evidence files uploaded yet.</p> : null}
             </div>
           </article>
 
+          {canResolve ? (
           <article className="technician-execution-card">
             <h3>Resolution Details <span>Required only on resolve</span></h3>
             <div className="technician-execution-resolution-grid">
@@ -222,6 +241,7 @@ export function TechnicianTicketExecution({
               />
             </FormField>
           </article>
+          ) : null}
         </div>
       </section>
     </div>

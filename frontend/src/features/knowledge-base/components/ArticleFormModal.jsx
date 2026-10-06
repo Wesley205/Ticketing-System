@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '../../../components/forms/Button.jsx';
 import { FormField } from '../../../components/forms/FormField.jsx';
 import { Modal } from '../../../components/modals/Modal.jsx';
+import { IMAGE_MIME_TYPES, fileToDataUrl } from '../../../lib/media-files.js';
 import {
   ARTICLE_STATUSES,
   ARTICLE_VISIBILITY_SCOPES,
@@ -32,6 +33,19 @@ function buildInitialForm(article) {
   };
 }
 
+const MAX_ARTICLE_IMAGES = 5;
+
+function buildInitialMedia(article) {
+  return (article?.media || []).map((item, index) => ({
+    media_id: item.media_id,
+    file_name: item.file_name,
+    caption: item.caption || '',
+    alt_text: item.alt_text || item.caption || item.file_name || '',
+    sort_order: Number(item.sort_order ?? index),
+    file: null,
+  }));
+}
+
 export function ArticleFormModal({
   open,
   article = null,
@@ -40,12 +54,16 @@ export function ArticleFormModal({
   isSubmitting = false,
 }) {
   const [form, setForm] = useState(buildInitialForm(article));
+  const [media, setMedia] = useState(buildInitialMedia(article));
   const [error, setError] = useState('');
+  const [mediaError, setMediaError] = useState('');
 
   useEffect(() => {
     if (open) {
       setForm(buildInitialForm(article));
+      setMedia(buildInitialMedia(article));
       setError('');
+      setMediaError('');
     }
   }, [open, article?.article_id]);
 
@@ -54,6 +72,66 @@ export function ArticleFormModal({
       ...current,
       [key]: value,
       ...(key === 'title' && !current.slug ? { slug: slugifyTitle(value) } : {}),
+    }));
+  }
+
+  function addImages(event) {
+    const files = Array.from(event.target.files || []);
+    event.target.value = '';
+    setMediaError('');
+
+    const invalid = files.find((file) => !IMAGE_MIME_TYPES.includes(file.type));
+    if (invalid) {
+      setMediaError('Only JPG, PNG, or WEBP images are allowed.');
+      return;
+    }
+
+    setMedia((current) => {
+      const available = MAX_ARTICLE_IMAGES - current.length;
+      if (available < files.length) {
+        setMediaError(`Articles can include up to ${MAX_ARTICLE_IMAGES} images.`);
+      }
+      return [
+        ...current,
+        ...files.slice(0, Math.max(0, available)).map((file, offset) => ({
+          media_id: null,
+          file_name: file.name,
+          caption: '',
+          alt_text: file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' '),
+          sort_order: current.length + offset,
+          file,
+        })),
+      ];
+    });
+  }
+
+  function updateMedia(index, key, value) {
+    setMedia((current) => current.map((item, itemIndex) => (
+      itemIndex === index ? { ...item, [key]: value } : item
+    )));
+  }
+
+  async function buildMediaPayload() {
+    return Promise.all(media.map(async (item, index) => {
+      const base = {
+        media_id: item.media_id || null,
+        file_name: item.file_name,
+        caption: item.caption.trim(),
+        alt_text: item.alt_text.trim(),
+        sort_order: index,
+      };
+
+      if (!base.alt_text) {
+        throw new Error('Alt text is required for each article image.');
+      }
+
+      if (!item.file) return base;
+
+      return {
+        ...base,
+        mime_type: item.file.type,
+        content_base64: await fileToDataUrl(item.file),
+      };
     }));
   }
 
@@ -75,7 +153,8 @@ export function ArticleFormModal({
     }
 
     try {
-      await onSubmit(form);
+      const mediaPayload = await buildMediaPayload();
+      await onSubmit({ ...form, media: mediaPayload });
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to save article.');
@@ -150,6 +229,51 @@ export function ArticleFormModal({
           <FormField label="Steps or guidance" htmlFor="article-body">
             <textarea id="article-body" className="ui-input" rows={10} value={form.body} placeholder="Write the steps, notes, and checks officers should follow." onChange={(event) => updateField('body', event.target.value)} required />
           </FormField>
+        </section>
+
+        <section className="secure-modal-section">
+          <h3>Images</h3>
+          <div className="article-media-editor-head">
+            <p className="react-copy">Add up to 5 screenshots or photos. Captions appear below images in the article gallery.</p>
+            <label className="ticket-link-button">
+              Add Images
+              <input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={addImages} />
+            </label>
+          </div>
+          {mediaError ? <p className="ui-field-error">{mediaError}</p> : null}
+          <div className="article-media-editor-list">
+            {media.map((item, index) => (
+              <article key={`${item.media_id || item.file_name}-${index}`} className="article-media-editor-row">
+                <div>
+                  <strong>{item.file_name}</strong>
+                  <small>{item.media_id ? 'Saved image' : 'New image'}</small>
+                </div>
+                <FormField label="Caption" htmlFor={`article-media-caption-${index}`}>
+                  <input
+                    id={`article-media-caption-${index}`}
+                    className="ui-input"
+                    value={item.caption}
+                    placeholder="Short context shown under the image"
+                    onChange={(event) => updateMedia(index, 'caption', event.target.value)}
+                  />
+                </FormField>
+                <FormField label="Alt text" htmlFor={`article-media-alt-${index}`}>
+                  <input
+                    id={`article-media-alt-${index}`}
+                    className="ui-input"
+                    value={item.alt_text}
+                    placeholder="Describe what the image shows"
+                    onChange={(event) => updateMedia(index, 'alt_text', event.target.value)}
+                    required
+                  />
+                </FormField>
+                <Button variant="secondary" size="sm" onClick={() => setMedia((current) => current.filter((_, itemIndex) => itemIndex !== index))}>
+                  Remove
+                </Button>
+              </article>
+            ))}
+            {!media.length ? <p className="react-copy">No article images added.</p> : null}
+          </div>
         </section>
 
         <section className="secure-modal-section">

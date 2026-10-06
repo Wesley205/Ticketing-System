@@ -6,6 +6,7 @@ import {
   fetchTickets,
   filterTicketsBySearch,
   paginateTickets,
+  uploadTicketImage,
 } from '../services/service-requests-api.js';
 
 const DEFAULT_FILTERS = {
@@ -14,17 +15,30 @@ const DEFAULT_FILTERS = {
   category: '',
   ticket_type: '',
   mine: false,
+  queue: '',
   search: '',
 };
 
-export function useTickets({ role, pageSize = 8 } = {}) {
+const QUEUE_PREFERENCE_KEY = 'nsc-service-desk-queue-view';
+
+function queuePreferenceKey(role, userId) {
+  return `${QUEUE_PREFERENCE_KEY}:${userId || role || 'anonymous'}`;
+}
+
+function initialFilters(role, userId) {
+  if (typeof window === 'undefined' || !['admin', 'ict_officer'].includes(role)) return DEFAULT_FILTERS;
+  const queue = window.localStorage.getItem(queuePreferenceKey(role, userId)) || '';
+  return { ...DEFAULT_FILTERS, queue: ['unassigned', 'sla_risk', 'overdue', 'pending_approval'].includes(queue) ? queue : '' };
+}
+
+export function useTickets({ role, userId, pageSize = 8 } = {}) {
   const [metadata, setMetadata] = useState({
     priorities: ['Low', 'Medium', 'High', 'Critical'],
     statuses: ['New', 'Pending', 'Assigned', 'Accepted', 'In Progress', 'Waiting for User', 'Waiting for Parts', 'Resolved', 'Closed', 'Reopened', 'Cancelled'],
     ticket_types: ['Incident', 'Service Request', 'Access Request', 'Maintenance Request', 'Change Request'],
   });
   const [tickets, setTickets] = useState([]);
-  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState(() => initialFilters(role, userId));
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,7 +78,7 @@ export function useTickets({ role, pageSize = 8 } = {}) {
 
   useEffect(() => {
     loadTickets(filters);
-  }, [filters.mine, filters.priority, filters.status, filters.category, filters.ticket_type]);
+  }, [filters.mine, filters.priority, filters.status, filters.category, filters.ticket_type, filters.queue]);
 
   const searchedTickets = useMemo(
     () => filterTicketsBySearch(tickets, filters.search),
@@ -83,6 +97,9 @@ export function useTickets({ role, pageSize = 8 } = {}) {
   }, [page, pagination.totalPages]);
 
   function updateFilter(key, value) {
+    if (key === 'queue' && typeof window !== 'undefined') {
+      window.localStorage.setItem(queuePreferenceKey(role, userId), value || '');
+    }
     setFilters((current) => ({
       ...current,
       [key]: value,
@@ -91,14 +108,20 @@ export function useTickets({ role, pageSize = 8 } = {}) {
   }
 
   function clearFilters() {
+    if (typeof window !== 'undefined') window.localStorage.removeItem(queuePreferenceKey(role, userId));
     setFilters(DEFAULT_FILTERS);
     setPage(1);
   }
 
-  async function submitCreateTicket(payload) {
+  async function submitCreateTicket(payload, images = []) {
     setIsSubmitting(true);
     try {
       const created = await createTicket(payload);
+      if (created?.request_id && images.length) {
+        for (const image of images) {
+          await uploadTicketImage(created.request_id, image, { is_internal: false });
+        }
+      }
       await loadTickets(filters);
       return created;
     } finally {

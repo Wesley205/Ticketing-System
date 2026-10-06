@@ -9,6 +9,7 @@ import {
   filterStaffBySearch,
   paginateStaff,
 } from '../services/staff-api.js';
+import { fetchFloors } from '../../floors/services/floors-api.js';
 
 const DEFAULT_FILTERS = {
   search: '',
@@ -28,24 +29,28 @@ export function useStaff({ pageSize = 8 } = {}) {
     roles: USER_ROLES,
     user_types: USER_TYPES,
     departments: [],
+    floors: [],
     ict_officers: [],
   });
 
   async function loadLookups() {
     try {
-      const [departments, staffRows] = await Promise.all([
+      const [departments, floors, staffRows] = await Promise.all([
         fetchDepartments().catch(() => []),
+        fetchFloors().catch(() => []),
         fetchStaff({ role: 'ict_officer' }).catch(() => []),
       ]);
       setLookups((current) => ({
         ...current,
         departments: Array.isArray(departments) ? departments : [],
+        floors: Array.isArray(floors) ? floors : [],
         ict_officers: filterIctOfficers(Array.isArray(staffRows) ? staffRows : []),
       }));
     } catch {
       setLookups((current) => ({
         ...current,
         departments: [],
+        floors: [],
         ict_officers: [],
       }));
     }

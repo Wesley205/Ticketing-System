@@ -1,33 +1,16 @@
 import { Link } from 'react-router-dom';
+import { AppIcon } from '../icons/AppIcon.jsx';
 
 function EmptyIcon({ variant }) {
   if (variant === 'search') {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="10" cy="10" r="6" />
-        <path d="m15 15 5 5" />
-      </svg>
-    );
+    return <AppIcon name="search" size={22} />;
   }
 
   if (variant === 'assets') {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 3 4 7v10l8 4 8-4V7l-8-4Z" />
-        <path d="M4 7l8 4 8-4" />
-        <path d="M12 11v10" />
-      </svg>
-    );
+    return <AppIcon name="package" size={22} />;
   }
 
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M7 3h7l4 4v14H7V3Z" />
-      <path d="M14 3v5h5" />
-      <path d="M10 13h6" />
-      <path d="M10 17h4" />
-    </svg>
-  );
+  return <AppIcon name="file" size={22} />;
 }
 
 function StateAction({ label, to, onClick, variant }) {

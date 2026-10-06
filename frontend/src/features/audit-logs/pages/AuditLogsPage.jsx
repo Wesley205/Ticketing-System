@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '../../../components/forms/Button.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
 import { SecureWorkspaceLayout } from '../../../components/layout/SecureWorkspaceLayout.jsx';
@@ -39,11 +40,11 @@ export function AuditLogsPage() {
           </div>
           <div className="service-desk-secure-actions">
             <Button variant="secondary" className="ui-button-with-icon" onClick={() => auditLogs.loadAuditLogs(auditLogs.filters)} disabled={auditLogs.isLoading}>
-              <span className="nsc-action-icon nsc-action-icon-refresh" aria-hidden="true" />
+              <AppIcon name="refresh" />
               Refresh
             </Button>
             <Button className="ui-button-with-icon" onClick={handleExport} disabled={!auditLogs.rows.length}>
-              <span className="nsc-action-icon nsc-action-icon-download" aria-hidden="true" />
+              <AppIcon name="download" />
               Export Audit Report
             </Button>
           </div>
@@ -56,7 +57,7 @@ export function AuditLogsPage() {
             aria-expanded={filtersOpen}
             onClick={() => setFiltersOpen((open) => !open)}
           >
-            <span className="nsc-action-icon nsc-action-icon-filter" aria-hidden="true" />
+            <AppIcon name="filter" />
             Filters
           </button>
           <div className="audit-filter-panel">

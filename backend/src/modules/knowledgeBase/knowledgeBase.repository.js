@@ -35,6 +35,30 @@ async function loadKnowledgeArticleFeedbackSummary(executor, articleId) {
   return result.rows[0];
 }
 
+async function loadKnowledgeArticleMedia(executor, articleId, includeDeleted = false) {
+  const result = await executor.query(
+    `SELECT media_id, article_id, uploaded_by_user_id, file_name, storage_key, mime_type,
+            file_size_bytes, caption, alt_text, sort_order, created_at, deleted_at
+     FROM knowledge_base_article_media
+     WHERE article_id = $1
+       AND ($2::boolean = TRUE OR deleted_at IS NULL)
+     ORDER BY sort_order ASC, created_at ASC, media_id ASC`,
+    [articleId, includeDeleted]
+  );
+  return result.rows;
+}
+
+async function loadKnowledgeArticleMediaById(executor, articleId, mediaId) {
+  const result = await executor.query(
+    `SELECT media_id, article_id, uploaded_by_user_id, file_name, storage_key, mime_type,
+            file_size_bytes, caption, alt_text, sort_order, created_at, deleted_at
+     FROM knowledge_base_article_media
+     WHERE article_id = $1 AND media_id = $2`,
+    [articleId, mediaId]
+  );
+  return result.rows[0] || null;
+}
+
 async function loadKnowledgeArticleRevisions(executor, articleId) {
   const result = await executor.query(
     `SELECT revision.revision_id,
@@ -220,6 +244,62 @@ async function replaceKnowledgeArticleRelations(client, articleId, relations = [
   }
 }
 
+async function insertKnowledgeArticleMedia(client, articleId, data, actorUserId) {
+  const result = await client.query(
+    `INSERT INTO knowledge_base_article_media
+      (article_id, uploaded_by_user_id, file_name, storage_key, mime_type, file_size_bytes,
+       caption, alt_text, sort_order)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+     RETURNING media_id, article_id, uploaded_by_user_id, file_name, storage_key, mime_type,
+               file_size_bytes, caption, alt_text, sort_order, created_at, deleted_at`,
+    [
+      articleId,
+      actorUserId || null,
+      data.file_name,
+      data.storage_key,
+      data.mime_type,
+      data.file_size_bytes,
+      data.caption || null,
+      data.alt_text,
+      Number(data.sort_order || 0),
+    ]
+  );
+  return result.rows[0];
+}
+
+async function updateKnowledgeArticleMedia(client, articleId, mediaId, data) {
+  const result = await client.query(
+    `UPDATE knowledge_base_article_media
+     SET caption = $3,
+         alt_text = $4,
+         sort_order = $5
+     WHERE article_id = $1 AND media_id = $2 AND deleted_at IS NULL
+     RETURNING media_id, article_id, uploaded_by_user_id, file_name, storage_key, mime_type,
+               file_size_bytes, caption, alt_text, sort_order, created_at, deleted_at`,
+    [
+      articleId,
+      mediaId,
+      data.caption || null,
+      data.alt_text,
+      Number(data.sort_order || 0),
+    ]
+  );
+  return result.rows[0] || null;
+}
+
+async function softDeleteKnowledgeArticleMediaNotIn(client, articleId, mediaIds = []) {
+  const result = await client.query(
+    `UPDATE knowledge_base_article_media
+     SET deleted_at = NOW()
+     WHERE article_id = $1
+       AND deleted_at IS NULL
+       AND NOT (media_id = ANY($2::int[]))
+     RETURNING storage_key`,
+    [articleId, mediaIds]
+  );
+  return result.rows;
+}
+
 async function insertKnowledgeArticleRevision(client, articleId, articleState, changedByUserId, changeNote) {
   await client.query(
     `INSERT INTO knowledge_base_article_revisions
@@ -340,9 +420,14 @@ module.exports = {
   listPublishedSuggestionCandidates,
   loadKnowledgeArticle,
   loadKnowledgeArticleFeedbackSummary,
+  loadKnowledgeArticleMedia,
+  loadKnowledgeArticleMediaById,
   loadKnowledgeArticleRelations,
   loadKnowledgeArticleRevisions,
+  insertKnowledgeArticleMedia,
   replaceKnowledgeArticleRelations,
+  softDeleteKnowledgeArticleMediaNotIn,
   updateArticleFeedbackCounters,
+  updateKnowledgeArticleMedia,
   updateKnowledgeBaseArticle,
 };

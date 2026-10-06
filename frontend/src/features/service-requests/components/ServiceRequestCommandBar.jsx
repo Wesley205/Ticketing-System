@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '../../../components/forms/Button.jsx';
 import { FormField } from '../../../components/forms/FormField.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 import { ActiveFilterChips } from './ActiveFilterChips.jsx';
 
 export function ServiceRequestCommandBar({ filters, metadata, isOperational = false, onChange, onClear }) {
@@ -48,7 +49,7 @@ export function ServiceRequestCommandBar({ filters, metadata, isOperational = fa
           onClick={() => setMoreOpen((current) => !current)}
           aria-expanded={moreOpen}
         >
-          <span className="nsc-action-icon nsc-action-icon-filter" aria-hidden="true" />
+          <AppIcon name="filter" />
           {moreOpen ? 'Hide filters' : 'Show filters'}
         </Button>
       </div>

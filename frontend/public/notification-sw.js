@@ -1,22 +1,37 @@
+self.addEventListener('install', (event) => {
+  event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
 self.addEventListener('push', (event) => {
   let payload = {};
+  let rawMessage = '';
 
   try {
-    payload = event.data ? event.data.json() : {};
+    if (event.data) {
+      rawMessage = event.data.text();
+      payload = rawMessage ? JSON.parse(rawMessage) : {};
+    }
   } catch {
-    payload = {};
+    payload = rawMessage ? { body: rawMessage } : {};
   }
 
   const title = payload.title || 'NSC notification';
+  const notificationId = payload.notificationId || payload.notification_id || null;
+  const actionUrl = payload.actionUrl || payload.action_url || '/notifications';
   const options = {
-    body: payload.message || 'A secure system notification requires attention.',
+    body: payload.body || payload.message || 'A secure system notification requires attention.',
     data: {
-      actionUrl: payload.actionUrl || '/notifications',
-      notificationId: payload.notificationId || null,
+      actionUrl,
+      notificationId,
     },
     icon: '/favicon.ico',
     badge: '/favicon.ico',
-    tag: payload.notificationId ? `nsc-notification-${payload.notificationId}` : 'nsc-notification',
+    requireInteraction: payload.severity === 'critical' || payload.severity === 'urgent',
+    tag: notificationId ? `nsc-notification-${notificationId}` : `nsc-notification-${Date.now()}`,
   };
 
   event.waitUntil(self.registration.showNotification(title, options));

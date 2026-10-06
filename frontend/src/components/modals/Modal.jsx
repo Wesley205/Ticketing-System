@@ -1,4 +1,4 @@
-import { Button } from '../forms/Button.jsx';
+import { AppIcon } from '../icons/AppIcon.jsx';
 
 export function Modal({
   open,
@@ -6,13 +6,14 @@ export function Modal({
   children,
   onClose,
   footer = null,
+  className = '',
 }) {
   if (!open) return null;
 
   return (
     <div className="ui-modal-overlay" role="presentation" onClick={onClose}>
       <div
-        className="ui-modal"
+        className={`ui-modal ${className}`.trim()}
         role="dialog"
         aria-modal="true"
         aria-label={title}
@@ -20,9 +21,9 @@ export function Modal({
       >
         <div className="ui-modal-head">
           <h3>{title}</h3>
-          <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close dialog">
-            Close
-          </Button>
+          <button type="button" className="ui-icon-button" onClick={onClose} aria-label="Close dialog" title="Close">
+            <AppIcon name="close" size={20} />
+          </button>
         </div>
         <div className="ui-modal-body">{children}</div>
         {footer ? <div className="ui-modal-footer">{footer}</div> : null}

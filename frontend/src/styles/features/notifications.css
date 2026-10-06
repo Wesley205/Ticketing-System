@@ -1,0 +1,338 @@
+﻿/* Notification workspace styles. */
+.notification-inbox-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.notification-inbox-head h2 {
+  margin: 0;
+  color: #202820;
+  font-family: var(--font-display);
+  font-size: 24px;
+}
+
+.notification-inbox-head p {
+  margin: 6px 0 0;
+  color: #68736b;
+}
+
+.notification-filter-row,
+.notification-filter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.browser-notification-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px 18px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid #e6e0d2;
+  border-radius: 8px;
+  background: #fffdf8;
+}
+
+.browser-notification-panel h3 {
+  margin: 0;
+  color: #06451f;
+  font-family: var(--font-display);
+  font-size: 15px;
+}
+
+.browser-notification-panel p {
+  margin: 4px 0 0;
+  color: #68736b;
+  font-size: 12px;
+}
+
+.browser-notification-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.secure-sla-text {
+  font-weight: 800;
+}
+
+.secure-sla-text-danger {
+  color: #bf3c30;
+}
+
+.secure-sla-text-warning {
+  color: #a86506;
+}
+
+.secure-sla-text-success {
+  color: #0a7d3e;
+}
+
+.browser-notification-actions .ui-button:disabled {
+  border-color: #e6e0d2;
+  background: #eee9df;
+  color: #8a938d;
+  opacity: 1;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.browser-notification-status {
+  grid-column: 1 / -1;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-weight: 800;
+}
+
+.browser-notification-status.error {
+  border: 1px solid #efb8b0;
+  background: #fff3f1;
+  color: #b42318;
+}
+
+.browser-notification-status.success {
+  border: 1px solid #bfe3cd;
+  background: #effaf2;
+  color: #06451f;
+}
+
+.browser-notification-status.warning {
+  border: 1px solid #f0d39b;
+  background: #fff8e7;
+  color: #8a5a06;
+}
+
+.browser-notification-devices {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #eee8dc;
+  color: #68736b;
+  font-size: 11px;
+}
+
+.browser-notification-devices strong {
+  color: #06451f;
+}
+
+.notification-feed-panel {
+  border: 1px solid #e6e0d2;
+  border-radius: 8px;
+  background: #fffdf8;
+  overflow: hidden;
+}
+
+.notification-group + .notification-group {
+  border-top: 1px solid #e6e0d2;
+}
+
+.notification-group-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 16px;
+  border-bottom: 1px solid #eee8dc;
+  background: #f7f3ea;
+}
+
+.notification-group-head span,
+.notification-group-head small {
+  color: #68736b;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.notification-row {
+  display: grid;
+  grid-template-columns: 10px 86px minmax(0, 1fr) 86px 48px;
+  gap: 12px;
+  align-items: center;
+  min-height: 54px;
+  padding: 11px 16px;
+  border-bottom: 1px solid #eee8dc;
+  color: #202820;
+}
+
+.notification-row:hover {
+  background: #fbf8f1;
+}
+
+.notification-row-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ded8cb;
+}
+
+.notification-row-dot.unread {
+  background: #d13d2f;
+}
+
+.notification-severity {
+  justify-self: start;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.notification-severity-urgent {
+  background: #fbeae5;
+  color: #c1432d;
+}
+
+.notification-severity-warning {
+  background: #fdf1dc;
+  color: #a9660f;
+}
+
+.notification-severity-info {
+  background: #eaf2ff;
+  color: #2868b7;
+}
+
+.notification-row-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.notification-row-copy strong {
+  overflow: hidden;
+  color: #202820;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-row-copy small {
+  overflow: hidden;
+  color: #68736b;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-row-time {
+  color: #68736b;
+  font-size: 11px;
+  text-align: right;
+}
+
+.notification-row-view {
+  justify-self: end;
+  padding: 4px 8px;
+  border: 1px solid #e6e0d2;
+  border-radius: 5px;
+  background: #fff;
+  color: #202820;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.notification-inbox-tip {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 14px;
+  padding: 12px;
+  border: 1px solid #e6e0d2;
+  border-radius: 6px;
+  background: #fffdf8;
+  color: #68736b;
+  font-size: 12px;
+}
+
+.notification-inbox-tip strong {
+  color: #202820;
+}
+
+.notification-secure-footer {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin-top: 80px;
+  color: #7b837d;
+  font-size: 10px;
+  text-align: center;
+}
+
+.notification-secure-footer small {
+  font-family: var(--font-mono);
+}
+
+
+.notification-preferences-panel {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid #e4ded2;
+  border-radius: 8px;
+  background: #fffdf8;
+}
+
+.notification-preferences-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.notification-preferences-head h3,
+.notification-preferences-head p {
+  margin: 0;
+}
+
+.notification-preferences-head p {
+  margin-top: 4px;
+  color: #68736b;
+}
+
+.notification-preference-groups {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 14px;
+}
+
+.notification-preference-groups fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #e8e2d7;
+  border-radius: 7px;
+}
+
+.notification-preference-groups legend {
+  padding: 0 5px;
+  color: #064723;
+  font-weight: 800;
+}
+
+.notification-preference-groups label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  color: #344037;
+}
+
+.notification-preferences-message {
+  margin: 0;
+  color: #08713a;
+  font-weight: 700;
+}

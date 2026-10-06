@@ -1,5 +1,6 @@
 import { EmptyState } from '../../../components/feedback/EmptyState.jsx';
 import { Button } from '../../../components/forms/Button.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 import { DataTable } from '../../../components/tables/DataTable.jsx';
 import { StatusBadge } from '../../../components/status/StatusBadge.jsx';
 import { formatCurrency, formatDate } from '../../../lib/formatting.js';
@@ -28,9 +29,15 @@ export function MaintenanceList({ records = [], canManage = false, onEdit, onCom
       label: 'Actions',
       render: (record) => (
         <div className="secure-row-actions">
-          <Button variant="ghost" size="sm" onClick={() => onEdit(record)}>Edit</Button>
+          <Button variant="ghost" size="sm" onClick={() => onEdit(record)} title="Edit maintenance record">
+            <AppIcon name="edit" size={16} />
+            Edit
+          </Button>
           {canManage && record.status !== 'Completed' && record.status !== 'Cancelled' ? (
-            <Button variant="secondary" size="sm" onClick={() => onComplete(record)}>Complete</Button>
+            <Button variant="secondary" size="sm" onClick={() => onComplete(record)}>
+              <AppIcon name="complete" size={16} />
+              Complete
+            </Button>
           ) : null}
         </div>
       ),

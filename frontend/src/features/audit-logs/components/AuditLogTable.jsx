@@ -42,6 +42,7 @@ const columns = [
 
 export function AuditLogTable({ rows = [] }) {
   const normalizedRows = rows.map((row) => ({ ...row, key: row.log_id }));
+  const mobileRows = normalizedRows.slice(0, 25);
 
   if (!rows.length) {
     return (
@@ -58,7 +59,7 @@ export function AuditLogTable({ rows = [] }) {
         rows={normalizedRows}
       />
       <div className="audit-mobile-list" aria-label="Audit records">
-        {normalizedRows.map((row) => (
+        {mobileRows.map((row) => (
           <article className="audit-mobile-card" key={row.key}>
             <div className="audit-mobile-card-head">
               <time>{formatDateTime(row.created_at)}</time>
@@ -77,6 +78,9 @@ export function AuditLogTable({ rows = [] }) {
             </div>
           </article>
         ))}
+        {normalizedRows.length > mobileRows.length ? (
+          <p className="audit-mobile-limit-note">Showing the first {mobileRows.length} records. Use filters to narrow the audit trail.</p>
+        ) : null}
       </div>
     </>
   );

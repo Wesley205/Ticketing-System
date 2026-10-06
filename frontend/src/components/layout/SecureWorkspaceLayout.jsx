@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '../forms/Button.jsx';
+import { AppIcon } from '../icons/AppIcon.jsx';
 import { useAuth } from '../../features/auth/hooks/useAuth.js';
 import { useNotificationCount } from '../../features/notifications/hooks/useNotificationCount.js';
 import { canAccessRoute, getSecureWorkspaceLinks } from '../../permissions/access.js';
@@ -10,7 +11,7 @@ function linkPath(to = '') {
 }
 
 function NavIcon({ type }) {
-  return <span className={`technician-dashboard-nav-icon technician-dashboard-nav-icon-${type}`} aria-hidden="true" />;
+  return <AppIcon name={type} size={19} />;
 }
 
 export function SecureWorkspaceLayout({
@@ -25,6 +26,7 @@ export function SecureWorkspaceLayout({
   const navigate = useNavigate();
   const notifications = useNotificationCount();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const assignedFloor = auth.user?.floor_label || null;
   const sidebarProfile = {
     ...(auth.accessProfile || {}),
     role: auth.accessProfile?.role || auth.user?.role,
@@ -71,7 +73,7 @@ export function SecureWorkspaceLayout({
               aria-label="Close navigation menu"
               onClick={() => setMobileNavOpen(false)}
             >
-              ×
+              <AppIcon name="close" size={20} />
             </button>
           </div>
 
@@ -101,8 +103,12 @@ export function SecureWorkspaceLayout({
           <div>
             <strong>{auth.user?.full_name || auth.user?.username || 'Authenticated user'}</strong>
             <small>{auth.accessProfile?.role_label || auth.user?.role || 'Active session'}</small>
+            {auth.user?.role === 'technician' ? (
+              <small>{assignedFloor ? `Assigned floor: ${assignedFloor}` : 'No floor assigned'}</small>
+            ) : null}
           </div>
           <Button variant="ghost" size="sm" className="technician-dashboard-logout" onClick={handleLogout}>
+            <AppIcon name="logout" size={16} />
             Log out
           </Button>
         </div>
@@ -119,9 +125,7 @@ export function SecureWorkspaceLayout({
               aria-label="Open navigation menu"
               onClick={() => setMobileNavOpen((open) => !open)}
             >
-              <span aria-hidden="true" />
-              <span aria-hidden="true" />
-              <span aria-hidden="true" />
+              <AppIcon name={mobileNavOpen ? 'close' : 'menu'} size={21} />
             </button>
             <span className="technician-dashboard-window-dots" aria-hidden="true">
               <i />
@@ -142,7 +146,7 @@ export function SecureWorkspaceLayout({
               aria-label={`Open notifications${notifications.unreadCount ? `, ${notifications.unreadCount} unread` : ''}`}
               title={notifications.unreadCount ? `${notifications.unreadCount} unread notification${notifications.unreadCount === 1 ? '' : 's'}` : 'No unread notifications'}
             >
-              <span className="technician-dashboard-notification-icon" aria-hidden="true" />
+              <AppIcon name="bell" size={19} />
               {notifications.unreadCount ? (
                 <span className="technician-dashboard-notification-count" aria-hidden="true">
                   {notifications.unreadCount > 99 ? '99+' : notifications.unreadCount}

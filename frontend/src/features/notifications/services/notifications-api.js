@@ -139,3 +139,14 @@ export async function markNotificationRead(notificationId) {
 export async function markAllNotificationsRead() {
   return apiClient('/notifications/read-all', { method: 'POST' });
 }
+
+export async function fetchNotificationPreferences() {
+  return apiClient('/notifications/preferences/me');
+}
+
+export async function updateNotificationPreferences(payload) {
+  return apiClient('/notifications/preferences/me', {
+    method: 'PATCH',
+    body: payload,
+  });
+}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/forms/Button.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
 import { SecureWorkspaceLayout } from '../../../components/layout/SecureWorkspaceLayout.jsx';
@@ -46,8 +47,16 @@ export function AssetsPage() {
             <p>View, edit, and manage assets across departments.</p>
           </div>
           <div className="service-desk-secure-actions">
-            <Button variant="secondary" onClick={() => assetsState.loadAssets(assetsState.filters)}>Refresh</Button>
-            {canManage ? <Button onClick={handleOpenCreate}>+ Register Asset</Button> : null}
+            <Button variant="secondary" onClick={() => assetsState.loadAssets(assetsState.filters)}>
+              <AppIcon name="refresh" />
+              Refresh
+            </Button>
+            {canManage ? (
+              <Button className="ui-button-with-icon" onClick={handleOpenCreate}>
+                <AppIcon name="plus" />
+                Register Asset
+              </Button>
+            ) : null}
           </div>
         </div>
 
@@ -95,6 +104,7 @@ export function AssetsPage() {
                 }}
                 onReturn={(asset) => navigate(`/assets/${asset.asset_id}?return=1`)}
                 onDelete={async (asset) => {
+                  if (!window.confirm(`Delete ${asset.asset_tag}? This action cannot be undone.`)) return;
                   await removeAsset(asset.asset_id);
                   await assetsState.loadAssets(assetsState.filters);
                   showToast({ tone: 'success', title: 'Asset deleted' });

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../../../components/forms/Button.jsx";
+import { AppIcon } from "../../../components/icons/AppIcon.jsx";
 import { ErrorState } from "../../../components/feedback/ErrorState.jsx";
 import { LoadingState } from "../../../components/feedback/LoadingState.jsx";
 import { SecureWorkspaceLayout } from "../../../components/layout/SecureWorkspaceLayout.jsx";
@@ -9,6 +10,7 @@ import { useAuth } from "../../auth/hooks/useAuth.js";
 import { useTickets } from "../hooks/useTickets.js";
 import { ServiceRequestCommandBar } from "../components/ServiceRequestCommandBar.jsx";
 import { ServiceRequestQueue } from "../components/ServiceRequestQueue.jsx";
+import { OperationalQueueViews } from "../components/OperationalQueueViews.jsx";
 import { TicketCreateModal } from "../components/TicketCreateModal.jsx";
 import {
   isOperationalServiceDeskRole,
@@ -23,7 +25,7 @@ export function ServiceRequestsPage() {
   const isTechnician = auth.user?.role === "technician";
   const isOperational = isOperationalServiceDeskRole(auth.user?.role);
 
-  const ticketsState = useTickets({ role: auth.user?.role });
+  const ticketsState = useTickets({ role: auth.user?.role, userId: auth.user?.user_id });
   const shouldShowMine =
     searchParams.get("mine") === "1" ||
     searchParams.get("mine") === "true" ||
@@ -76,11 +78,11 @@ export function ServiceRequestsPage() {
             className="ui-button-with-icon"
             onClick={() => ticketsState.loadTickets(ticketsState.filters)}
           >
-            <span className="nsc-action-icon nsc-action-icon-refresh" aria-hidden="true" />
+            <AppIcon name="refresh" />
             Refresh
           </Button>
           <Button className="ui-button-with-icon" onClick={() => setCreateOpen(true)}>
-            <span className="nsc-action-icon nsc-action-icon-plus" aria-hidden="true" />
+            <AppIcon name="plus" />
             {isOperational ? "New ticket" : "Request help"}
           </Button>
         </div>
@@ -93,6 +95,13 @@ export function ServiceRequestsPage() {
         onChange={ticketsState.updateFilter}
         onClear={handleClearFilters}
       />
+
+      {isOperational ? (
+        <OperationalQueueViews
+          value={ticketsState.filters.queue}
+          onChange={(value) => ticketsState.updateFilter("queue", value)}
+        />
+      ) : null}
 
       {ticketsState.error ? (
         <ErrorState

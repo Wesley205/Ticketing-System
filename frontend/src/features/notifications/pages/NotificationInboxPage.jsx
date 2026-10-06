@@ -4,6 +4,7 @@ import { SecureWorkspaceLayout } from '../../../components/layout/SecureWorkspac
 import { BrowserNotificationPanel } from '../components/BrowserNotificationPanel.jsx';
 import { NotificationFeed } from '../components/NotificationFeed.jsx';
 import { NotificationFilters } from '../components/NotificationFilters.jsx';
+import { NotificationPreferencesPanel } from '../components/NotificationPreferencesPanel.jsx';
 import { useNotifications } from '../hooks/useNotifications.js';
 
 export function NotificationInboxPage() {
@@ -26,7 +27,11 @@ export function NotificationInboxPage() {
         />
       </section>
 
-      <BrowserNotificationPanel />
+      <BrowserNotificationPanel
+        onNotificationSent={() => notifications.refresh(notifications.filter)}
+      />
+
+      <NotificationPreferencesPanel />
 
       {notifications.error ? (
         <ErrorState

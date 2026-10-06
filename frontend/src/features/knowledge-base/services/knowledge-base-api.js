@@ -1,4 +1,4 @@
-import { apiClient } from '../../../lib/api-client.js';
+import { apiClient, apiDownload } from '../../../lib/api-client.js';
 import { buildQueryParams } from '../../../lib/query-params.js';
 
 export const ARTICLE_STATUSES = ['draft', 'in_review', 'published', 'archived'];
@@ -49,6 +49,7 @@ export function normalizeArticleDetail(detail = {}) {
       helpful_count: detail.helpful_count || 0,
       not_helpful_count: detail.not_helpful_count || 0,
     },
+    media: Array.isArray(detail.media) ? detail.media : [],
     permissions: detail.permissions || {},
   };
 }
@@ -105,6 +106,7 @@ export function normalizeArticlePayload(form = {}) {
       asset_types: form.asset_types,
       ticket_categories: form.ticket_categories,
     }),
+    media: Array.isArray(form.media) ? form.media : [],
   };
 }
 
@@ -147,6 +149,10 @@ export async function submitArticleFeedback(articleId, payload) {
       feedback_note: payload.feedback_note || null,
     },
   });
+}
+
+export async function fetchArticleMediaBlob(articleId, mediaId) {
+  return apiDownload(`/knowledge-base/${articleId}/media/${mediaId}/download`);
 }
 
 export async function fetchKnowledgeBaseSuggestions(context = {}) {

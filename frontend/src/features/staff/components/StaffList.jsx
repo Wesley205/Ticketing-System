@@ -1,4 +1,5 @@
 import { EmptyState } from '../../../components/feedback/EmptyState.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 import { DataTable } from '../../../components/tables/DataTable.jsx';
 import { StatusBadge } from '../../../components/status/StatusBadge.jsx';
 import { formatDate } from '../../../lib/formatting.js';
@@ -45,6 +46,11 @@ export function StaffList({
           render: (row) => row.department_name || '-',
         },
         {
+          key: 'floor_label',
+          label: 'Floor',
+          render: (row) => row.role === 'technician' ? row.floor_label || 'Unassigned' : '-',
+        },
+        {
           key: 'account_expiration_date',
           label: 'Joined',
           render: (row) => formatDate(row.created_at || row.account_start_date),
@@ -61,12 +67,16 @@ export function StaffList({
             <div className="secure-row-actions">
               {canManage ? (
                 <>
-                  <button type="button" onClick={() => onEdit(row)}>Edit</button>
-                  <button type="button" onClick={() => onToggleActive(row)}>
-                    {row.is_active ? 'Deactivate' : 'Activate'}
+                  <button type="button" className="ui-icon-button" onClick={() => onEdit(row)} aria-label={`Edit ${row.full_name}`} title="Edit staff account">
+                    <AppIcon name="edit" size={16} />
+                  </button>
+                  <button type="button" className="ui-icon-button" onClick={() => onToggleActive(row)} aria-label={`${row.is_active ? 'Deactivate' : 'Activate'} ${row.full_name}`} title={row.is_active ? 'Deactivate account' : 'Activate account'}>
+                    <AppIcon name={row.is_active ? 'user-remove' : 'user-check'} size={16} />
                   </button>
                   {isTemporaryUser(row.user_type) ? (
-                    <button type="button" onClick={() => onExtend(row)}>Extend</button>
+                    <button type="button" className="ui-icon-button" onClick={() => onExtend(row)} aria-label={`Extend ${row.full_name}'s account`} title="Extend account">
+                      <AppIcon name="calendar" size={16} />
+                    </button>
                   ) : null}
                 </>
               ) : null}

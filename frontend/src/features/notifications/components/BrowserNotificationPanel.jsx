@@ -1,18 +1,19 @@
 import { useEffect, useState } from 'react';
 import {
-  browserPushSupported,
   disableBrowserPushSubscription,
+  getBrowserPushSupportStatus,
   listBrowserPushSubscriptions,
   registerBrowserPushDevice,
   sendBrowserPushTest,
 } from '../services/browser-push-api.js';
 
-export function BrowserNotificationPanel() {
+export function BrowserNotificationPanel({ onNotificationSent }) {
   const [devices, setDevices] = useState([]);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [isBusy, setIsBusy] = useState(false);
-  const supported = browserPushSupported();
+  const support = getBrowserPushSupportStatus();
+  const supported = support.supported;
 
   async function refreshDevices() {
     if (!supported) return;
@@ -34,9 +35,16 @@ export function BrowserNotificationPanel() {
     setError('');
     setMessage('');
     try {
-      await action();
+      const result = await action();
       await refreshDevices();
-      setMessage(successMessage);
+      if (result?.notification && typeof onNotificationSent === 'function') {
+        await onNotificationSent(result.notification);
+      }
+      setMessage(
+        typeof successMessage === 'function'
+          ? successMessage(result)
+          : successMessage
+      );
     } catch (actionError) {
       setError(actionError.message || 'Browser notification action failed.');
     } finally {
@@ -45,6 +53,7 @@ export function BrowserNotificationPanel() {
   }
 
   const activeDevice = devices.find((device) => device.is_active);
+  const activeCount = devices.filter((device) => device.is_active).length;
 
   return (
     <section className="browser-notification-panel" aria-label="Browser notification settings">
@@ -54,7 +63,7 @@ export function BrowserNotificationPanel() {
       </div>
 
       {!supported ? (
-        <p className="browser-notification-status warning">Browser push is not supported on this device.</p>
+        <p className="browser-notification-status warning">{support.reason}</p>
       ) : null}
 
       {error ? <p className="browser-notification-status error">{error}</p> : null}
@@ -65,7 +74,7 @@ export function BrowserNotificationPanel() {
           type="button"
           className="ui-button ui-button-primary"
           disabled={!supported || isBusy}
-          onClick={() => runAction(registerBrowserPushDevice, 'Browser notifications enabled for this device.')}
+          onClick={() => runAction(registerBrowserPushDevice, 'This browser is ready for alerts.')}
         >
           Enable this device
         </button>
@@ -73,7 +82,12 @@ export function BrowserNotificationPanel() {
           type="button"
           className="ui-button ui-button-secondary"
           disabled={!supported || isBusy || !activeDevice}
-          onClick={() => runAction(sendBrowserPushTest, 'Test notification queued.')}
+          onClick={() =>
+            runAction(
+              sendBrowserPushTest,
+              (result) => (result?.dispatched ? 'Test notification sent.' : 'Test notification queued.')
+            )
+          }
         >
           Test notification
         </button>
@@ -93,8 +107,8 @@ export function BrowserNotificationPanel() {
       </div>
 
       <div className="browser-notification-devices">
-        <strong>{devices.filter((device) => device.is_active).length} active device</strong>
-        <span>{activeDevice ? activeDevice.user_agent || 'Current browser registered' : 'No active browser device registered'}</span>
+        <strong>{activeCount} active device{activeCount === 1 ? '' : 's'}</strong>
+        <span>{activeDevice ? 'This browser is registered for alerts.' : 'No browser device registered yet.'}</span>
       </div>
     </section>
   );

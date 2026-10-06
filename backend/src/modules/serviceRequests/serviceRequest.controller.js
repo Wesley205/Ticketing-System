@@ -45,6 +45,16 @@ async function getAssignmentHistory(req, res) {
   }
 }
 
+async function getRoutingSuggestions(req, res) {
+  try {
+    const suggestions = await service.getRoutingSuggestions(req.user, req.params.id);
+    res.json(suggestions);
+  } catch (err) {
+    console.error(err);
+    sendError(res, err, "Failed to load routing suggestions.");
+  }
+}
+
 async function getTicketDetail(req, res) {
   try {
     const detail = await service.getTicketDetail(req.user, req.params.id);
@@ -62,6 +72,16 @@ async function createTicket(req, res) {
   } catch (err) {
     console.error(err);
     sendError(res, err, "Failed to submit request.");
+  }
+}
+
+async function decideApproval(req, res) {
+  try {
+    const ticket = await service.decideApproval(req.user, req.params.id, req.body);
+    res.json(ticket);
+  } catch (err) {
+    console.error(err);
+    sendError(res, err, "Failed to record the approval decision.");
   }
 }
 
@@ -136,8 +156,10 @@ module.exports = {
   addComment,
   assignTicket,
   createTicket,
+  decideApproval,
   downloadAttachment,
   getAssignmentHistory,
+  getRoutingSuggestions,
   getMetadata,
   getTicketDetail,
   listAssignedToMe,

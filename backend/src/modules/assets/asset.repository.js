@@ -1,8 +1,10 @@
 const ASSET_SELECT = `
-  SELECT a.*, d.name AS department_name, u.full_name AS assigned_staff_name
+  SELECT a.*, d.name AS department_name, u.full_name AS assigned_staff_name,
+         f.floor_label
   FROM assets a
   LEFT JOIN departments d ON d.department_id = a.department_id
   LEFT JOIN users u ON u.user_id = a.assigned_to
+  LEFT JOIN floors f ON f.floor_id = a.floor_id
 `;
 
 function buildAssetListQuery(filters = {}, visibility = { clauses: [], params: [] }) {
@@ -48,8 +50,8 @@ async function insertAsset(client, data) {
   const result = await client.query(
     `INSERT INTO assets
       (asset_tag, asset_type, brand, model, serial_number, department_id,
-       assigned_to, purchase_date, condition, status, location, description)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+       floor_id, assigned_to, purchase_date, condition, status, location, description)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
      RETURNING *`,
     [
       data.asset_tag,
@@ -58,6 +60,7 @@ async function insertAsset(client, data) {
       data.model || null,
       data.serial_number || null,
       data.department_id || null,
+      data.floor_id || null,
       null,
       data.purchase_date || null,
       data.condition || 'Good',
@@ -89,13 +92,14 @@ async function updateAsset(client, assetId, updates) {
       model = $4,
       serial_number = $5,
       department_id = $6,
-      assigned_to = $7,
-      purchase_date = $8,
-      condition = COALESCE($9, condition),
-      status = $10,
-      location = $11,
-      description = $12
-     WHERE asset_id = $13
+      floor_id = $7,
+      assigned_to = $8,
+      purchase_date = $9,
+      condition = COALESCE($10, condition),
+      status = $11,
+      location = $12,
+      description = $13
+     WHERE asset_id = $14
      RETURNING *`,
     [
       updates.asset_tag,
@@ -104,6 +108,7 @@ async function updateAsset(client, assetId, updates) {
       updates.model || null,
       updates.serial_number || null,
       updates.department_id || null,
+      updates.floor_id || null,
       updates.assigned_to,
       updates.purchase_date || null,
       updates.condition || null,

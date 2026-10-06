@@ -9,7 +9,7 @@ function mapHistory(history = []) {
       entry.from_status || entry.to_status
         ? `${entry.from_status || '-'} -> ${entry.to_status || '-'}`
         : '',
-      entry.details || '',
+      String(entry.details || '').replace(/\btechnician_id\s+(\d+)/gi, 'technician #$1'),
     ]
       .filter(Boolean)
       .join(' | '),

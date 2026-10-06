@@ -1,5 +1,6 @@
 import { EmptyState } from '../../../components/feedback/EmptyState.jsx';
 import { Button } from '../../../components/forms/Button.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 import { formatDateTime } from '../../../lib/formatting.js';
 import { getChecklistItems } from '../services/maintenance-api.js';
 
@@ -37,7 +38,10 @@ export function ScheduleList({ schedules = [], canManage = false, onEdit }) {
             ) : null}
             {canManage ? (
               <div className="ui-inline-actions">
-                <Button variant="secondary" size="sm" onClick={() => onEdit(schedule)}>Edit Schedule</Button>
+                <Button variant="secondary" size="sm" onClick={() => onEdit(schedule)}>
+                  <AppIcon name="edit" size={16} />
+                  Edit schedule
+                </Button>
               </div>
             ) : null}
           </article>

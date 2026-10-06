@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/forms/Button.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 import { useAuth } from '../../auth/hooks/useAuth.js';
 
 const links = [
@@ -12,12 +13,13 @@ const links = [
 ];
 
 function NavIcon({ type }) {
-  return <span className={`technician-dashboard-nav-icon technician-dashboard-nav-icon-${type}`} aria-hidden="true" />;
+  return <AppIcon name={type} size={19} />;
 }
 
 export function TechnicianDashboardSidebar() {
   const auth = useAuth();
   const navigate = useNavigate();
+  const assignedFloor = auth.user?.floor_label || null;
 
   async function handleLogout() {
     await auth.logout();
@@ -58,6 +60,7 @@ export function TechnicianDashboardSidebar() {
         <div>
           <strong>{auth.user?.full_name || auth.user?.username || 'Technician'}</strong>
           <small>{auth.accessProfile?.role_label || auth.user?.role || 'Technician'} / Level 3</small>
+          <small>{assignedFloor ? `Assigned floor: ${assignedFloor}` : 'No floor assigned'}</small>
         </div>
         <Button variant="ghost" size="sm" className="technician-dashboard-logout" onClick={handleLogout}>
           Log out

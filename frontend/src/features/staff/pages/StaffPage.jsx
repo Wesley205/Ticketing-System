@@ -38,13 +38,13 @@ export function StaffPage() {
             <Button size="sm" variant="secondary" onClick={() => staffState.loadStaff(staffState.filters)}>Refresh</Button>
             {canManage ? (
               <>
-                <Button size="sm" variant="secondary" onClick={() => setInviteOpen(true)}>Invite Staff</Button>
+                <Button size="sm" variant="secondary" onClick={() => setInviteOpen(true)}>Send Invitation</Button>
                 <Button size="sm" onClick={() => {
                   setEditingUser(null);
                   setFormOpen(true);
                 }}
                 >
-                  Add Account
+                  Create Account
                 </Button>
               </>
             ) : null}

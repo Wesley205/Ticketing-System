@@ -1,4 +1,5 @@
 const pool = require('../../config/db');
+const fs = require('fs');
 const policy = require('./knowledgeBase.policy');
 const service = require('./knowledgeBase.service');
 const { KNOWLEDGE_BASE_ERROR_MESSAGES } = require('./knowledgeBase.constants');
@@ -134,9 +135,33 @@ async function feedback(req, res) {
   }
 }
 
+async function downloadMedia(req, res) {
+  try {
+    const result = await service.getKnowledgeArticleMediaDownload(
+      pool,
+      Number(req.params.id),
+      Number(req.params.mediaId)
+    );
+    if (!result) {
+      return res.status(404).json({ error: 'Article image not found.' });
+    }
+    if (!policy.canViewArticle(req.user, result.article)) {
+      return res.status(403).json({ error: KNOWLEDGE_BASE_ERROR_MESSAGES.viewForbidden });
+    }
+
+    await fs.promises.access(result.fullPath);
+    res.setHeader('Content-Type', result.media.mime_type || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `inline; filename="${result.media.file_name}"`);
+    return res.sendFile(result.fullPath);
+  } catch (err) {
+    return sendError(res, err, 404, 'Article image file not found.');
+  }
+}
+
 module.exports = {
   create,
   detail,
+  downloadMedia,
   feedback,
   listArticles,
   revisions,

@@ -12,27 +12,25 @@ function readRepoFile(...parts) {
 test('Dockerfile packages the backend for production safely', () => {
   const dockerfile = readRepoFile('Dockerfile');
 
-  assert.match(dockerfile, /FROM node:20-bookworm-slim AS frontend-build/);
-  assert.match(dockerfile, /WORKDIR \/app\/frontend/);
-  assert.match(dockerfile, /RUN npm run build/);
-  assert.match(dockerfile, /FROM node:20-bookworm-slim AS backend-dependencies/);
-  assert.match(dockerfile, /npm ci --omit=dev/);
+  assert.match(dockerfile, /FROM node:20-bookworm-slim/);
+  assert.match(dockerfile, /ENV NODE_ENV=production/);
   assert.match(dockerfile, /COPY backend \.\/backend/);
-  assert.match(dockerfile, /COPY --from=frontend-build \/app\/frontend\/dist \.\/frontend\/dist/);
+  assert.match(dockerfile, /COPY frontend\/dist \.\/frontend\/dist/);
   assert.match(dockerfile, /COPY database\/migrations \.\/database\/migrations/);
+  assert.match(dockerfile, /require\('\.\/backend\/node_modules\/web-push'\)/);
   assert.match(dockerfile, /USER node/);
   assert.match(dockerfile, /HEALTHCHECK/);
   assert.match(dockerfile, /CMD \["node", "src\/server\.js"\]/);
 });
 
-test('docker ignore excludes secrets, dependencies, and runtime attachments', () => {
+test('docker ignore excludes secrets, frontend dependencies, and runtime attachments', () => {
   const dockerignore = readRepoFile('.dockerignore');
 
   assert.match(dockerignore, /backend\/\.env/);
   assert.match(dockerignore, /\.env\.\*/);
-  assert.match(dockerignore, /backend\/node_modules/);
+  assert.doesNotMatch(dockerignore, /backend\/node_modules/);
   assert.match(dockerignore, /frontend\/node_modules/);
-  assert.match(dockerignore, /frontend\/dist/);
+  assert.doesNotMatch(dockerignore, /frontend\/dist/);
   assert.match(dockerignore, /storage\/ticket-attachments/);
 });
 

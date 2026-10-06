@@ -134,6 +134,10 @@ const phase10DomainIntegrityRollbackSql = fs.readFileSync(
   ),
   'utf8'
 );
+const slaWarningMigrationSql = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'database', 'migrations', '015_sla_warning_notifications.sql'),
+  'utf8'
+);
 
 test('bootstrap migration creates the original foundation tables non-destructively', () => {
   for (const tableName of ['departments', 'users', 'assets', 'service_requests', 'maintenance', 'audit_logs']) {
@@ -217,6 +221,13 @@ test('phase 7 migration adds delivery queue and richer notification preferences'
   assert.match(phase7MigrationSql, /ADD COLUMN IF NOT EXISTS comment_enabled BOOLEAN NOT NULL DEFAULT TRUE/i);
   assert.match(phase7MigrationSql, /ADD COLUMN IF NOT EXISTS sla_enabled BOOLEAN NOT NULL DEFAULT TRUE/i);
   assert.match(phase7MigrationSql, /notification_type IN \(\s*'ticket_assigned',\s*'ticket_updated',\s*'ticket_resolved',\s*'ticket_comment',\s*'ticket_attachment'/i);
+});
+
+test('SLA warning migration adds one-time warning state and notification support', () => {
+  assert.match(slaWarningMigrationSql, /ADD COLUMN IF NOT EXISTS response_warning_sent_at TIMESTAMP/i);
+  assert.match(slaWarningMigrationSql, /ADD COLUMN IF NOT EXISTS resolution_warning_sent_at TIMESTAMP/i);
+  assert.match(slaWarningMigrationSql, /ADD COLUMN IF NOT EXISTS expected_completion_escalated_at TIMESTAMP/i);
+  assert.match(slaWarningMigrationSql, /'ticket_sla_warning'/i);
 });
 
 test('phase 8 migration adds maintenance schedules and asset lifecycle tracking', () => {

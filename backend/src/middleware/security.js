@@ -19,7 +19,10 @@ const {
 const BODY_METHODS = new Set(['POST', 'PUT', 'PATCH']);
 
 function normalizeOrigin(value) {
-  return String(value || '').trim().replace(/\/+$/, '');
+  return String(value || '')
+    .trim()
+    .replace(/^(https?):\/(?!\/)/i, '$1://')
+    .replace(/\/+$/, '');
 }
 
 function configureTrustProxy(app, env = process.env) {
@@ -45,6 +48,7 @@ function configureTrustProxy(app, env = process.env) {
 function contentTypeGuard(req, res, next) {
   if (!BODY_METHODS.has(req.method)) return next();
   if (!req.headers['content-length'] && !req.headers['transfer-encoding']) return next();
+  if (req.headers['content-length'] === '0' && !req.headers['transfer-encoding']) return next();
   if (req.is('application/json') || req.is('application/x-www-form-urlencoded')) return next();
 
   return next(new AppError({
@@ -58,7 +62,14 @@ function isSameHostOrigin(req, origin) {
   const host = req.get?.('host') || req.headers?.host;
   if (!host || !origin) return false;
 
-  return normalizeOrigin(origin) === `${req.protocol}://${host}`;
+  try {
+    const parsedOrigin = new URL(normalizeOrigin(origin));
+    if (!['http:', 'https:'].includes(parsedOrigin.protocol)) return false;
+
+    return parsedOrigin.host.toLowerCase() === String(host).toLowerCase();
+  } catch {
+    return false;
+  }
 }
 
 function createCorsOptionsDelegate(env = process.env) {

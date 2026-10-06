@@ -3,8 +3,9 @@ import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
 import { Button } from '../../../components/forms/Button.jsx';
 import { TimelineList } from '../../../components/status/TimelineList.jsx';
+import { ImageGallery } from '../../../components/media/ImageGallery.jsx';
 import { formatDateTime } from '../../../lib/formatting.js';
-import { splitRelations } from '../services/knowledge-base-api.js';
+import { fetchArticleMediaBlob, splitRelations } from '../services/knowledge-base-api.js';
 import { formatArticleVisibility } from '../services/knowledge-base-copy.js';
 
 function feedbackCount(summary, key) {
@@ -42,6 +43,24 @@ export function ArticleDetail({
     description: revision.change_note || 'No change note provided',
     timestamp: revision.created_at,
   }));
+  const mediaItems = (article.media || []).map((item) => ({
+    id: item.media_id,
+    fileName: item.file_name,
+    caption: item.caption,
+    altText: item.alt_text || item.caption || item.file_name,
+  }));
+
+  async function downloadMedia(item) {
+    const blob = await fetchArticleMediaBlob(article.article_id, item.id);
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = item.fileName || 'article-image';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  }
 
   return (
     <article className="kb-secure-detail">
@@ -63,6 +82,17 @@ export function ArticleDetail({
       </section>
 
       <div className="kb-article-body">{article.body}</div>
+
+      {mediaItems.length ? (
+        <section className="kb-secure-section">
+          <ImageGallery
+            title="Article images"
+            items={mediaItems}
+            loadImage={(mediaId) => fetchArticleMediaBlob(article.article_id, mediaId)}
+            onDownload={downloadMedia}
+          />
+        </section>
+      ) : null}
 
       <section className="kb-secure-section">
         <strong>Related assets</strong>

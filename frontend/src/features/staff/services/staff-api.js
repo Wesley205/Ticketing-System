@@ -139,7 +139,7 @@ export function getUserTypeLabel(userType) {
   return {
     employee: 'Employee',
     intern: 'Intern',
-    corper: 'Corper',
+    corper: 'National service member',
     contractor: 'Contractor',
     guest: 'Guest',
   }[userType] || userType || '-';
