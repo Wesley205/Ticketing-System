@@ -1,0 +1,223 @@
+{
+  "collection": "nsc-production-support-2026-10",
+  "reviewed_on": "2026-10-08",
+  "methodology": "Curated first-line support collection, not a measured Nigerian top-30 ranking. Vendor instructions are paraphrased; escalation and organisational safeguards are NSC editorial guidance.",
+  "regional_sources": [
+    "https://www.ncc.gov.ng/market-data-reports/consumer-complaint-statistics",
+    "https://ncc.gov.ng/frequently-asked-questions/causes-data-consumptionusagedepletion",
+    "https://consumer.ncc.gov.ng/articles/115-telecom-complaint-resolution-a-step-by-step-guide"
+  ],
+  "image_policy": "No fabricated or generated illustrations. These first-line checks do not require images; source links provide vendor illustrations. Microsoft screenshot guidelines prohibit inclusion in product user interfaces. Model-specific hardware photographs must not be presented as universal instructions.",
+  "articles": [
+    {
+      "slug": "prod-windows-wifi-no-internet", "title": "Wi-Fi connected but internet is not working", "category": "Network issues", "ticket_categories": ["Network", "Internet"],
+      "summary": "Check Wi-Fi settings and distinguish a device problem from a shared network outage.", "platform": "Microsoft Windows 11", "keywords": "wifi wireless internet disconnected router outage",
+      "steps": ["Open Settings > Network & internet. Turn Wi-Fi on and make sure Airplane mode is off.", "Confirm that you are connected to the correct approved network. Try another website.", "Test the same network on another device. If both fail, report a shared connection problem to ICT.", "Run the Network and Internet troubleshooter in Get Help and follow its prompts."],
+      "verify": "An approved website loads on the affected device.", "escalate": "Report your floor, network name, time, error message and whether other devices are affected. Do not reset shared routers, change DNS or disable security controls.",
+      "sources": ["https://support.microsoft.com/en-us/windows/experience/connectivity-networking/fix-wi-fi-connection-issues-in-windows"]
+    },
+    {
+      "slug": "prod-windows-ethernet-disconnected", "title": "Network cable connected but internet is unavailable", "category": "Network issues", "ticket_categories": ["Network", "Internet"],
+      "summary": "Check a wired network connection without changing office network settings.", "platform": "Microsoft Windows 11", "keywords": "ethernet LAN cable network port disconnected",
+      "steps": ["Check that the Ethernet cable is firmly connected to your computer and approved wall socket or adapter.", "Open Settings > Network & internet and inspect the Ethernet status.", "If available, test with a known working cable approved by ICT.", "Run the Network and Internet troubleshooter in Get Help. Tell ICT whether another device has the same problem."],
+      "verify": "Ethernet shows Connected and an approved website opens.", "escalate": "Give ICT the socket label and any link-light or error details. Do not move switch cables or change static IP settings.",
+      "sources": ["https://support.microsoft.com/en-us/windows/experience/connectivity-networking/fix-ethernet-connection-problems-in-windows"]
+    },
+    {
+      "slug": "prod-android-mobile-data", "title": "Mobile data is on but websites will not load", "category": "Network issues", "ticket_categories": ["Internet", "Network"],
+      "summary": "Check mobile connectivity before reporting a provider or coverage problem.", "platform": "Android; menu names vary by manufacturer", "keywords": "Android mobile data MTN Airtel Glo 4G 5G coverage Nigeria",
+      "steps": ["Restart the phone. In Settings > Network & internet or Connections, check that Mobile data is enabled.", "Turn Wi-Fi off briefly to test mobile data separately. Look for a cellular data indicator beside the signal bars.", "Turn Airplane mode on, wait 10 seconds, then turn it off.", "If coverage is weak, try a nearby safe location. If the problem persists, contact the mobile provider through its official channel."],
+      "verify": "A webpage loads using mobile data rather than Wi-Fi.", "escalate": "For an office SIM, contact ICT with the location and error. Do not guess APN settings or use personal hotspots for restricted work without approval.",
+      "sources": ["https://support.google.com/android/answer/2651367"]
+    },
+    {
+      "slug": "prod-android-hotspot-connection", "title": "Connect a laptop to an approved phone hotspot", "category": "Network issues", "ticket_categories": ["Internet", "Network"],
+      "summary": "Use a password-protected mobile hotspot when ICT permits it.", "platform": "Android phone and Wi-Fi-enabled laptop", "keywords": "hotspot tethering mobile phone laptop Wi-Fi",
+      "steps": ["First obtain approval to use mobile data for work. Confirm that the phone has a working mobile connection and that its plan allows tethering.", "Swipe down on the phone and enable Hotspot. Touch and hold Hotspot to check its name and password.", "On the laptop, open available Wi-Fi networks, select the hotspot and enter its password.", "Turn the hotspot off after use to reduce battery and data consumption."],
+      "verify": "The laptop can open an approved website through the hotspot.", "escalate": "Report connection errors to ICT. Keep hotspot security enabled and do not publish its password in tickets.",
+      "sources": ["https://support.google.com/android/answer/9059108/share-a-mobile-connection-by-hotspot-or-tethering-on-android?hl=en-GB"]
+    },
+    {
+      "slug": "prod-data-bundle-depletion", "title": "Data bundle finishes faster than expected", "category": "Network issues", "ticket_categories": ["Internet"],
+      "summary": "Reduce unnecessary background data and check the terms of your Nigerian data plan.", "platform": "Microsoft Windows 11 on a limited Wi-Fi or Ethernet plan", "keywords": "data depletion Nigeria bundle metered updates background usage",
+      "steps": ["Check your provider's official balance information and your plan's expiry, bonus-data and fair-use conditions.", "Review video streaming, conferencing, shared hotspot use and background downloads; these can consume substantial data.", "In Windows, open Settings > Network & internet > Wi-Fi or Ethernet, select the current network and enable Metered connection if allowed.", "If usage appears inconsistent with your plan, contact the provider and request a complaint reference number."],
+      "verify": "You understand the plan balance and have reduced avoidable background traffic.", "escalate": "Ask ICT to manage office data plans. Metered mode can delay updates and syncing; arrange required security updates with ICT. Escalate unresolved provider complaints through NCC's official guide.",
+      "sources": ["https://ncc.gov.ng/frequently-asked-questions/causes-data-consumptionusagedepletion", "https://support.microsoft.com/en-us/windows/experience/connectivity-networking/metered-connections-in-windows", "https://consumer.ncc.gov.ng/articles/115-telecom-complaint-resolution-a-step-by-step-guide"]
+    },
+    {
+      "slug": "prod-windows-slow-computer", "title": "Computer is slow during normal work", "category": "Software and apps", "ticket_categories": ["Computer", "Software"],
+      "summary": "Check storage, running apps and security before requesting a hardware upgrade.", "platform": "Microsoft Windows 11", "keywords": "slow computer lag performance startup freeze",
+      "steps": ["Save work, close apps you are not using and restart the computer.", "Check Settings > System > Storage for low free space.", "Open Task Manager to identify unusually busy apps; do not stop unfamiliar system or security processes.", "Run an approved malware scan and check Windows Update when ICT permits. Ask ICT before disabling startup services."],
+      "verify": "Repeat the task that was slow and note whether responsiveness improves.", "escalate": "Report the app, duration and whether the issue affects all work. Do not install registry cleaners, unofficial optimisers or random driver tools.",
+      "sources": ["https://support.microsoft.com/en-us/windows/experience/performance-optimization/tips-to-improve-pc-performance-in-windows"]
+    },
+    {
+      "slug": "prod-windows-low-storage", "title": "Computer reports low disk space", "category": "Software and apps", "ticket_categories": ["Computer", "Software"],
+      "summary": "Recover storage without deleting work records or system files.", "platform": "Microsoft Windows 11", "keywords": "disk full storage space cleanup drive C",
+      "steps": ["Open File Explorer > This PC to check which drive is nearly full.", "Open Settings > System > Storage > Cleanup recommendations.", "Review each proposed item before removal. Keep Downloads and any required work records unless their removal is approved.", "Use approved storage for files that must be retained; check that copies open before deleting originals."],
+      "verify": "Available space increases and the affected app can save a file.", "escalate": "Contact ICT if space rapidly fills again or you cannot safely remove files. Never delete Windows folders or assume cloud sync alone is a backup.",
+      "sources": ["https://support.microsoft.com/en-gb/windows/experience/storage-filemanagement/free-up-drive-space-in-windows"]
+    },
+    {
+      "slug": "prod-windows-update-fails", "title": "Windows update fails or keeps retrying", "category": "Software and apps", "ticket_categories": ["Computer", "Software"],
+      "summary": "Check power, internet and the update error before retrying.", "platform": "Microsoft Windows 11; managed devices may restrict changes", "keywords": "update failed restart pending error Windows installation",
+      "steps": ["Record the displayed error code and update name.", "Ensure the computer has reliable power and a working approved internet connection. Save your work.", "Restart normally when Windows requests it, then check Settings > Windows Update.", "Use the Windows Update troubleshooter in Get Help if the update still fails."],
+      "verify": "Windows Update shows the update installed without another error.", "escalate": "Send ICT the error code. Do not interrupt an active installation, delete update folders or reinstall Windows yourself. Windows 10 support ended in October 2025; ask ICT about supported-device arrangements.",
+      "sources": ["https://support.microsoft.com/en-gb/windows/deployment/updates-lifecycle/troubleshoot-problems-updating-windows", "https://support.microsoft.com/en-us/windows/windows-update-troubleshooter-19bc41ca-ad72-ae67-af3c-89ce169755dd"]
+    },
+    {
+      "slug": "prod-computer-no-power", "title": "Computer will not turn on", "category": "Hardware and devices", "ticket_categories": ["Hardware", "Computer"],
+      "summary": "Check external power connections and report hardware symptoms safely.", "platform": "Dell laptop or desktop; other brands require their own manual", "keywords": "power outage no power charger UPS lights boot Nigeria",
+      "steps": ["Inspect the power cable and adapter without opening equipment. Stop using damaged cables.", "Check that the approved adapter or power cable is firmly connected at both ends.", "Check the power strip's indicator and switch. Ask facilities or ICT to confirm supply if the outlet is uncertain.", "Disconnect nonessential external peripherals, then press the power button and record any lights, beeps or fan activity."],
+      "verify": "The computer starts normally. A powered device with a blank screen needs display troubleshooting instead.", "escalate": "Report an outage, damaged cable or persistent no-power condition. Do not open power supplies, bypass UPS protection, remove internal batteries or attempt electrical repairs.",
+      "sources": ["https://www.dell.com/support/contents/en-us/article/product-support/self-support-knowledgebase/fix-common-issues/no-power"]
+    },
+    {
+      "slug": "prod-laptop-slow-charging", "title": "Laptop charges slowly or loses charge while plugged in", "category": "Hardware and devices", "ticket_categories": ["Hardware", "Computer"],
+      "summary": "Check that the charger, cable and port meet the laptop's requirements.", "platform": "Microsoft Windows laptop; charger requirements are model-specific", "keywords": "battery charging charger USB-C adapter plugged in",
+      "steps": ["Use the manufacturer-approved charger and cable intended for the laptop.", "Confirm that the cable is connected to the laptop's charging port; not every USB-C port supports charging.", "Check the battery indicator for a slow-charging warning.", "Ask ICT to compare the charger rating and cable specification with the laptop manual."],
+      "verify": "The charging warning disappears and the battery level rises under normal use.", "escalate": "Stop using damaged or unusually hot charging equipment and contact ICT. Do not buy an adapter based only on connector shape or open the battery pack.",
+      "sources": ["https://support.microsoft.com/en-us/windows/experience/power-battery/pc-is-charging-slowly-or-discharging-while-it-s-plugged-in"]
+    },
+    {
+      "slug": "prod-computer-overheating", "title": "Laptop becomes hot or shuts down unexpectedly", "category": "Hardware and devices", "ticket_categories": ["Hardware", "Computer"],
+      "summary": "Reduce blocked airflow and escalate repeated thermal shutdowns.", "platform": "Dell computer; use the relevant manufacturer's manual for other brands", "keywords": "overheating fan hot shutdown dust ventilation",
+      "steps": ["Save work and shut down if the device is excessively hot.", "Place the laptop on a firm surface, not fabric, and leave its vents unobstructed.", "After cooling, close apps that are not needed and check whether the problem returns.", "Ask ICT to inspect dust buildup, fan operation and the model's thermal diagnostics."],
+      "verify": "Normal work no longer causes excessive heat or shutdowns.", "escalate": "Stop using a device with swelling, smoke or a burning smell and contact ICT or facilities urgently. Do not open it or perform BIOS updates during unstable power.",
+      "sources": ["https://www.dell.com/support/kbdoc/en-us/000130867/how-to-troubleshoot-a-overheating-shutdown-or-thermal-issue-on-a-dell-pc", "https://www.dell.com/support/kbdoc/en-ca/000124389/how-to-troubleshoot-power-issues-on-a-dell-laptop"]
+    },
+    {
+      "slug": "prod-windows-blank-screen", "title": "Computer is on but the screen is blank", "category": "Hardware and devices", "ticket_categories": ["Computer", "Hardware"],
+      "summary": "Check display connections before attempting recovery.", "platform": "Microsoft Windows 11", "keywords": "black blank screen monitor display HDMI cursor",
+      "steps": ["Check that the monitor is powered and its display cable is firmly connected.", "Press Windows + Ctrl + Shift + B to reset the graphics driver; a beep or brief flicker may occur.", "Use Windows + P to check the selected display mode.", "If an external display is connected, test the laptop's own screen separately."],
+      "verify": "The desktop appears on the intended screen.", "escalate": "Report whether a cursor, stop code or manufacturer logo is visible. Do not repeatedly force shutdowns or attempt recovery that could lose unsaved work without ICT guidance.",
+      "sources": ["https://support.microsoft.com/en-us/windows/hardware/display-graphics/troubleshooting-blank-screens-in-windows"]
+    },
+    {
+      "slug": "prod-windows-stop-code", "title": "Windows restarts with a stop-code error", "category": "Software and apps", "ticket_categories": ["Computer", "Software", "Hardware"],
+      "summary": "Capture the error and preserve evidence for repeated crashes.", "platform": "Microsoft Windows 11", "keywords": "BSOD blue black screen stop code crash restart",
+      "steps": ["Record the stop code and any module name shown; redact personal information in photos.", "Allow Windows to restart. Note whether the error returns during the same task.", "If a new external device was added just before the issue, shut down normally and disconnect that peripheral.", "Check free storage and approved Windows updates if you can sign in."],
+      "verify": "The original task runs without another unexpected restart.", "escalate": "Send ICT the code, time and recent hardware or software changes. Leave driver removal, recovery and operating-system resets to ICT.",
+      "sources": ["https://support.microsoft.com/en-us/windows/experience/performance-optimization/troubleshooting-windows-unexpected-restarts-and-stop-code-errors"]
+    },
+    {
+      "slug": "prod-printer-offline", "title": "Printer shows Offline", "category": "Printers", "ticket_categories": ["Printer", "Network"],
+      "summary": "Check printer power and connectivity before reinstalling anything.", "platform": "Microsoft Windows 11 and an approved office printer", "keywords": "printer offline not printing wireless USB",
+      "steps": ["Check that the printer is powered on and shows no paper, cover or toner warning.", "Check the USB cable or confirm that your computer and network printer use the approved network.", "With approval for shared equipment, switch the printer off, unplug it for 30 seconds, reconnect it and turn it on.", "Run the printer troubleshooter in Get Help."],
+      "verify": "The printer is available and prints one nonconfidential test page.", "escalate": "Report the printer name and whether colleagues are affected. Do not remove shared queues, install unofficial drivers or restart a shared print server.",
+      "sources": ["https://support.microsoft.com/en-us/windows/hardware/printer/troubleshooting-offline-printer-problems-in-windows"]
+    },
+    {
+      "slug": "prod-printer-queue-stuck", "title": "A print job is stuck in the queue", "category": "Printers", "ticket_categories": ["Printer"],
+      "summary": "Inspect your queued document before sending repeated copies.", "platform": "Microsoft Windows 11", "keywords": "print queue stuck pending document spooler",
+      "steps": ["Open Settings > Bluetooth & devices > Printers & scanners and select the intended printer.", "Open its print queue and check for an error or a stalled document.", "Cancel your own stuck job if it is no longer needed; do not cancel other users' documents.", "Check printer paper, ink or toner, open covers and jam warnings. Run the printer troubleshooter in Get Help if needed."],
+      "verify": "One new test job leaves the queue and prints once.", "escalate": "If cancellation fails or the shared queue remains blocked, contact ICT. Do not repeatedly submit documents or clear spooler files yourself.",
+      "sources": ["https://support.microsoft.com/en-us/windows/hardware/printer/fix-printer-connection-and-printing-problems-in-windows"]
+    },
+    {
+      "slug": "prod-printer-paper-jam", "title": "Printer reports a paper jam", "category": "Printers", "ticket_categories": ["Printer", "Hardware"],
+      "summary": "Follow the printer's model-specific instructions rather than forcing paper out.", "platform": "Office printers; access panels and removal directions vary by model", "keywords": "printer paper jam torn tray stuck",
+      "steps": ["Stop sending print jobs and record the printer model and displayed jam location.", "Use the exact model's manufacturer guide before opening any panel. Follow its shutdown and cooling instructions.", "Only if authorised, remove accessible paper exactly as that guide describes. Do not use sharp tools or force parts.", "Reload suitable, undamaged paper and avoid adding paper during printing."],
+      "verify": "The warning clears and a single test page feeds correctly.", "escalate": "Contact ICT if paper tears, cannot be reached, or jams recur. The linked HP OfficeJet Pro 7740 guide is an example for that model only, not universal disassembly instructions.",
+      "sources": ["https://support.hp.com/us-en/document/ish_12673775-12673823-16"]
+    },
+    {
+      "slug": "prod-keyboard-mouse-not-working", "title": "Keyboard or mouse stops responding", "category": "Hardware and devices", "ticket_categories": ["Hardware", "Computer"],
+      "summary": "Check the connection, battery and USB port before replacing a device.", "platform": "Microsoft Windows 11 with external keyboard or mouse", "keywords": "keyboard mouse USB receiver input battery",
+      "steps": ["Check cables for damage and verify that a wireless device is charged or has working batteries.", "Unplug the USB cable or receiver, wait briefly and reconnect it.", "Try another computer USB port; if using a hub, connect directly to the computer.", "If permitted, test the device on another approved computer to distinguish device failure from a computer problem."],
+      "verify": "Typing and pointer movement work reliably.", "escalate": "Report which tests succeeded. Do not connect unknown USB devices or install drivers from unsolicited links.",
+      "sources": ["https://support.microsoft.com/en-au/windows/hardware/input-devices/mouse-and-keyboard-problems-in-windows"]
+    },
+    {
+      "slug": "prod-bluetooth-pairing", "title": "Bluetooth device will not connect", "category": "Hardware and devices", "ticket_categories": ["Hardware", "Computer"],
+      "summary": "Check Bluetooth availability and pair an approved accessory again.", "platform": "Microsoft Windows 11", "keywords": "Bluetooth pairing headset wireless device disconnected",
+      "steps": ["Charge or replace the accessory batteries and keep it near the computer.", "Open Settings > Bluetooth & devices and confirm Bluetooth is enabled and Airplane mode is off.", "Turn Bluetooth off, wait 10 seconds, then turn it on.", "For your approved accessory, remove its existing pairing and add it again using the manufacturer's pairing instructions. Run the Bluetooth troubleshooter in Get Help if needed."],
+      "verify": "The accessory connects and performs its intended function.", "escalate": "Contact ICT if Bluetooth is missing or pairing fails. Do not pair unknown nearby devices or change managed drivers.",
+      "sources": ["https://support.microsoft.com/en-us/windows/hardware/bluetooth/fix-bluetooth-problems-in-windows"]
+    },
+    {
+      "slug": "prod-windows-no-sound", "title": "No sound from speakers or headphones", "category": "Hardware and devices", "ticket_categories": ["Hardware", "Computer"],
+      "summary": "Check volume and the selected sound output.", "platform": "Microsoft Windows 11", "keywords": "audio sound speaker headphones mute output",
+      "steps": ["Check speaker or headphone connections and their physical volume controls.", "Open the taskbar sound control and make sure sound is not muted.", "Open Settings > System > Sound and choose the intended output device rather than an unused monitor or headset.", "Run the Audio troubleshooter in Get Help if sound is still absent."],
+      "verify": "A nonconfidential audio sample plays through the selected device.", "escalate": "Report whether all apps or only one app are affected. Ask ICT before changing drivers or system audio services.",
+      "sources": ["https://support.microsoft.com/en-US/Windows/Hardware/Audio/fix-sound-or-audio-problems-in-windows"]
+    },
+    {
+      "slug": "prod-microphone-not-heard", "title": "Others cannot hear your microphone", "category": "Hardware and devices", "ticket_categories": ["Hardware", "Software"],
+      "summary": "Check microphone selection, access and input volume.", "platform": "Microsoft Windows 11", "keywords": "microphone meeting headset input mute voice",
+      "steps": ["Check the headset connection and physical mute switch.", "Open Settings > Privacy & security > Microphone. Allow access for the intended app if organisational policy permits.", "Open Settings > System > Sound > Input and choose your microphone.", "Use Start test in the microphone properties, speak normally, stop the test and review the result; adjust input volume if necessary."],
+      "verify": "The test captures your voice and the meeting app uses the same microphone.", "escalate": "If access is greyed out or the device is not detected, contact ICT. Do not enable access for untrusted apps or remove audio drivers yourself.",
+      "sources": ["https://support.microsoft.com/en-us/windows/hardware/drivers/fix-microphone-problems"]
+    },
+    {
+      "slug": "prod-camera-not-working", "title": "Camera does not work in a meeting", "category": "Hardware and devices", "ticket_categories": ["Hardware", "Software"],
+      "summary": "Check the camera connection and permissions without weakening security.", "platform": "Microsoft Windows 11", "keywords": "camera webcam meeting video privacy shutter",
+      "steps": ["Check the camera's physical shutter or switch and any external USB connection.", "Close other apps that may already be using the camera.", "Open Settings > Privacy & security > Camera and allow the intended app if policy permits; desktop apps have a separate access setting.", "Open the Windows Camera app to see whether the preview works independently of the meeting app."],
+      "verify": "The camera preview appears in the intended app.", "escalate": "Report the error code and whether Camera works. Greyed-out access settings require ICT; do not disable antivirus or bypass managed policies.",
+      "sources": ["https://support.microsoft.com/en-gb/windows/hardware/camera/camera-doesn-t-work-in-windows"]
+    },
+    {
+      "slug": "prod-chrome-crashes", "title": "Chrome freezes or a webpage keeps crashing", "category": "Software and apps", "ticket_categories": ["Software", "Internet"],
+      "summary": "Reduce browser resource use and determine whether the failure is site-specific.", "platform": "Google Chrome on a computer", "keywords": "Chrome crash freeze Aw Snap browser tabs memory",
+      "steps": ["Save work in other tabs, then close tabs and apps that are not needed.", "Pause unnecessary downloads and reload the affected page.", "Quit Chrome and reopen it. If necessary, save work and restart the computer.", "Test the same approved website in another approved browser to distinguish a site or network problem from Chrome."],
+      "verify": "The original page opens without crashing.", "escalate": "Send ICT the error text and affected site. Do not erase browser profiles, remove managed extensions or reinstall Chrome without approval.",
+      "sources": ["https://support.google.com/chrome/answer/142063"]
+    },
+    {
+      "slug": "prod-browser-certificate-clock", "title": "Browser says the clock is wrong or connection is not private", "category": "Security steps", "ticket_categories": ["Software", "Internet"],
+      "summary": "Check date and time without bypassing certificate warnings.", "platform": "Google Chrome; device clock settings vary", "keywords": "certificate privacy clock date TLS SSL NET ERR CERT DATE INVALID",
+      "steps": ["Record the exact browser warning and website address.", "If the warning says the clock is ahead or behind, check the device's date, time and time zone.", "Correct an inaccurate clock using approved device settings, or ask ICT if those settings are managed.", "Reload the intended website. If the clock is correct but the warning persists, stop and report it."],
+      "verify": "The site opens normally without a certificate warning.", "escalate": "Do not proceed through the warning, install unknown certificates or submit passwords. ICT or the site owner must investigate remaining certificate failures.",
+      "sources": ["https://support.google.com/chrome/answer/95669"]
+    },
+    {
+      "slug": "prod-chrome-notifications-blocked", "title": "Browser notifications are not appearing", "category": "Software and apps", "ticket_categories": ["Software"],
+      "summary": "Allow alerts only for trusted sites and check device notification settings.", "platform": "Google Chrome on a computer; mobile support differs", "keywords": "notification browser push permission blocked alerts Chrome",
+      "steps": ["Open Chrome Settings > Privacy and security > Site settings > Notifications.", "Check whether the trusted site is blocked; change only that site's permission to Allow if you want its alerts.", "Check the computer's notification settings for Chrome and whether focus or do-not-disturb settings suppress alerts.", "Return to the application and send a test notification if that feature is available."],
+      "verify": "The trusted site's test alert appears in the operating system's notification area.", "escalate": "Report the browser, device and permission state if no alert arrives. Allowing notifications does not guarantee a sound or banner; those depend on device settings. Do not allow unknown sites.",
+      "sources": ["https://support.google.com/chrome/answer/3220216?hl=en", "https://support.microsoft.com/en-us/windows/experience/notifications-and-do-not-disturb-in-windows"]
+    },
+    {
+      "slug": "prod-outlook-mail-not-sending", "title": "Outlook cannot send or receive email", "category": "Software and apps", "ticket_categories": ["Email", "Software"],
+      "summary": "Check connectivity, synchronisation and attachment size.", "platform": "Microsoft Outlook; commands differ between new and classic versions", "keywords": "Outlook email outbox send receive offline attachment mailbox",
+      "steps": ["Check that an approved website opens to confirm internet access.", "Inspect Outlook's status for disconnection or offline mode.", "In new Outlook, use View > Sync to check for new messages if the account supports it.", "Check whether a large attachment is blocking a message and whether account storage is full. Use an approved sharing method for oversized files."],
+      "verify": "A nonconfidential test message sends and a reply arrives.", "escalate": "Give ICT the error and Outlook version. Do not share passwords, create unofficial forwarding rules or remove the account profile without approval.",
+      "sources": ["https://support.microsoft.com/en-us/outlook/i-can-t-send-or-receive-messages-in-outlook"]
+    },
+    {
+      "slug": "prod-onedrive-sync-error", "title": "OneDrive files are not syncing", "category": "Software and apps", "ticket_categories": ["Software"],
+      "summary": "Read the sync status before making changes to local files.", "platform": "Microsoft OneDrive current sync app on Windows", "keywords": "OneDrive cloud sync error upload storage files",
+      "steps": ["Find the OneDrive cloud icon in the taskbar and open its status panel.", "Record the displayed error and follow the matching guidance in Microsoft's sync troubleshooter.", "Confirm that OneDrive is running and that you are using the intended work account.", "Check whether cloud storage is full; exceeding storage prevents new uploads and synchronisation."],
+      "verify": "The affected file appears in the approved cloud location and sync errors clear.", "escalate": "Keep local originals until ICT confirms safe synchronisation. Do not delete files, reset or unlink the account as an initial fix; synced deletion can affect colleagues.",
+      "sources": ["https://support.microsoft.com/en-gb/onedrive/fix-onedrive-sync-problems"]
+    },
+    {
+      "slug": "prod-microsoft-work-password-reset", "title": "Forgot your Microsoft work-account password", "category": "Account access", "ticket_categories": ["Software", "Email"],
+      "summary": "Use the organisation's authorised recovery process, not an emailed password-reset link you cannot verify.", "platform": "Microsoft Entra work or school account; not an NSC service-desk login", "keywords": "password forgotten locked Microsoft work account Entra reset",
+      "steps": ["Open mysignins.microsoft.com/security-info directly in the browser.", "At the sign-in screen, choose Can't access your account and enter your work username.", "Complete the identity checks using a previously registered recovery method.", "If self-service reset is unavailable or you cannot verify your identity, contact the organisation's help desk."],
+      "verify": "You can sign in to the intended Microsoft work account with the new password.", "escalate": "Self-service reset must be enabled by the administrator. This procedure does not reset an NSC application password. Never give ICT or another person your password or verification code.",
+      "sources": ["https://support.microsoft.com/en-us/accounts-billing/work-school/reset-your-microsoft-work-or-school-account-password-using-security-info"]
+    },
+    {
+      "slug": "prod-microsoft-mfa-fails", "title": "Microsoft verification code or approval does not arrive", "category": "Account access", "ticket_categories": ["Software", "Email"],
+      "summary": "Use a registered alternative verification method and avoid repeated requests.", "platform": "Microsoft Entra work or school account", "keywords": "MFA OTP verification Authenticator code SMS lost phone",
+      "steps": ["Check that the registered phone or email is the one you can access.", "Check blocked messages or junk mail for the requested code.", "If offered, choose another verification method already registered to your account.", "Avoid repeated code requests, which can trigger security blocks. Contact the help desk if the phone is lost or no registered method works."],
+      "verify": "You complete the sign-in that you initiated.", "escalate": "Report unsolicited approval requests immediately. Do not approve them, share codes or disable MFA. Identity-verified recovery must be performed by authorised administrators.",
+      "sources": ["https://support.microsoft.com/en-us/accounts-billing/work-school/common-problems-with-two-step-verification-for-a-work-or-school-account"]
+    },
+    {
+      "slug": "prod-report-phishing", "title": "Suspicious email asks for a password or urgent payment", "category": "Security steps", "ticket_categories": ["Email", "Other"],
+      "summary": "Verify unexpected messages without opening their links or attachments.", "platform": "Email and browser users", "keywords": "phishing scam suspicious email link fraud password payment",
+      "steps": ["Do not open unexpected attachments, follow sign-in links or reply with sensitive information.", "Check the sender address and destination of links without opening them; familiar display names are not proof of identity.", "Verify the request through a contact method you already trust, not a number supplied in the suspicious message.", "Report the message to ICT using the approved reporting process. If you already entered credentials, tell ICT immediately."],
+      "verify": "ICT has received the report and you have not acted on an unverified request.", "escalate": "Record the time and what you clicked or entered, but never put passwords or codes into the ticket. Preserve the message for the security team rather than forwarding it widely.",
+      "sources": ["https://support.microsoft.com/en-gb/security/protect-yourself-from-phishing"]
+    },
+    {
+      "slug": "prod-windows-malware-alert", "title": "Windows reports a virus or suspicious file", "category": "Security steps", "ticket_categories": ["Computer", "Software", "Other"],
+      "summary": "Use the approved security tool and report the alert without bypassing protection.", "platform": "Microsoft Windows 11 with Microsoft Defender; managed antivirus may differ", "keywords": "malware virus Defender suspicious file security alert",
+      "steps": ["Stop opening the suspicious file and record the alert's threat name and time.", "Open Windows Security from Start, then Virus & threat protection > Quick scan if Microsoft Defender is the approved tool.", "For a specific file, use Scan with Microsoft Defender from its context menu when available.", "Send the scan result to ICT and follow its incident instructions. If another antivirus is managed by ICT, use that approved process instead."],
+      "verify": "ICT confirms the alert is handled; a clean scan alone does not prove every threat is absent.", "escalate": "Report suspected infection promptly. Do not disable protection, add exclusions, restore quarantined files or install unapproved cleaners.",
+      "sources": ["https://support.microsoft.com/en-us/windows/security/windows-security/stay-protected-with-the-windows-security-app"]
+    }
+  ]
+}

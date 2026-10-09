@@ -23,7 +23,7 @@
   padding: 18px;
   border-radius: 8px;
   border: 1px solid var(--border);
-  background: #fff;
+  background: var(--color-panel-background);
 }
 
 .ui-feedback h3 {
@@ -49,7 +49,7 @@
   width: 36px;
   height: 36px;
   border-radius: 999px;
-  background: rgba(20, 144, 74, 0.12);
+  background: var(--brand-soft);
   color: var(--brand);
 }
 
@@ -113,7 +113,7 @@
 .ui-skeleton-detail b {
   display: block;
   border-radius: 999px;
-  background: linear-gradient(90deg, #e9e4d8 0%, #f4f0e8 48%, #e9e4d8 100%);
+  background: linear-gradient(90deg, #e8efea 0%, #f6f9f7 48%, #e8efea 100%);
   background-size: 220% 100%;
   animation: uiSkeletonSweep 1.35s ease-in-out infinite;
 }
@@ -199,7 +199,7 @@
   width: 54px;
   height: 54px;
   border-radius: 999px;
-  border: 1px solid #e7decc;
+  border: 1px solid var(--border);
   color: var(--brand);
 }
 
@@ -226,13 +226,13 @@
 }
 
 .ui-feedback-empty-search .ui-feedback-icon {
-  background: #f1eee8;
+  background: var(--color-surface-muted);
   color: var(--muted);
 }
 
 .ui-feedback-error {
-  border-color: #f0c4b8;
-  background: #fff;
+  border-color: #edc0b7;
+  background: var(--color-surface);
 }
 
 .ui-feedback-error-data .ui-feedback-icon,
@@ -246,13 +246,13 @@
 }
 
 .ui-feedback-error-access .ui-feedback-icon {
-  background: #f1eee8;
+  background: var(--color-surface-muted);
   color: var(--brand-deep);
 }
 
 .ui-feedback-success {
-  border-color: #bee0cb;
-  background: #e7f4ec;
+  border-color: var(--brand-border);
+  background: var(--brand-soft);
 }
 
 .ui-feedback-actions {

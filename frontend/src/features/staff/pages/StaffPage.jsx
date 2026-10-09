@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '../../../components/forms/Button.jsx';
+import { ConfirmDialog } from '../../../components/modals/ConfirmDialog.jsx';
 import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
 import { Panel } from '../../../components/layout/Panel.jsx';
@@ -25,6 +26,13 @@ export function StaffPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [confirmation, setConfirmation] = useState(null);
+
+  async function runConfirmation() {
+    if (!confirmation) return;
+    await confirmation.action();
+    setConfirmation(null);
+  }
 
   return (
     <SecureWorkspaceLayout title="Staff & Access Control Hub" subtitle="ICT Service Hub">
@@ -90,7 +98,7 @@ export function StaffPage() {
               <option key={department.department_id} value={department.department_id}>{department.name}</option>
             ))}
           </select>
-          <span className="secure-count-chip">{staffState.totalStaff} Active Profiles</span>
+          <span className="secure-count-chip">{staffState.totalStaff} Active staff accounts</span>
         </div>
 
       {staffState.error ? (
@@ -108,14 +116,22 @@ export function StaffPage() {
                   setEditingUser(row);
                   setFormOpen(true);
                 }}
-                onToggleActive={async (row) => {
-                  await updateStaffStatus(row.user_id, {
-                    is_active: !row.is_active,
-                    deactivation_reason: row.is_active ? 'Deactivated during React admin verification' : null,
-                  });
-                  await staffState.loadStaff(staffState.filters);
-                  showToast({ tone: 'success', title: row.is_active ? 'Account deactivated' : 'Account activated' });
-                }}
+                onToggleActive={(row) => setConfirmation({
+                  title: row.is_active ? 'Deactivate this staff account?' : 'Activate this staff account?',
+                  description: row.is_active
+                    ? `${row.full_name}'s access will be disabled until an administrator activates it again.`
+                    : `${row.full_name} will regain access under the current account permissions.`,
+                  confirmLabel: row.is_active ? 'Deactivate account' : 'Activate account',
+                  tone: row.is_active ? 'danger' : 'primary',
+                  action: async () => {
+                    await updateStaffStatus(row.user_id, {
+                      is_active: !row.is_active,
+                      deactivation_reason: row.is_active ? 'Account deactivated by administrator' : null,
+                    });
+                    await staffState.loadStaff(staffState.filters);
+                    showToast({ tone: 'success', title: row.is_active ? 'Account deactivated' : 'Account activated' });
+                  },
+                })}
                 onExtend={async (row) => {
                   const nextDate = row.account_expiration_date || '2026-12-31';
                   await extendTemporaryAccount(row.user_id, { account_expiration_date: nextDate });
@@ -136,7 +152,7 @@ export function StaffPage() {
 
       {canManage ? (
         <Panel
-          title="Pending Invitations"
+          title="Pending invitations"
           actions={(
             <div className="ui-inline-actions responsive-action-row">
               <select
@@ -160,10 +176,15 @@ export function StaffPage() {
           ) : (
             <InvitationList
               rows={invitationsState.invitations}
-              onRevoke={async (row) => {
-                await invitationsState.revoke(row.invitation_id);
-                showToast({ tone: 'success', title: 'Invitation revoked' });
-              }}
+              onRevoke={(row) => setConfirmation({
+                title: 'Revoke this invitation?',
+                description: `The invitation for ${row.email} will stop working immediately.`,
+                confirmLabel: 'Revoke invitation',
+                action: async () => {
+                  await invitationsState.revoke(row.invitation_id);
+                  showToast({ tone: 'success', title: 'Invitation revoked' });
+                },
+              })}
               onResend={async (row) => {
                 await invitationsState.resend(row.invitation_id);
                 showToast({ tone: 'success', title: 'Invitation email queued' });
@@ -203,6 +224,15 @@ export function StaffPage() {
           showToast({ tone: 'success', title: 'Invitation created' });
           return created;
         }}
+      />
+      <ConfirmDialog
+        open={Boolean(confirmation)}
+        title={confirmation?.title || 'Confirm action'}
+        description={confirmation?.description || ''}
+        confirmLabel={confirmation?.confirmLabel || 'Confirm'}
+        tone={confirmation?.tone || 'danger'}
+        onCancel={() => setConfirmation(null)}
+        onConfirm={runConfirmation}
       />
       </div>
     </SecureWorkspaceLayout>

@@ -49,9 +49,9 @@ export function TechnicianWorkItemPage() {
       ) : null}
 
       {workState.isLoading ? (
-        <LoadingState variant="detail" description="Loading assigned work item..." />
+        <LoadingState variant="detail" description="Loading assigned work..." />
       ) : !workState.item ? (
-        <EmptyState variant="search" title="Work item not found" description="The selected ticket or maintenance record is not available in your assigned queue." actionLabel="Assigned Work" actionTo="/technician/assigned-work" />
+        <EmptyState variant="search" title="Assigned work not found" description="This ticket or maintenance task is no longer in your assigned queue." actionLabel="View assigned work" actionTo="/technician/assigned-work" />
       ) : workType === 'ticket' ? (
         <TechnicianTicketExecution
             ticket={workState.item}

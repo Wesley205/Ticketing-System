@@ -3,6 +3,8 @@ import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
 import { SecureWorkspaceLayout } from '../../../components/layout/SecureWorkspaceLayout.jsx';
 import { NotificationFeed } from '../components/NotificationFeed.jsx';
 import { NotificationFilters } from '../components/NotificationFilters.jsx';
+import { BrowserNotificationPanel } from '../components/BrowserNotificationPanel.jsx';
+import { NotificationPreferencesPanel } from '../components/NotificationPreferencesPanel.jsx';
 import { useNotifications } from '../hooks/useNotifications.js';
 
 export function NotificationInboxPage() {
@@ -14,7 +16,7 @@ export function NotificationInboxPage() {
       <section className="notification-inbox-head">
         <div>
           <h2>Notification Feed</h2>
-          <p>Manage real-time secure ticketing triggers, SLA alarms, and gateway audits.</p>
+          <p>Review ticket updates, SLA warnings, maintenance reminders, and system activity.</p>
         </div>
         <NotificationFilters
           filter={notifications.filter}
@@ -39,9 +41,20 @@ export function NotificationInboxPage() {
         <NotificationFeed groups={notifications.groups} onView={(notification) => notifications.markRead(notification.notification_id)} />
       )}
 
+      <section className="notification-secondary-settings" aria-labelledby="notification-settings-heading">
+        <div className="notification-secondary-settings-head">
+          <div>
+            <h3 id="notification-settings-heading">Notification settings</h3>
+            <p>Optional delivery settings for this account and browser.</p>
+          </div>
+        </div>
+        <BrowserNotificationPanel />
+        <NotificationPreferencesPanel />
+      </section>
+
       <footer className="notification-secure-footer">
-        <span>National Security Council ICT Department. Secure internal infrastructure.</span>
-        <small>NODE: NSC-AUTH-PR00-09 // LATENCY: 14ms // ROLE: ICT_OFFICER_SECURE_INBOX</small>
+        <span>National Security Council ICT Department. Secure internal service desk.</span>
+        <small>System status: protected workspace // Role: ICT officer</small>
       </footer>
     </SecureWorkspaceLayout>
   );

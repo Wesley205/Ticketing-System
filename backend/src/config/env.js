@@ -37,14 +37,11 @@ function normalizeUrl(value) {
 
 function getDatabaseConfig(env = process.env) {
   const sslEnabled = parseBoolean(env.DB_SSL, false);
-
-  return {
-    host: env.PGHOST || "localhost",
-    port: parsePositiveInteger(env.PGPORT, 5432),
-    database: env.PGDATABASE || DEFAULT_DB_NAME,
-    user: env.PGUSER || "postgres",
-    password: env.PGPASSWORD || "",
-    max: parsePositiveInteger(env.PGPOOL_MAX, 10),
+  const connectionString = String(
+    env.DATABASE_URL || env.POSTGRES_URL || env.POSTGRES_PRISMA_URL || "",
+  ).trim();
+  const shared = {
+    max: parsePositiveInteger(env.PGPOOL_MAX, connectionString ? 2 : 10),
     idleTimeoutMillis: parsePositiveInteger(env.PGIDLE_TIMEOUT_MS, 30000),
     connectionTimeoutMillis: parsePositiveInteger(
       env.PGCONNECTION_TIMEOUT_MS,
@@ -58,6 +55,19 @@ function getDatabaseConfig(env = process.env) {
           ),
         }
       : false,
+  };
+
+  if (connectionString) {
+    return { ...shared, connectionString };
+  }
+
+  return {
+    ...shared,
+    host: env.PGHOST || "localhost",
+    port: parsePositiveInteger(env.PGPORT, 5432),
+    database: env.PGDATABASE || DEFAULT_DB_NAME,
+    user: env.PGUSER || "postgres",
+    password: env.PGPASSWORD || "",
   };
 }
 
@@ -174,8 +184,12 @@ function validateRuntimeConfig(env = process.env, options = {}) {
     errors.push("CORS_ALLOWED_ORIGINS must be configured in production.");
   }
 
-  if (isProduction && config.database.password === "") {
-    errors.push("PGPASSWORD must be configured in production.");
+  if (
+    isProduction &&
+    !config.database.connectionString &&
+    config.database.password === ""
+  ) {
+    errors.push("DATABASE_URL or PGPASSWORD must be configured in production.");
   }
 
   if (!config.jsonBodyLimit) {

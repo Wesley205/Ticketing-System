@@ -9,6 +9,8 @@ import {
   clearBrowserNotificationSessionState,
 } from '../../features/notifications/components/BrowserNotificationBootstrap.jsx';
 import { canAccessRoute, getSecureWorkspaceLinks } from '../../permissions/access.js';
+import { OperationalJobHeartbeat } from '../system/OperationalJobHeartbeat.jsx';
+import { Breadcrumbs } from './Breadcrumbs.jsx';
 
 function linkPath(to = '') {
   return String(to).split('?')[0];
@@ -24,6 +26,7 @@ export function SecureWorkspaceLayout({
   subtitle = 'ICT Secure Hub',
   links = null,
   activePath,
+  breadcrumbs = [],
 }) {
   const auth = useAuth();
   const location = useLocation();
@@ -43,8 +46,13 @@ export function SecureWorkspaceLayout({
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') setMobileNavOpen(false);
+    }
+    document.addEventListener('keydown', handleKeyDown);
 
     return () => {
+      document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = previousOverflow;
     };
   }, [mobileNavOpen]);
@@ -58,6 +66,9 @@ export function SecureWorkspaceLayout({
 
   return (
     <div className={`technician-dashboard-shell${mobileNavOpen ? ' mobile-nav-open' : ''}`}>
+      <a className="secure-skip-link" href="#secure-workspace-main">
+        Skip to main content
+      </a>
       <button
         type="button"
         className="technician-dashboard-sidebar-backdrop"
@@ -127,7 +138,7 @@ export function SecureWorkspaceLayout({
               className="technician-dashboard-menu-button"
               aria-controls="secure-workspace-navigation"
               aria-expanded={mobileNavOpen}
-              aria-label="Open navigation menu"
+              aria-label={mobileNavOpen ? 'Close navigation menu' : 'Open navigation menu'}
               onClick={() => setMobileNavOpen((open) => !open)}
             >
               <AppIcon name={mobileNavOpen ? 'close' : 'menu'} size={21} />
@@ -164,9 +175,13 @@ export function SecureWorkspaceLayout({
             </span>
           </div>
         </header>
-        <main className="technician-dashboard-content">{children}</main>
+        <main id="secure-workspace-main" className="technician-dashboard-content" tabIndex="-1">
+          <Breadcrumbs items={breadcrumbs} />
+          {children}
+        </main>
       </div>
       <BrowserNotificationBootstrap userId={auth.user?.user_id} />
+      <OperationalJobHeartbeat userId={auth.user?.user_id} />
     </div>
   );
 }

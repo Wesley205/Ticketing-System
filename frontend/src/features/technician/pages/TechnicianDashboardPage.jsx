@@ -72,12 +72,15 @@ export function TechnicianDashboardPage() {
     <TechnicianDashboardLayout>
       <section className="technician-dashboard-hero">
         <div>
-          <h2>Next Actionable Work</h2>
+          <h2>Assigned work</h2>
           <p>
             {assignedFloor
               ? `You are assigned to ${assignedFloor}. Same-floor work is prioritized when officers dispatch tickets.`
               : 'No floor is assigned to your technician profile yet. Contact an ICT officer if this is incorrect.'}
           </p>
+          <small className="technician-dashboard-last-updated">
+            {workState.lastUpdated ? `Last updated ${workState.lastUpdated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'Updating work queue'}
+          </small>
         </div>
         {nextAction ? (
           <Link to={nextAction.href}>

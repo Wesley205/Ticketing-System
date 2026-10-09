@@ -8,6 +8,7 @@ import { PriorityBadge } from "../../../components/status/PriorityBadge.jsx";
 import { StatusBadge } from "../../../components/status/StatusBadge.jsx";
 import { formatDateTime } from "../../../lib/formatting.js";
 import { useToast } from "../../../hooks/useToast.js";
+import { useAuth } from "../../auth/hooks/useAuth.js";
 import { TicketCreateModal } from "../../service-requests/components/TicketCreateModal.jsx";
 import { createTicket } from "../../service-requests/services/service-requests-api.js";
 import { TechnicianDashboardLayout } from "../components/TechnicianDashboardLayout.jsx";
@@ -55,6 +56,7 @@ function TicketTable({ tickets }) {
             <th>Priority</th>
             <th>Status</th>
             <th>SLA Remaining</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -81,6 +83,7 @@ function TicketTable({ tickets }) {
               >
                 {ticket.slaLabel || "Not scheduled"}
               </td>
+              <td><Link className="technician-dashboard-view-link" to={`/technician/work/ticket/${ticket.request_id}`}>View work</Link></td>
             </tr>
           ))}
         </tbody>
@@ -107,9 +110,10 @@ function MaintenanceTable({ rows }) {
         <thead>
           <tr>
             <th>Target Asset</th>
-            <th>Maintenance Type</th>
-            <th>Due Date</th>
+            <th>Work</th>
+            <th>SLA / due</th>
             <th>Status</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -123,20 +127,15 @@ function MaintenanceTable({ rows }) {
                 </Link>
               </td>
               <td>
-                {record.maintenance_type ||
-                  record.problem ||
-                  "Maintenance task"}
+                {record.problem || record.maintenance_type || "Maintenance task"}
               </td>
-              <td>
-                {formatDateTime(
-                  record.next_due_at ||
-                    record.scheduled_start_at ||
-                    record.maintenance_date,
-                )}
+              <td className={new Date(record.next_due_at || record.scheduled_start_at || record.maintenance_date) < new Date() ? "technician-dashboard-overdue-text" : ""}>
+                {new Date(record.next_due_at || record.scheduled_start_at || record.maintenance_date) < new Date() ? "Overdue" : formatDateTime(record.next_due_at || record.scheduled_start_at || record.maintenance_date)}
               </td>
               <td>
                 <StatusBadge value={record.status} />
               </td>
+              <td><Link className="technician-dashboard-view-link" to={`/technician/work/maintenance/${record.maintenance_id}`}>View work</Link></td>
             </tr>
           ))}
         </tbody>
@@ -146,6 +145,7 @@ function MaintenanceTable({ rows }) {
 }
 
 export function TechnicianAssignedWorkPage() {
+  const auth = useAuth();
   const workState = useTechnicianWork();
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -178,11 +178,11 @@ export function TechnicianAssignedWorkPage() {
     <TechnicianDashboardLayout>
       <section className="technician-assigned-head">
         <div>
-          <h2>Technician Work Center</h2>
+          <h2>Assigned work</h2>
           <p>
-            Manage personal priority tickets and hardware maintenance routines
-            assigned to you.
+            Review and complete tickets and maintenance tasks assigned to you.
           </p>
+          <span className="technician-floor-context">Assigned floor: {auth.user?.floor_label || 'Not set'}</span>
         </div>
         <div className="technician-assigned-tools">
           <Button size="sm" onClick={() => setCreateOpen(true)}>Create Ticket</Button>
@@ -223,7 +223,7 @@ export function TechnicianAssignedWorkPage() {
 
       <section className="technician-dashboard-section">
         <div className="technician-dashboard-section-head">
-          <h2>My Assigned Active Tickets</h2>
+          <h2>Assigned tickets</h2>
           <span>
             Execute and log transition states immediately upon action.
           </span>
@@ -233,7 +233,7 @@ export function TechnicianAssignedWorkPage() {
 
       <section className="technician-dashboard-section">
         <div className="technician-dashboard-section-head">
-          <h2>My Preventative Maintenance Tasks</h2>
+          <h2>Assigned maintenance</h2>
           <span>Scheduled diagnostics and terminal auditing.</span>
         </div>
         <MaintenanceTable rows={workState.visibleMaintenance} />

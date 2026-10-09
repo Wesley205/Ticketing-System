@@ -10,6 +10,7 @@ import { TicketAttachments } from './TicketAttachments.jsx';
 import { TicketCommentsThread } from './TicketCommentsThread.jsx';
 import { TicketApprovalPanel } from './TicketApprovalPanel.jsx';
 import { ticketId } from './service-request-formatters.js';
+import { SlaIndicator } from './SlaIndicator.jsx';
 
 const REQUESTER_STATUS_COPY = {
   New: ['Request received', 'ICT has received your request and will review it.'],
@@ -49,7 +50,7 @@ export function ServiceRequestFullDetail({
     <div className="service-request-detail-layout responsive-detail-grid">
       <main className="service-request-detail-main">
         <header className="service-request-detail-header">
-          <Link to="/service-requests" className="service-request-back-link">Back to requests</Link>
+          <Link to="/service-requests" className="service-request-back-link">Back to service desk</Link>
           <div className="service-request-detail-title">
             <div>
               <strong>{ticketId(ticket)}</strong>
@@ -58,6 +59,7 @@ export function ServiceRequestFullDetail({
             <div className="ui-inline-actions responsive-action-row">
               <StatusBadge value={ticket.status} />
               <PriorityBadge value={ticket.priority} />
+              <span className="service-request-title-sla"><SlaIndicator ticket={ticket} /></span>
             </div>
           </div>
         </header>
@@ -113,7 +115,7 @@ export function ServiceRequestFullDetail({
         </section>
 
         <section className="service-request-detail-section">
-          <h3>Communication</h3>
+          <h3>Public comments and internal notes</h3>
           <TicketCommentsThread
             comments={ticket.comments || []}
             canComment={ticket.permissions?.can_add_comment}
@@ -144,7 +146,7 @@ export function ServiceRequestFullDetail({
         ) : null}
 
         <section className="service-request-detail-section">
-          <h3>Activity</h3>
+          <h3>Activity history</h3>
           <TicketActivityTimeline history={ticket.history || []} limit={12} />
         </section>
       </main>

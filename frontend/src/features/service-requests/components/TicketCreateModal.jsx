@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '../../../components/forms/Button.jsx';
 import { FormField } from '../../../components/forms/FormField.jsx';
 import { Modal } from '../../../components/modals/Modal.jsx';
+import { ConfirmDialog } from '../../../components/modals/ConfirmDialog.jsx';
 import { normalizeApiError } from '../../../lib/error-handling.js';
 import { IMAGE_MIME_TYPES } from '../../../lib/media-files.js';
 import { ImageUploadPreview } from '../../../components/media/ImageGallery.jsx';
@@ -62,6 +63,7 @@ export function TicketCreateModal({
   const [submitError, setSubmitError] = useState('');
   const [images, setImages] = useState([]);
   const [imageError, setImageError] = useState('');
+  const [discardOpen, setDiscardOpen] = useState(false);
   const subjectRef = useRef(null);
   const descriptionRef = useRef(null);
 
@@ -170,7 +172,16 @@ export function TicketCreateModal({
 
   function handleClose() {
     if (isSubmitting) return;
-    if (isDirty(form) && !window.confirm('Discard this request draft?')) return;
+    if (isDirty(form)) {
+      setDiscardOpen(true);
+      return;
+    }
+    resetDraft();
+    onClose();
+  }
+
+  function discardDraft() {
+    setDiscardOpen(false);
     resetDraft();
     onClose();
   }
@@ -229,7 +240,8 @@ export function TicketCreateModal({
   }
 
   return (
-    <Modal
+    <>
+      <Modal
       open={open}
       title="Create request"
       onClose={handleClose}
@@ -241,17 +253,18 @@ export function TicketCreateModal({
           {step < STEPS.length - 1 ? (
             <Button onClick={continueStep}>Continue</Button>
           ) : (
-            <Button type="submit" form="ticket-create-form" disabled={isSubmitting}>
-              {isSubmitting ? 'Submitting...' : 'Submit request'}
+          <Button type="submit" form="ticket-create-form" loading={isSubmitting} loadingLabel="Submitting...">
+            Submit request
             </Button>
           )}
         </>
       }
     >
-      <form id="ticket-create-form" className="ticket-create-secure ticket-create-flow" onSubmit={handleSubmit}>
+      <form id="ticket-create-form" className="ticket-create-secure ticket-create-flow" onSubmit={handleSubmit} aria-busy={isSubmitting || undefined}>
         <nav className="ticket-create-steps" aria-label="Ticket creation progress">
+          <span className="ticket-create-step-count">Step {step + 1} of {STEPS.length}</span>
           {STEPS.map((label, index) => (
-            <span key={label} className={index === step ? 'active' : index < step ? 'complete' : ''}>
+            <span key={label} className={index === step ? 'active' : index < step ? 'complete' : ''} aria-current={index === step ? 'step' : undefined}>
               <b>{index + 1}</b>
               {label}
             </span>
@@ -388,6 +401,7 @@ export function TicketCreateModal({
           {step === 2 ? (
             <section className="ticket-create-section">
               <strong>Review and submit</strong>
+              <p className="ticket-create-help">This request will be filed under your account's department.</p>
               {submitError ? <p className="ui-field-error" role="alert">{submitError}</p> : null}
               <dl className="ticket-create-summary">
                 <div><dt>Subject</dt><dd>{form.subject}</dd></div>
@@ -412,6 +426,15 @@ export function TicketCreateModal({
           </section>
         </aside>
       </form>
-    </Modal>
+      </Modal>
+      <ConfirmDialog
+        open={discardOpen}
+        title="Discard this request draft?"
+        description="Your entered details and attached images will be removed."
+        confirmLabel="Discard draft"
+        onCancel={() => setDiscardOpen(false)}
+        onConfirm={discardDraft}
+      />
+    </>
   );
 }

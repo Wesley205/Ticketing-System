@@ -137,14 +137,17 @@ async function addAttachment(req, res) {
 
 async function downloadAttachment(req, res) {
   try {
-    const { attachment, fullPath } = await service.getAttachmentDownload(
+    const { attachment, fullPath, stream } = await service.getAttachmentDownload(
       req.user,
       req.params.id,
       req.params.attachmentId,
     );
     res.setHeader("Content-Type", attachment.mime_type || "application/octet-stream");
     res.setHeader("Content-Disposition", `attachment; filename="${attachment.file_name}"`);
-    res.sendFile(fullPath);
+    if (stream) {
+      return stream.pipe(res);
+    }
+    return res.sendFile(fullPath);
   } catch (err) {
     console.error(err);
     sendError(res, err, "Attachment file not found.", 404);

@@ -3,7 +3,7 @@ const { withTransaction } = require('../../utils/transactions');
 const { logAction } = require('../../utils/audit');
 const {
   removeArticleMediaFile,
-  resolveArticleMediaPath,
+  getArticleMediaFile,
   saveArticleMediaFile,
 } = require('../../utils/imageMedia');
 const mapper = require('./knowledgeBase.mapper');
@@ -239,10 +239,11 @@ async function getKnowledgeArticleMediaDownload(executor, articleId, mediaId) {
     repository.loadKnowledgeArticleMediaById(executor, articleId, mediaId),
   ]);
   if (!article || !media || media.deleted_at) return null;
+  const stored = await getArticleMediaFile(media.storage_key);
   return {
     article: mapper.mapArticleRow(article),
     media,
-    fullPath: resolveArticleMediaPath(media.storage_key),
+    ...stored,
   };
 }
 

@@ -1,4 +1,5 @@
 import { EmptyState } from '../../../components/feedback/EmptyState.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 import { DataTable } from '../../../components/tables/DataTable.jsx';
 import { StatusBadge } from '../../../components/status/StatusBadge.jsx';
 import { formatDate } from '../../../lib/formatting.js';
@@ -41,8 +42,8 @@ export function InvitationList({ rows = [], onRevoke, onResend }) {
             row.status === 'pending'
               ? (
                 <div className="ui-inline-actions">
-                  <button type="button" className="ticket-link-button" onClick={() => onResend(row)}>Resend email</button>
-                  <button type="button" className="ticket-link-button" onClick={() => onRevoke(row)}>Revoke</button>
+                  <button type="button" className="ui-icon-button" onClick={() => onResend(row)} aria-label={`Resend invitation to ${row.email}`} title="Resend invitation"><AppIcon name="refresh" size={16} /></button>
+                  <button type="button" className="ui-icon-button" onClick={() => onRevoke(row)} aria-label={`Revoke invitation for ${row.email}`} title="Revoke invitation"><AppIcon name="x" size={16} /></button>
                 </div>
               )
               : '-'

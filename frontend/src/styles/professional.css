@@ -1,49 +1,10 @@
-/* Final visual-system layer. Keep page-specific behavior in components.css. */
-
-html {
-  background: var(--surface-subtle);
-}
-
-body {
-  background: var(--surface-subtle);
-  color: var(--text);
-  font-size: 15px;
-  line-height: 1.5;
-  text-rendering: optimizeLegibility;
-}
-
-button,
-a,
-input,
-select,
-textarea {
-  -webkit-tap-highlight-color: transparent;
-}
-
-button {
-  letter-spacing: 0;
-}
-
-h1,
-h2,
-h3,
-h4,
-p {
-  margin-top: 0;
-}
-
-h1,
-h2,
-h3,
-h4 {
-  color: var(--text-strong);
-  font-family: var(--font-display);
-  letter-spacing: 0;
-}
+/* Compatibility overrides for the current visual system.
+   Foundation rules live in ./foundation; feature behavior stays in ./features. */
 
 .app-icon {
   display: block;
   flex: 0 0 auto;
+  vertical-align: middle;
   stroke-width: 1.9;
 }
 
@@ -63,7 +24,7 @@ h4 {
 }
 
 .ui-icon-button:hover {
-  background: var(--surface-muted);
+  background: var(--color-control-hover);
   border-color: var(--border);
 }
 
@@ -127,8 +88,22 @@ h4 {
   margin: 0;
 }
 
+.ui-button > span,
+.ui-icon-button > .app-icon,
+.media-lightbox-actions button > svg,
+.media-lightbox-nav > svg {
+  flex: 0 0 auto;
+}
+
+.ui-icon-button:focus-visible,
+.media-lightbox-actions button:focus-visible,
+.media-lightbox-nav:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
 .ui-input {
-  background: var(--surface);
+  background: var(--color-control-background);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   box-shadow: 0 1px 1px rgb(15 23 42 / 3%);
@@ -164,12 +139,46 @@ h4 {
 .ui-detail-panel {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 1px 2px rgb(16 33 24 / 4%);
 }
 
 .technician-dashboard-shell {
-  background: var(--surface-subtle);
+  background: var(--color-panel-background);
   min-height: 100vh;
+}
+
+.secure-skip-link {
+  position: fixed;
+  z-index: 2000;
+  top: 8px;
+  left: 8px;
+  padding: 10px 14px;
+  border: 2px solid var(--color-border, #d8d1c4);
+  border-radius: 6px;
+  background: var(--color-panel-background, #fff);
+  color: var(--color-brand, #07552e);
+  font-weight: 800;
+  text-decoration: none;
+  transform: translateY(-150%);
+  transition: transform 120ms ease;
+}
+
+.secure-skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+.technician-dashboard-main,
+.technician-dashboard-content,
+.ui-modal,
+.ui-modal-body,
+.ui-modal-footer {
+  min-width: 0;
+}
+
+.ui-modal-head h3,
+.ui-modal-body,
+.ui-modal-footer {
+  overflow-wrap: anywhere;
 }
 
 .technician-dashboard-sidebar {
@@ -255,9 +264,9 @@ h4 {
 }
 
 .technician-dashboard-topbar {
-  background: rgb(255 255 255 / 96%);
+  background: var(--color-surface);
   border-bottom: 1px solid var(--border);
-  box-shadow: 0 1px 4px rgb(20 35 27 / 4%);
+  box-shadow: 0 1px 3px rgb(16 33 24 / 5%);
   min-height: 68px;
   padding: 0 clamp(20px, 3vw, 40px);
   position: sticky;
@@ -309,6 +318,43 @@ h4 {
   max-width: 1480px;
   padding: clamp(24px, 3vw, 40px);
   width: 100%;
+}
+
+.secure-breadcrumbs {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.secure-breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  list-style: none;
+}
+
+.secure-breadcrumbs li {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.secure-breadcrumbs li:not(:last-child)::after {
+  content: '/';
+  margin-left: 6px;
+  color: var(--border);
+}
+
+.secure-breadcrumbs a {
+  color: var(--brand);
+  text-decoration: none;
+}
+
+.secure-breadcrumbs a:hover,
+.secure-breadcrumbs a:focus-visible {
+  text-decoration: underline;
 }
 
 .service-desk-secure-head,

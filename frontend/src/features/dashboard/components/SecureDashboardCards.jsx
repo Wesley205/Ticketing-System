@@ -7,7 +7,9 @@ export function SecureDashboardMetricCard({
   tone = 'neutral',
   actionLabel,
   to,
+  emphasize = false,
 }) {
+  const stateClass = `${Number(value) === 0 ? ' is-zero' : ''}${emphasize ? ' is-emphasized' : ''}`;
   const content = (
     <>
       <span>{label}</span>
@@ -18,10 +20,10 @@ export function SecureDashboardMetricCard({
   );
 
   if (to) {
-    return <Link className={`secure-dashboard-card secure-dashboard-card-${tone}`} to={to}>{content}</Link>;
+    return <Link className={`secure-dashboard-card secure-dashboard-card-${tone}${stateClass}`} to={to}>{content}</Link>;
   }
 
-  return <article className={`secure-dashboard-card secure-dashboard-card-${tone}`}>{content}</article>;
+  return <article className={`secure-dashboard-card secure-dashboard-card-${tone}${stateClass}`}>{content}</article>;
 }
 
 export function SecureDashboardActionCard({ title, description, actionLabel, to, tone = 'neutral' }) {

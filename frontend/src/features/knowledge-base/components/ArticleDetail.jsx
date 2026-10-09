@@ -7,7 +7,7 @@ import { TimelineList } from '../../../components/status/TimelineList.jsx';
 import { ImageGallery } from '../../../components/media/ImageGallery.jsx';
 import { formatDateTime } from '../../../lib/formatting.js';
 import { fetchArticleMediaBlob, splitRelations } from '../services/knowledge-base-api.js';
-import { formatArticleVisibility } from '../services/knowledge-base-copy.js';
+import { formatArticleCategory, formatArticleVisibility } from '../services/knowledge-base-copy.js';
 import { ArticleBody } from './ArticleBody.jsx';
 
 function feedbackCount(summary, key) {
@@ -67,34 +67,30 @@ export function ArticleDetail({
 
   return (
     <article className="kb-secure-detail">
-      <button type="button" className="kb-mobile-back" onClick={onBack}>
+      <button type="button" className="kb-article-back" onClick={onBack}>
         <AppIcon name="previous" size={16} />
-        All articles
+        Back to knowledge base
       </button>
       <header className="kb-secure-detail-head">
         <div>
           <div className="kb-meta-react">
-            <strong>{article.article_code || `NSC-KB-${article.article_id}`}</strong>
-            <span>{article.category || 'General'}</span>
+            <span>{formatArticleCategory(article.category)}</span>
             <span>{formatArticleVisibility(article.visibility_scope)}</span>
           </div>
           <h3>{article.title}</h3>
         </div>
-        <small>Updated {formatDateTime(article.updated_at)}</small>
+        <small>Last reviewed {article.last_reviewed_at ? formatDateTime(article.last_reviewed_at) : 'Not reviewed'}</small>
       </header>
 
-      <section className="kb-summary-box">
-        <strong>Summary</strong>
-        <p>{article.summary || 'No summary available.'}</p>
-      </section>
+      {article.summary ? <p className="kb-article-introduction">{article.summary}</p> : null}
 
-      <ArticleBody value={article.body} />
+      <ArticleBody value={article.body} title={article.title} />
 
       <dl className="kb-article-facts">
+        <div><dt>Article ID</dt><dd>{article.article_code || `NSC-KB-${article.article_id}`}</dd></div>
         <div><dt>Owner</dt><dd>{article.updated_by_name || article.created_by_name || 'ICT Service Desk'}</dd></div>
         <div><dt>Revision</dt><dd>{article.current_revision_number || 1}</dd></div>
-        <div><dt>Views</dt><dd>{article.view_count || 0}</dd></div>
-        <div><dt>Last reviewed</dt><dd>{article.last_reviewed_at ? formatDateTime(article.last_reviewed_at) : 'Not reviewed'}</dd></div>
+        <div><dt>Updated</dt><dd>{formatDateTime(article.updated_at)}</dd></div>
       </dl>
 
       {mediaItems.length ? (
@@ -117,14 +113,14 @@ export function ArticleDetail({
         </div>
       </section>
 
-      <section className="kb-secure-section">
-        <strong>Revision history</strong>
+      <details className="kb-secure-section kb-revision-history">
+        <summary>Revision history</summary>
         {revisionItems.length ? (
           <TimelineList items={revisionItems} />
         ) : (
           <p className="react-copy">No revisions recorded.</p>
         )}
-      </section>
+      </details>
 
       <footer className="kb-feedback-row">
         <span>Was this helpful?</span>

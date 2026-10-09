@@ -1,5 +1,4 @@
 const pool = require('../../config/db');
-const fs = require('fs');
 const policy = require('./knowledgeBase.policy');
 const service = require('./knowledgeBase.service');
 const { KNOWLEDGE_BASE_ERROR_MESSAGES } = require('./knowledgeBase.constants');
@@ -149,9 +148,11 @@ async function downloadMedia(req, res) {
       return res.status(403).json({ error: KNOWLEDGE_BASE_ERROR_MESSAGES.viewForbidden });
     }
 
-    await fs.promises.access(result.fullPath);
     res.setHeader('Content-Type', result.media.mime_type || 'application/octet-stream');
     res.setHeader('Content-Disposition', `inline; filename="${result.media.file_name}"`);
+    if (result.stream) {
+      return result.stream.pipe(res);
+    }
     return res.sendFile(result.fullPath);
   } catch (err) {
     return sendError(res, err, 404, 'Article image file not found.');

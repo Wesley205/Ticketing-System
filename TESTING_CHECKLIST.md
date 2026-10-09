@@ -105,6 +105,23 @@ Use this checklist after setup to confirm major workflows end to end.
 - [ ] As staff or technician, call `GET /api/health/operations` and confirm it returns `403`.
 - [ ] Confirm a PostgreSQL backup and attachment backup are captured before any production migration.
 
+## UI Release Review
+
+- [x] Shared focus, loading, empty, error, table, pagination, and modal states reviewed.
+- [x] Responsive navigation, modal sizing, safe-area spacing, and mobile touch targets reviewed.
+- [x] Shared icon usage and accessible names reviewed for primary actions and media controls.
+- [x] Core user-facing copy reviewed for clarity and encoding defects.
+- [ ] Reinstall frontend dependencies, run the frontend test suite, and complete desktop/mobile browser screenshots.
+- [ ] Run the production frontend build and verify both `index.html` and `react-shell.html` entry points.
+- [ ] Verify login, ticket creation, ticket detail, notifications, knowledge base, and role-restricted routes in the release build.
+- [ ] At 320px, 390px, and 430px, verify the shell, login, ticket creation, ticket detail, notifications, knowledge base, and technician assigned-work views have no unintended horizontal overflow.
+- [ ] At 768px and 1024px, verify navigation, filters, dialogs, tables, and two-column content transition without clipped labels or select values.
+- [ ] At 1440px and 1830px, verify content remains readable within its max width and does not stretch into overly long lines or oversized empty regions.
+- [ ] Use keyboard-only navigation to confirm skip-to-content, visible focus, menu and dialog controls, modal focus trapping, Escape handling, and focus restoration.
+- [ ] Verify icon-only controls have accessible names, touch targets are at least 44px, and screen-reader announcements identify loading, error, empty, unread, and success states.
+- [ ] Verify text and control contrast in the light theme, including disabled, selected, error, warning, and overdue states.
+- [ ] Enable reduced motion and confirm navigation, modal, notification, and loading transitions are reduced or removed.
+
 ## Role-Based Access
 
 - [ ] Log in as staff and confirm Staff Management, Departments, Reports, and Audit Log links do not appear.

@@ -64,6 +64,7 @@ export function normalizeNotification(row = {}) {
     read_at: row.read_at || (row.is_read ? row.updated_at || row.created_at || new Date().toISOString() : null),
     source_type: sourceType,
     source_id: sourceId,
+    ticket_number: row.ticket_number || payload.ticket_number || payload.ticket_no || '',
     action_url: row.action_url || row.url || '',
     actor_user_id: payload.actor_user_id || null,
     actor_name: payload.actor_name || '',

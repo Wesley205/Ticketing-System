@@ -79,7 +79,7 @@
     place-items: center;
     border: 0;
     border-radius: 6px;
-    background: #fffdf8;
+    background: var(--color-panel-background);
     color: #202820;
     font-size: 22px;
     font-weight: 800;
@@ -97,7 +97,7 @@
     padding: 0;
     border: 1px solid #d8d1c4;
     border-radius: 6px;
-    background: #fffdf8;
+    background: var(--color-panel-background);
     color: #202820;
     font: inherit;
     font-weight: 800;
@@ -144,12 +144,21 @@
     padding: 20px;
   }
 
+  .secure-breadcrumbs {
+    padding-inline: 2px;
+  }
+
   .technician-assigned-head,
   .notification-inbox-head,
   .secure-dashboard-head,
   .technician-dashboard-hero {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .secure-dashboard-head-actions {
+    justify-items: start;
+    text-align: left;
   }
 
   .technician-dashboard-topbar {
@@ -259,7 +268,7 @@
 
   .ticket-create-review-pane {
     border-left: none;
-    border-top: 1px solid #e6e0d2;
+    border-top: 1px solid var(--color-divider);
   }
 
   .technician-assigned-alert {
@@ -276,6 +285,24 @@
 
   .notification-row {
     grid-template-columns: 10px minmax(0, 1fr) auto;
+  }
+
+  .notification-row .notification-severity {
+    grid-column: 2;
+  }
+
+  .notification-row .notification-row-copy {
+    grid-column: 2 / -1;
+  }
+
+  .notification-row .notification-row-time {
+    grid-column: 2;
+    text-align: left;
+  }
+
+  .notification-row .notification-row-view {
+    grid-column: 3;
+    grid-row: 3;
   }
 
   .service-request-queue-head {
@@ -301,6 +328,14 @@
 
   .service-request-row-assignee {
     gap: 5px;
+  }
+
+  .service-request-row-subject span {
+    display: none;
+  }
+
+  .service-request-row-assignee small {
+    display: none;
   }
 
   .service-request-open-link {
@@ -330,9 +365,9 @@
     z-index: 25;
     margin: 0;
     padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
-    border-top: 1px solid #e6e0d2;
+    border-top: 1px solid var(--color-divider);
     border-bottom: 0;
-    background: rgba(255, 253, 248, 0.96);
+    background: color-mix(in srgb, var(--color-panel-background) 96%, transparent);
     box-shadow: 0 -12px 30px rgba(6, 31, 20, 0.1);
     backdrop-filter: blur(10px);
   }
@@ -348,7 +383,7 @@
 
   .service-request-admin-overrides {
     padding: 8px 10px;
-    background: #fffdf8;
+    background: var(--color-panel-background);
   }
 
   .service-request-admin-overrides:not([open]) p {
@@ -417,7 +452,7 @@
     gap: 8px;
     border: 1px solid #d8d1c4;
     border-radius: 8px;
-    background: #fffdf8;
+    background: var(--color-panel-background);
     color: #064723;
     font-weight: 800;
   }
@@ -485,6 +520,89 @@
 
   .technician-dashboard-user-pill {
     max-width: 116px;
+  }
+}
+
+@media (max-width: 360px) {
+  .technician-dashboard-content {
+    padding-inline: 12px;
+  }
+
+  .technician-dashboard-topbar {
+    padding-inline: 10px;
+  }
+
+  .technician-dashboard-title-lockup h1 {
+    max-width: 118px;
+  }
+
+  .technician-dashboard-user-pill {
+    max-width: 96px;
+  }
+
+  .ui-modal {
+    padding: 14px;
+  }
+
+  .ui-modal-head h3 {
+    font-size: 18px;
+  }
+}
+
+/* Keep shared overlays and dense data views usable on small screens. */
+@media (max-width: 640px) {
+  .ui-modal-overlay {
+    align-items: flex-start;
+    padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom));
+  }
+
+  .ui-modal {
+    width: 100%;
+    max-height: calc(100dvh - 16px);
+    padding: 18px;
+    border-radius: 12px;
+  }
+
+  .ui-modal-head,
+  .ui-modal-footer {
+    gap: 10px;
+  }
+
+  .ui-modal-head {
+    margin-bottom: 12px;
+  }
+
+  .ui-modal-footer {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .ui-modal-footer .ui-button {
+    width: 100%;
+  }
+
+  .ui-pagination {
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .ui-pagination .ui-button {
+    min-width: 44px;
+    padding-inline: 10px;
+  }
+
+  .ui-pagination-label {
+    white-space: nowrap;
+  }
+
+  .ui-table-wrap {
+    margin-inline: -4px;
+    padding-inline: 4px;
+  }
+
+  .ui-modal-body,
+  .ui-modal-footer {
+    min-width: 0;
   }
 }
 

@@ -17,7 +17,7 @@ function safeNullableNumber(value) {
   return value === null ? null : Number(value);
 }
 
-function mapDashboardStats({ filters, ticketMetrics, assetMetrics, maintenanceMetrics, ticketStatusRows, ticketPriorityRows, assetStatusRows, technicianRows }) {
+function mapDashboardStats({ filters, ticketMetrics, assetMetrics, maintenanceMetrics, accessMetrics = {}, ticketStatusRows, ticketPriorityRows, assetStatusRows, technicianRows }) {
   return {
     filters_applied: formatAppliedFilters(filters),
     total_assets: safeNumber(assetMetrics.total_assets),
@@ -28,6 +28,10 @@ function mapDashboardStats({ filters, ticketMetrics, assetMetrics, maintenanceMe
     damaged_assets: safeNumber(assetMetrics.damaged_assets),
     retired_assets: safeNumber(assetMetrics.retired_assets),
     due_maintenance_schedules: safeNumber(maintenanceMetrics.due_schedules),
+    pending_invitations: safeNumber(accessMetrics.pending_invitations),
+    active_accounts: safeNumber(accessMetrics.active_accounts),
+    access_anomalies: safeNumber(accessMetrics.access_anomalies),
+    active_departments: safeNumber(accessMetrics.active_departments),
     total_requests: safeNumber(ticketMetrics.total_requests),
     pending_requests: safeNumber(ticketMetrics.pending_requests),
     in_progress_requests: safeNumber(ticketMetrics.in_progress_requests),

@@ -1,0 +1,37 @@
+:root {
+  --type-body-size: 15px;
+  --type-body-line-height: 1.5;
+  --type-label-size: 12px;
+  --type-label-line-height: 1.35;
+  --type-title-sm: 18px;
+  --type-title-md: 24px;
+  --type-title-lg: 32px;
+}
+
+body {
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-line-height);
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  text-wrap: balance;
+}
+
+p,
+li,
+label {
+  overflow-wrap: anywhere;
+}
+
+small,
+.ui-field-label,
+.ui-field-hint,
+.ui-field-error {
+  line-height: var(--type-label-line-height);
+}

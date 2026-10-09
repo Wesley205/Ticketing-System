@@ -13,6 +13,7 @@ export function StaffDashboardPage({ user }) {
   const [articles, setArticles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -27,6 +28,7 @@ export function StaffDashboardPage({ user }) {
         if (!mounted) return;
         setTickets(Array.isArray(ticketRows) ? ticketRows : []);
         setArticles(Array.isArray(articleRows) ? articleRows : []);
+        setLastUpdated(new Date());
       } catch (loadError) {
         if (!mounted) return;
         setError(loadError.message || 'Failed to load staff dashboard.');
@@ -47,6 +49,9 @@ export function StaffDashboardPage({ user }) {
         <div>
           <h2>Welcome back, {user?.full_name?.split(' ')[0] || user?.username || 'Staff'}</h2>
           <p>Request help, track your requests, and confirm required actions.</p>
+          <small className="secure-dashboard-last-updated">
+            {lastUpdated ? `Last updated ${lastUpdated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'Updating requests'}
+          </small>
         </div>
         <Link to="/service-requests"><Button>Request help</Button></Link>
       </section>

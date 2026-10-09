@@ -66,6 +66,9 @@ export function IctOfficerDashboardPage({ dashboard }) {
             Focus on unassigned work, overdue tickets, SLA risk, and technician
             capacity.
           </p>
+          <small className="secure-dashboard-last-updated">
+            {dashboard.lastUpdated ? `Last updated ${dashboard.lastUpdated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'Updating metrics'}
+          </small>
         </div>
         <Link to="/service-requests">
           <Button>New Ticket</Button>

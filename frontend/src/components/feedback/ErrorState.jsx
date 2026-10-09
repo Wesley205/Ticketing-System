@@ -16,7 +16,7 @@ function ErrorIcon({ variant }) {
 
 export function ErrorState({
   title = 'Unable to load data',
-  description = 'A connection timeout occurred while communicating with the active directory service. Please check your network and try again.',
+  description = 'We could not load this information. Check your connection and try again.',
   onRetry,
   onBack,
   actionLabel,

@@ -9,7 +9,7 @@ import { formatDateTime } from '../../../lib/formatting.js';
 import { ticketId } from './service-request-formatters.js';
 import { ticketSlaState } from '../services/sla-labels.js';
 
-function ServiceRequestRow({ ticket, onSelect }) {
+function ServiceRequestRow({ ticket, onSelect, isSelected = false }) {
   const id = ticketId(ticket);
   const sla = ticketSlaState(ticket);
 
@@ -27,6 +27,7 @@ function ServiceRequestRow({ ticket, onSelect }) {
       tabIndex={0}
       onClick={() => onSelect(ticket)}
       onKeyDown={handleKeyDown}
+      aria-current={isSelected ? 'page' : undefined}
     >
       <div className="service-request-row-id">
         <strong>{id}</strong>
@@ -54,9 +55,9 @@ function ServiceRequestRow({ ticket, onSelect }) {
       </div>
 
       <div className="service-request-row-actions" onClick={(event) => event.stopPropagation()}>
-        <Link className="service-request-open-link" to={`/service-requests/${ticket.request_id}`} aria-label={`Open ${id}`}>
+        <Link className="service-request-open-link" to={`/service-requests/${ticket.request_id}`} aria-label={`View ticket ${id}`}>
           <AppIcon name="open" size={16} />
-          <span>Open</span>
+          <span>View ticket</span>
         </Link>
       </div>
     </article>
@@ -71,6 +72,8 @@ export function ServiceRequestQueue({
   onCreate,
   onPrevious,
   onNext,
+  createLabel = 'New ticket',
+  selectedTicketId = null,
 }) {
   const start = tickets.length ? ((pagination.page - 1) * pagination.pageSize) + 1 : 0;
   const end = tickets.length ? start + tickets.length - 1 : 0;
@@ -81,7 +84,7 @@ export function ServiceRequestQueue({
         variant="search"
         title="No tickets found"
         description="No service requests match the current filters."
-        actionLabel="Create Ticket"
+        actionLabel={createLabel}
         onAction={onCreate}
       />
     );
@@ -103,6 +106,7 @@ export function ServiceRequestQueue({
             key={ticket.request_id}
             ticket={ticket}
             onSelect={onSelect}
+            isSelected={String(ticket.request_id) === String(selectedTicketId)}
           />
         ))}
       </div>

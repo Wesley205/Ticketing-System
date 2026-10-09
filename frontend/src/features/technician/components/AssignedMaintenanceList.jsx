@@ -21,7 +21,7 @@ export function AssignedMaintenanceList({ records = [] }) {
             </Link>
           ),
         },
-        { key: 'maintenance_type', label: 'Type' },
+        { key: 'maintenance_type', label: 'Work' },
         {
           key: 'asset',
           label: 'Asset',

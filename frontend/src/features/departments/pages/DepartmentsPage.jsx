@@ -3,6 +3,7 @@ import { ErrorState } from '../../../components/feedback/ErrorState.jsx';
 import { LoadingState } from '../../../components/feedback/LoadingState.jsx';
 import { Button } from '../../../components/forms/Button.jsx';
 import { FormField } from '../../../components/forms/FormField.jsx';
+import { AppIcon } from '../../../components/icons/AppIcon.jsx';
 import { SecureWorkspaceLayout } from '../../../components/layout/SecureWorkspaceLayout.jsx';
 import { useToast } from '../../../hooks/useToast.js';
 import { hasPermission } from '../../../permissions/access.js';
@@ -43,7 +44,7 @@ export function DepartmentsPage() {
           </div>
           <div className="service-desk-secure-actions">
             <Button variant="secondary" onClick={departments.loadDepartments}>Refresh</Button>
-            {canManage ? <Button onClick={openCreate}>+ New Department</Button> : null}
+            {canManage ? <Button onClick={openCreate}><AppIcon name="plus" size={16} /> New Department</Button> : null}
           </div>
         </div>
 

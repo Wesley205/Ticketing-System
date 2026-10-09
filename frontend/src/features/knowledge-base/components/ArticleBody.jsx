@@ -1,5 +1,14 @@
 import { useMemo, useState } from 'react';
 import { AppIcon } from '../../../components/icons/AppIcon.jsx';
+import { safeArticleUrl } from '../services/knowledge-base-copy.js';
+
+function ArticleText({ value }) {
+  return String(value).split(/(https:\/\/[^\s<>]+)/g).map((part, index) => {
+    const candidate = part.replace(/[.,;!?]+$/, '');
+    const href = part.startsWith('https://') ? safeArticleUrl(candidate) : null;
+    return href ? <span key={index}><a href={href} target="_blank" rel="noopener noreferrer">{candidate}</a>{part.slice(candidate.length)}</span> : part;
+  });
+}
 
 function parseArticleBody(value = '') {
   const lines = String(value).replace(/\r\n/g, '\n').split('\n');
@@ -86,8 +95,12 @@ function CodeBlock({ value, language }) {
   );
 }
 
-export function ArticleBody({ value = '' }) {
-  const blocks = useMemo(() => parseArticleBody(value), [value]);
+export function ArticleBody({ value = '', title = '' }) {
+  const blocks = useMemo(() => {
+    const parsed = parseArticleBody(value);
+    if (parsed[0]?.type === 'heading' && parsed[0].value.trim().toLowerCase() === title.trim().toLowerCase()) parsed.shift();
+    return parsed;
+  }, [value, title]);
   const headings = blocks
     .map((block, index) => (block.type === 'heading' ? { ...block, id: headingId(block.value, index) } : null))
     .filter(Boolean);
@@ -102,17 +115,23 @@ export function ArticleBody({ value = '' }) {
           }
           if (block.type === 'list') {
             const List = block.ordered ? 'ol' : 'ul';
-            return <List key={`${block.type}-${index}`}>{block.items.map((item, itemIndex) => <li key={`${item}-${itemIndex}`}>{item}</li>)}</List>;
+            return <List key={`${block.type}-${index}`}>{block.items.map((item, itemIndex) => <li key={`${item}-${itemIndex}`}><ArticleText value={item} /></li>)}</List>;
           }
           if (block.type === 'code') return <CodeBlock key={`${block.type}-${index}`} value={block.value} language={block.language} />;
-          return <p key={`${block.type}-${index}`}>{block.value}</p>;
+          return <p key={`${block.type}-${index}`}><ArticleText value={block.value} /></p>;
         })}
       </div>
       {headings.length > 1 ? (
+        <>
+        <details className="kb-article-toc-compact">
+          <summary>On this page</summary>
+          <nav aria-label="Article contents">{headings.map((heading) => <a key={heading.id} href={`#${heading.id}`}>{heading.value}</a>)}</nav>
+        </details>
         <nav className="kb-article-toc" aria-label="Article contents">
           <strong>On this page</strong>
           {headings.map((heading) => <a key={heading.id} href={`#${heading.id}`}>{heading.value}</a>)}
         </nav>
+        </>
       ) : null}
     </div>
   );

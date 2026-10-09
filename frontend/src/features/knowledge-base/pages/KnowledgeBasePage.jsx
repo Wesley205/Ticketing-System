@@ -65,14 +65,17 @@ export function KnowledgeBasePage() {
   }
 
   return (
-    <SecureWorkspaceLayout title="Knowledge Base" subtitle="ICT Service Hub">
+    <SecureWorkspaceLayout
+      title="Knowledge Base"
+      subtitle="ICT Service Hub"
+      breadcrumbs={articleId ? [{ label: 'Knowledge Base', to: '/knowledge-base' }, { label: kb.selectedArticle?.title || 'Article detail' }] : []}
+    >
       <div className="kb-page-react secure-registry-page">
         <div className="service-desk-secure-head">
           <div>
             <h2>Knowledge Base</h2>
             <p>
-              Find short guides for service requests, hardware setup,
-              and network troubleshooting.
+              Find answers to common ICT problems.
             </p>
           </div>
           <div className="service-desk-secure-actions responsive-action-row">

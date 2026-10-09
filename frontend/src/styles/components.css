@@ -40,7 +40,7 @@
   justify-content: center;
   width: 44px;
   height: 44px;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   background: rgba(245, 166, 35, 0.12);
   color: var(--amber);
   font-family: var(--font-mono);
@@ -116,9 +116,9 @@
 }
 
 .react-panel {
-  background: var(--card-bg);
+  background: var(--color-panel-background);
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--radius-md);
   padding: 24px;
   box-shadow: var(--shadow-card);
 }
@@ -135,8 +135,8 @@
   gap: 10px;
   min-width: 260px;
   padding: 14px 16px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.72);
+  border-radius: var(--radius-md);
+  background: var(--color-panel-background);
   border: 1px solid rgba(20, 144, 74, 0.12);
   box-shadow: var(--shadow-card);
 }
@@ -146,8 +146,8 @@
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.88);
+  border-radius: var(--radius-md);
+  background: var(--color-panel-background);
   border: 1px solid rgba(20, 144, 74, 0.12);
   box-shadow: var(--shadow-card);
 }
@@ -215,10 +215,27 @@
 
 .ui-button {
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+
+.ui-button-loading {
+  cursor: wait;
+}
+
+.ui-button-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: ui-spin 700ms linear infinite;
+}
+
+@keyframes ui-spin {
+  to { transform: rotate(360deg); }
 }
 
 
@@ -241,12 +258,12 @@
 }
 
 .ui-button-secondary {
-  background: #ede7d9;
+  background: var(--color-surface-muted);
   color: var(--brand-deep);
 }
 
 .ui-button-secondary:hover {
-  background: #e4ddce;
+  background: var(--color-border-subtle);
 }
 
 .ui-button-danger {
@@ -260,11 +277,13 @@
 }
 
 .ui-button-md {
-  padding: 11px 18px;
+  min-height: var(--control-height-md);
+  padding: 0 var(--space-4);
 }
 
 .ui-button-sm {
-  padding: 8px 14px;
+  min-height: var(--control-height-sm);
+  padding: 0 var(--space-3);
   font-size: 12px;
 }
 
@@ -293,8 +312,8 @@
   gap: 18px;
   align-items: flex-start;
   padding: 24px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, rgba(10, 125, 62, 0.1), rgba(23, 165, 148, 0.06), rgba(245, 166, 35, 0.1));
+  border-radius: var(--radius-md);
+  background: var(--color-panel-background);
   border: 1px solid rgba(20, 144, 74, 0.14);
 }
 
@@ -321,7 +340,7 @@
   align-items: center;
   padding: 7px 12px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.78);
+  background: var(--color-surface-subtle);
   color: var(--brand-deep);
   font-size: 12px;
   border: 1px solid rgba(20, 144, 74, 0.12);
@@ -356,8 +375,8 @@
   width: 100%;
   padding: 11px 13px;
   border: 1.5px solid var(--border);
-  border-radius: 10px;
-  background: #fff;
+  border-radius: var(--radius-sm);
+  background: var(--color-control-background);
 }
 
 

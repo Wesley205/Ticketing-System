@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { deleteMedia, getMedia, putMedia, resolveLocalPath } = require('../storage/mediaStorage');
 
 const STORAGE_ROOT = path.join(__dirname, '..', '..', '..', 'storage', 'ticket-attachments');
 const MAX_ATTACHMENT_BYTES = Number(process.env.TICKET_ATTACHMENT_MAX_BYTES || 2 * 1024 * 1024);
@@ -74,39 +75,30 @@ function buildStorageKey(requestId, fileName) {
 async function saveAttachmentFile(requestId, payload) {
   const { safeFileName, buffer } = validateAttachmentInput(payload);
   const storageKey = buildStorageKey(requestId, safeFileName);
-  const fullPath = path.join(STORAGE_ROOT, ...storageKey.split('/'));
-
-  await fs.promises.mkdir(path.dirname(fullPath), { recursive: true });
-  await fs.promises.writeFile(fullPath, buffer);
+  const stored = await putMedia({
+    storageKey,
+    buffer,
+    mimeType: payload.mime_type,
+    localRoot: STORAGE_ROOT,
+  });
 
   return {
     buffer,
     fileName: safeFileName,
-    fullPath,
-    storageKey,
+    ...stored,
   };
 }
 
 function resolveAttachmentPath(storageKey) {
-  const fullPath = path.join(STORAGE_ROOT, ...String(storageKey || '').split('/'));
-  const normalizedRoot = path.resolve(STORAGE_ROOT);
-  const normalizedPath = path.resolve(fullPath);
-
-  if (!normalizedPath.startsWith(normalizedRoot)) {
-    throw new Error('Invalid attachment path.');
-  }
-
-  return normalizedPath;
+  return resolveLocalPath(STORAGE_ROOT, storageKey);
 }
 
 async function removeAttachmentFile(storageKey) {
-  try {
-    await fs.promises.unlink(resolveAttachmentPath(storageKey));
-  } catch (err) {
-    if (err.code !== 'ENOENT') {
-      throw err;
-    }
-  }
+  await deleteMedia({ storageKey, localRoot: STORAGE_ROOT });
+}
+
+async function getAttachmentFile(storageKey) {
+  return getMedia({ storageKey, localRoot: STORAGE_ROOT });
 }
 
 module.exports = {
@@ -115,6 +107,7 @@ module.exports = {
   MAX_ATTACHMENT_BYTES,
   MAX_TICKET_IMAGE_ATTACHMENTS,
   detectImageMimeType,
+  getAttachmentFile,
   removeAttachmentFile,
   resolveAttachmentPath,
   saveAttachmentFile,

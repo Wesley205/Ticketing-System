@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Button } from '../../../components/forms/Button.jsx';
 import { AppIcon } from '../../../components/icons/AppIcon.jsx';
+import { ConfirmDialog } from '../../../components/modals/ConfirmDialog.jsx';
 import { SlaIndicator } from './SlaIndicator.jsx';
 
 function actionIcon(status) {
@@ -83,6 +85,7 @@ function buildWorkflowActions(ticket = {}) {
 export function TicketActionCenter({ ticket, isAdmin = false, canAssign = false, onAssignOpen, onStatusSubmit, isMutating = false }) {
   const workflowActions = buildWorkflowActions(ticket);
   const hasAssignWorkflow = workflowActions.some((action) => action.status === 'Assigned');
+  const [cancelAction, setCancelAction] = useState(null);
 
   function submitStatus(action) {
     const status = action.status;
@@ -91,7 +94,8 @@ export function TicketActionCenter({ ticket, isAdmin = false, canAssign = false,
       return;
     }
 
-    if (status === 'Cancelled' && !window.confirm('Cancel this ticket? This is an exceptional workflow action.')) {
+    if (status === 'Cancelled') {
+      setCancelAction(action);
       return;
     }
 
@@ -112,8 +116,16 @@ export function TicketActionCenter({ ticket, isAdmin = false, canAssign = false,
     onStatusSubmit({ status, note: action.note || `${action.label || actionLabel(status)} selected.` });
   }
 
+  function confirmCancellation() {
+    if (!cancelAction) return;
+    const note = window.prompt('Enter cancellation reason.');
+    if (note?.trim()) onStatusSubmit({ status: 'Cancelled', note: note.trim() });
+    setCancelAction(null);
+  }
+
   return (
-    <section className="service-request-action-center">
+    <>
+      <section className="service-request-action-center">
       <SlaIndicator ticket={ticket} />
       <div className="service-request-action-owner">
         <span>Assignee</span>
@@ -127,7 +139,8 @@ export function TicketActionCenter({ ticket, isAdmin = false, canAssign = false,
             variant={action.variant}
             className="ui-button-with-icon"
             onClick={() => submitStatus(action)}
-            disabled={isMutating}
+            loading={isMutating}
+            loadingLabel="Saving..."
           >
             <AppIcon name={actionIcon(action.status)} />
             {action.label}
@@ -147,6 +160,15 @@ export function TicketActionCenter({ ticket, isAdmin = false, canAssign = false,
           <p>Use override actions only when standard workflow handling is not sufficient.</p>
         </details>
       ) : null}
-    </section>
+      </section>
+      <ConfirmDialog
+        open={Boolean(cancelAction)}
+        title="Cancel this ticket?"
+        description="Cancellation stops the standard workflow. Continue only when the request should not proceed."
+        confirmLabel="Continue to cancellation"
+        onCancel={() => setCancelAction(null)}
+        onConfirm={confirmCancellation}
+      />
+    </>
   );
 }

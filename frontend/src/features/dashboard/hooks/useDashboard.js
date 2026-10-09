@@ -20,6 +20,7 @@ export function useDashboard({ canUseGlobalFilters = false, enabled = true } = {
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterLoading, setIsFilterLoading] = useState(false);
   const [error, setError] = useState('');
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   async function loadFilterOptions() {
     if (!enabled) return;
@@ -54,6 +55,7 @@ export function useDashboard({ canUseGlobalFilters = false, enabled = true } = {
     try {
       const data = await fetchDashboardStats(nextFilters);
       setStats(data);
+      setLastUpdated(new Date());
       return data;
     } catch (loadError) {
       setError(loadError.message || 'Failed to load dashboard metrics.');
@@ -96,6 +98,7 @@ export function useDashboard({ canUseGlobalFilters = false, enabled = true } = {
     filters,
     isFilterLoading,
     isLoading,
+    lastUpdated,
     loadDashboard,
     resetFilters,
     stats,

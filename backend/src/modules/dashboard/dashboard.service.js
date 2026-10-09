@@ -35,6 +35,7 @@ async function getDashboardStats(user, rawQuery = {}, executor = pool) {
     ticketPriorityRows: stats.ticketPriorityRows,
     assetStatusRows: stats.assetStatusRows,
     technicianRows: stats.technicianRows,
+    accessMetrics: stats.accessTotals,
   });
 }
 

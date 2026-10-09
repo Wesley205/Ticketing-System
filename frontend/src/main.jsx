@@ -2,6 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './app/App.jsx';
 import './styles/tokens.css';
+import './styles/foundation/typography.css';
+import './styles/foundation/accessibility.css';
 import './styles/components.css';
 import './styles/features/technician.css';
 import './styles/features/ticket-create.css';
@@ -20,6 +22,7 @@ import './styles/auth.css';
 import './styles/media.css';
 import './styles/globals.css';
 import './styles/professional.css';
+import './styles/foundation/motion.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

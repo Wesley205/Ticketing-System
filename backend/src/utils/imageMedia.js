@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { deleteMedia, getMedia, putMedia, resolveLocalPath } = require('../storage/mediaStorage');
 
 const ARTICLE_MEDIA_ROOT = path.join(__dirname, '..', '..', '..', 'storage', 'article-media');
 const MAX_IMAGE_BYTES = Number(process.env.IMAGE_MEDIA_MAX_BYTES || process.env.TICKET_ATTACHMENT_MAX_BYTES || 2 * 1024 * 1024);
@@ -61,44 +62,39 @@ function buildArticleMediaStorageKey(articleId, fileName) {
 async function saveArticleMediaFile(articleId, payload) {
   const { buffer, fileName, mimeType } = validateImagePayload(payload);
   const storageKey = buildArticleMediaStorageKey(articleId, fileName);
-  const fullPath = path.join(ARTICLE_MEDIA_ROOT, ...storageKey.split('/'));
-
-  await fs.promises.mkdir(path.dirname(fullPath), { recursive: true });
-  await fs.promises.writeFile(fullPath, buffer);
+  const stored = await putMedia({
+    storageKey,
+    buffer,
+    mimeType,
+    localRoot: ARTICLE_MEDIA_ROOT,
+  });
 
   return {
     buffer,
     fileName,
-    fullPath,
+    ...stored,
     mimeType,
     storageKey,
   };
 }
 
 function resolveArticleMediaPath(storageKey) {
-  const fullPath = path.join(ARTICLE_MEDIA_ROOT, ...String(storageKey || '').split('/'));
-  const normalizedRoot = path.resolve(ARTICLE_MEDIA_ROOT);
-  const normalizedPath = path.resolve(fullPath);
-
-  if (!normalizedPath.startsWith(normalizedRoot)) {
-    throw new Error('Invalid article media path.');
-  }
-
-  return normalizedPath;
+  return resolveLocalPath(ARTICLE_MEDIA_ROOT, storageKey);
 }
 
 async function removeArticleMediaFile(storageKey) {
-  try {
-    await fs.promises.unlink(resolveArticleMediaPath(storageKey));
-  } catch (err) {
-    if (err.code !== 'ENOENT') throw err;
-  }
+  await deleteMedia({ storageKey, localRoot: ARTICLE_MEDIA_ROOT });
+}
+
+async function getArticleMediaFile(storageKey) {
+  return getMedia({ storageKey, localRoot: ARTICLE_MEDIA_ROOT });
 }
 
 module.exports = {
   ALLOWED_IMAGE_MIME_TYPES,
   MAX_IMAGE_BYTES,
   detectImageMimeType,
+  getArticleMediaFile,
   removeArticleMediaFile,
   resolveArticleMediaPath,
   saveArticleMediaFile,

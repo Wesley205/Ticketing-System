@@ -2,6 +2,7 @@ import { FormField } from '../../../components/forms/FormField.jsx';
 import { ARTICLE_STATUSES } from '../services/knowledge-base-api.js';
 import {
   formatArticleStatus,
+  formatArticleCategory,
   getCategoryOptions,
 } from '../services/knowledge-base-copy.js';
 
@@ -10,13 +11,13 @@ export function ArticleFilters({ filters, canManage = false, resultCount = 0, on
 
   return (
     <section className="kb-filter-shell" aria-label="Knowledge-base filters">
-      <div className="kb-filters responsive-filter-grid">
+      <div className="kb-filters">
       <FormField label="Search" htmlFor="kb-search-react">
         <input
           id="kb-search-react"
           className="ui-input"
           value={filters.search}
-          placeholder="Search knowledge articles"
+          placeholder="Search articles"
           onChange={(event) => onChange('search', event.target.value)}
         />
       </FormField>
@@ -30,7 +31,7 @@ export function ArticleFilters({ filters, canManage = false, resultCount = 0, on
         >
           <option value="">All topics</option>
           {getCategoryOptions(filters.category).map((category) => (
-            <option key={category} value={category}>{category}</option>
+            <option key={category} value={category}>{formatArticleCategory(category)}</option>
           ))}
         </select>
       </FormField>
@@ -51,7 +52,7 @@ export function ArticleFilters({ filters, canManage = false, resultCount = 0, on
 
       </div>
       <div className="kb-filter-meta">
-        <span>{resultCount} article{resultCount === 1 ? '' : 's'}</span>
+        <span className="kb-result-count" aria-live="polite">{resultCount} article{resultCount === 1 ? '' : 's'}</span>
         {hasActiveFilters ? <button type="button" onClick={onClear}>Clear filters</button> : null}
       </div>
     </section>

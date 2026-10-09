@@ -8,6 +8,7 @@ import { TicketAttachments } from './TicketAttachments.jsx';
 import { TicketCommentsThread } from './TicketCommentsThread.jsx';
 import { TicketHistoryTimeline } from './TicketHistoryTimeline.jsx';
 import { TicketStatusUpdate } from './TicketStatusUpdate.jsx';
+import { SlaIndicator } from './SlaIndicator.jsx';
 
 export function TicketDetail({
   ticket,
@@ -42,6 +43,7 @@ export function TicketDetail({
           <div className="ui-inline-actions">
             <StatusBadge value={ticket.status} />
             <PriorityBadge value={ticket.priority} />
+            <SlaIndicator ticket={ticket} />
             <span className="ui-chip">{ticket.ticket_type || 'Incident'}</span>
           </div>
         )}
@@ -155,7 +157,7 @@ export function TicketDetail({
         </section>
 
         <section className="ticket-block">
-          <strong>Comments And Notes</strong>
+          <strong>Public comments and internal notes</strong>
           <TicketCommentsThread
             comments={ticket.comments || []}
             canComment={ticket.permissions?.can_add_comment}
@@ -179,7 +181,7 @@ export function TicketDetail({
         </section>
 
         <section className="ticket-block">
-          <strong>Timeline</strong>
+          <strong>Activity history</strong>
           <TicketHistoryTimeline history={ticket.history || []} />
         </section>
       </DetailPanel>

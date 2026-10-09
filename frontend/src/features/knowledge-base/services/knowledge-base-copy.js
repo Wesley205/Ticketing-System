@@ -16,13 +16,26 @@ export const ARTICLE_STATUS_LABELS = Object.freeze({
 });
 
 export const ARTICLE_VISIBILITY_LABELS = Object.freeze({
-  all_users: 'Everyone',
+  all_users: 'All staff',
   department: 'One department',
   operational_only: 'ICT team only',
 });
 
 export function formatArticleStatus(status = '') {
   return ARTICLE_STATUS_LABELS[status] || status || 'Draft';
+}
+
+export function formatArticleCategory(category = '') {
+  return category === 'Security steps' ? 'Security' : category || 'General support';
+}
+
+export function safeArticleUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password ? url.href : null;
+  } catch {
+    return null;
+  }
 }
 
 export function formatArticleVisibility(scope = '') {

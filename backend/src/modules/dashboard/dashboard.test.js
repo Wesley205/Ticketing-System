@@ -48,6 +48,7 @@ test('dashboard mapper preserves stats response shape', () => {
     ticketMetrics: { total_requests: '2', response_sla_measured: '0', resolution_sla_measured: '0' },
     assetMetrics: { total_assets: '4' },
     maintenanceMetrics: { total_records: '1', total_cost: '2500' },
+    accessMetrics: { pending_invitations: '2', active_accounts: '7', access_anomalies: '1', active_departments: '3' },
     ticketStatusRows: [],
     ticketPriorityRows: [],
     assetStatusRows: [],
@@ -57,6 +58,10 @@ test('dashboard mapper preserves stats response shape', () => {
   assert.equal(mapped.total_requests, 2);
   assert.equal(mapped.total_assets, 4);
   assert.equal(mapped.maintenance_total_cost, 2500);
+  assert.equal(mapped.pending_invitations, 2);
+  assert.equal(mapped.active_accounts, 7);
+  assert.equal(mapped.access_anomalies, 1);
+  assert.equal(mapped.active_departments, 3);
   assert.equal(mapped.response_sla_met, 0);
   assert.equal(mapped.response_sla_measured, 0);
   assert.equal(mapped.resolution_sla_met, 0);

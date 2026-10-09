@@ -2,7 +2,7 @@
 .auth-screen,
 .auth-guard-screen {
   min-height: 100vh;
-  background: #f6f3ed;
+  background: var(--color-page-background);
 }
 
 .auth-screen {
@@ -17,7 +17,7 @@
   min-height: 100vh;
   overflow: hidden;
   border-radius: 0;
-  background: #f6f3ed;
+  background: var(--color-page-background);
 }
 
 .auth-brand-panel,
@@ -109,14 +109,14 @@
   align-items: center;
   justify-content: center;
   padding: 56px;
-  background: #f6f3ed;
+  background: var(--color-page-background);
 }
 
 .auth-card-react {
   width: 100%;
   max-width: 520px;
   padding: 34px;
-  border: 1px solid #e3ddd2;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   background: #fff;
   box-shadow: 0 18px 48px rgba(25, 30, 24, 0.08);
@@ -154,9 +154,9 @@
 
 .auth-input {
   min-height: 52px;
-  border-color: #e5ded4;
+  border-color: var(--color-border);
   border-radius: 8px;
-  background: #fffdf9;
+  background: var(--color-panel-background);
   color: #303630;
   font-size: 15px;
 }
@@ -255,7 +255,7 @@
 .auth-help-card {
   width: min(1080px, 100%);
   border-radius: 18px;
-  background: #fffdf9;
+  background: var(--color-panel-background);
   color: #242926;
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.1),
@@ -348,8 +348,8 @@
 }
 
 .auth-state-button-secondary {
-  border: 1px solid #e5ded4;
-  background: #fffdf9;
+  border: 1px solid var(--color-border);
+  background: var(--color-panel-background);
   color: #242926;
 }
 
@@ -399,7 +399,7 @@
 .auth-help-divider {
   height: 1px;
   margin: 62px 0;
-  background: #e3ded5;
+  background: var(--color-surface-muted);
 }
 
 .auth-help-options {
@@ -413,9 +413,9 @@
   gap: 32px;
   align-items: center;
   padding: 30px;
-  border: 1px solid #e3ded5;
+  border: 1px solid var(--color-border);
   border-radius: 18px;
-  background: #fffdf9;
+  background: var(--color-panel-background);
 }
 
 .auth-help-icon {

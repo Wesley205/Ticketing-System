@@ -70,8 +70,8 @@ export function TicketCommentsThread({
             <span>Internal ICT note</span>
           </label>
           <div className="ui-inline-actions">
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Posting...' : 'Post Comment'}
+            <Button type="submit" loading={isSubmitting} loadingLabel="Posting...">
+              Post Comment
             </Button>
             <span className="react-copy ticket-muted-note">
               Internal notes are visible only to ICT officers, administrators, and the assigned technician.
@@ -81,6 +81,7 @@ export function TicketCommentsThread({
       ) : null}
 
       <div className="ticket-comment-list">
+        {comments.length ? <h4 className="ticket-comment-list-title">Conversation</h4> : null}
         {mapComments(comments).map((comment) => (
           <article key={comment.id} className="ui-thread-item">
             <div className="ui-thread-head">

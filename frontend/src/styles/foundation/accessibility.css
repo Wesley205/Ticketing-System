@@ -1,0 +1,39 @@
+/* Shared interaction guarantees. Feature styles may refine appearance, not remove these. */
+:where(button, a, input, select, textarea) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:where(button, a, input, select, textarea, [tabindex]:not([tabindex='-1'])):focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+:where(button, [role='button']) {
+  touch-action: manipulation;
+}
+
+:where(button, [role='button']):disabled,
+:where(button, [role='button'])[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+@media (pointer: coarse) {
+  :where(button, [role='button'], input, select, textarea) {
+    min-height: 44px;
+  }
+
+  .ui-icon-button,
+  .media-lightbox-actions button,
+  .media-lightbox-nav {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --border: #9aa69d;
+    --border-subtle: #b6c0b9;
+    --border-strong: #65746a;
+  }
+}

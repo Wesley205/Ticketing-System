@@ -125,7 +125,12 @@ export function AssetDetailPage() {
   const canDelete = auth.user?.role === 'admin' || auth.accessProfile?.permissions?.can_access_admin_portal === true;
 
   return (
-    <SecureWorkspaceLayout title="ICT Service Desk Workspace" subtitle="Service Desk" activePath="/assets">
+    <SecureWorkspaceLayout
+      title="ICT Service Desk Workspace"
+      subtitle="Service Desk"
+      activePath="/assets"
+      breadcrumbs={[{ label: 'Assets', to: '/assets' }, { label: 'Asset detail' }]}
+    >
       <div className="secure-registry-page">
         <div className="asset-detail-secure-head">
           <Button variant="secondary" size="sm" onClick={() => navigate('/assets')}>Back</Button>

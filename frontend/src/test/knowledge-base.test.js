@@ -11,6 +11,16 @@ import {
   splitRelations,
 } from '../features/knowledge-base/services/knowledge-base-api.js';
 import { buildAccessProfile, canAccessRoute } from '../permissions/access.js';
+import { formatArticleCategory, formatArticleVisibility, safeArticleUrl } from '../features/knowledge-base/services/knowledge-base-copy.js';
+
+test('knowledge-base reader uses clear labels and permits only credential-free HTTPS links', () => {
+  assert.equal(formatArticleCategory('Security steps'), 'Security');
+  assert.equal(formatArticleVisibility('all_users'), 'All staff');
+  assert.equal(safeArticleUrl('https://support.microsoft.com/help'), 'https://support.microsoft.com/help');
+  for (const value of ['javascript:alert(1)', 'data:text/html,test', 'http://example.com', 'https://user:password@example.com', '/relative']) {
+    assert.equal(safeArticleUrl(value), null);
+  }
+});
 
 test('knowledge-base list query keeps status manager-only', () => {
   const filters = { search: 'vpn', category: 'Network', status: 'draft' };

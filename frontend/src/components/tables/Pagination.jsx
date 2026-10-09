@@ -7,19 +7,21 @@ export function Pagination({
   onPrevious,
   onNext,
 }) {
+  const normalizedTotalPages = Math.max(totalPages, 1);
+
   return (
-    <div className="ui-pagination">
-      <Button variant="secondary" onClick={onPrevious} disabled={page <= 1}>
+    <nav className="ui-pagination" aria-label="Pagination">
+      <Button aria-label="Go to previous page" variant="secondary" onClick={onPrevious} disabled={page <= 1}>
         <AppIcon name="previous" size={16} />
         Previous
       </Button>
       <span className="ui-pagination-label">
-        Page {page} of {Math.max(totalPages, 1)}
+        <span aria-live="polite">Page {page} of {normalizedTotalPages}</span>
       </span>
-      <Button variant="secondary" onClick={onNext} disabled={page >= totalPages}>
+      <Button aria-label="Go to next page" variant="secondary" onClick={onNext} disabled={page >= normalizedTotalPages}>
         Next
         <AppIcon name="next" size={16} />
       </Button>
-    </div>
+    </nav>
   );
 }

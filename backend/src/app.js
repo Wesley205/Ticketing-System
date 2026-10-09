@@ -19,6 +19,7 @@ const departmentRoutes = require('./modules/departments/department.routes');
 const floorRoutes = require('./modules/floors/floor.routes');
 const auditLogRoutes = require('./modules/auditLogs/auditLog.routes');
 const reportRoutes = require('./modules/reports/report.routes');
+const systemRoutes = require('./modules/system/system.routes');
 
 function createApp(options = {}) {
   const app = express();
@@ -42,8 +43,11 @@ function createApp(options = {}) {
   app.use('/api/floors', floorRoutes);
   app.use('/api/audit-logs', auditLogRoutes);
   app.use('/api/reports', reportRoutes);
+  app.use('/api/system', systemRoutes);
 
-  configureFrontendServing(app, options);
+  if (options.serveFrontend !== false) {
+    configureFrontendServing(app, options);
+  }
 
   app.use('/api', notFound);
   app.use(errorHandler);

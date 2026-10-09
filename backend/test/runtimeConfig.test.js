@@ -104,3 +104,28 @@ test('database config supports ssl and pool tuning from environment', () => {
   assert.equal(config.max, 20);
   assert.equal(config.ssl.rejectUnauthorized, false);
 });
+
+test('database config supports a hosted pooled connection URL', () => {
+  const config = getDatabaseConfig({
+    DATABASE_URL: 'postgresql://user:password@db.example.test/app?sslmode=require',
+    DB_SSL: 'true',
+  });
+
+  assert.equal(config.connectionString, 'postgresql://user:password@db.example.test/app?sslmode=require');
+  assert.equal(config.host, undefined);
+  assert.equal(config.password, undefined);
+  assert.equal(config.max, 2);
+  assert.equal(config.ssl.rejectUnauthorized, true);
+});
+
+test('runtime config accepts a database URL without a separate password', () => {
+  const result = validateRuntimeConfig({
+    NODE_ENV: 'production',
+    JWT_SECRET: 'a-very-long-production-secret-value', // pragma: allowlist secret
+    ORGANIZATION_EMAIL_DOMAINS: 'nscict.local',
+    CORS_ALLOWED_ORIGINS: 'https://service-desk.example.test',
+    DATABASE_URL: 'postgresql://user:password@db.example.test/app',
+  });
+
+  assert.equal(result.ok, true);
+});

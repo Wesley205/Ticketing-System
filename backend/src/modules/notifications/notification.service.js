@@ -1,4 +1,5 @@
 const pool = require('../../config/db');
+const { processBrowserPushQueue } = require('../../utils/notificationProcessor');
 const mapper = require('./notification.mapper');
 const policy = require('./notification.policy');
 const repository = require('./notification.repository');
@@ -54,11 +55,13 @@ async function emitNotificationEvent(event, executor = pool) {
     }
 
     let notificationRow = null;
-    if (allowInApp) {
+    // Browser push and email deliveries both reference the notification row.
+    // This also supports users who intentionally disable the in-app channel.
+    if (allowInApp || allowEmail || allowBrowserPush) {
       notificationRow = await repository.insertNotification(executor, target, event, eventConfig);
-      if (notificationRow) {
-        created.push(mapper.mapNotificationRow(notificationRow));
-      }
+    }
+    if (notificationRow && allowInApp) {
+      created.push(mapper.mapNotificationRow(notificationRow));
     }
 
     if (allowEmail && target.email) {
@@ -67,6 +70,17 @@ async function emitNotificationEvent(event, executor = pool) {
 
     if (allowBrowserPush && notificationRow) {
       await repository.insertBrowserPushDeliveries(executor, notificationRow, target, event);
+
+      // Vercel functions do not keep a background worker alive between requests.
+      // Dispatch this event before the request finishes and leave the delivery
+      // in the queue for retry if the provider is temporarily unavailable.
+      if (process.env.VERCEL === '1' || process.env.NOTIFICATION_INLINE_BROWSER_PUSH === 'true') {
+        await processBrowserPushQueue(executor, {
+          notificationId: notificationRow.notification_id,
+          recipientUserId: target.user_id,
+          limit: 50,
+        });
+      }
     }
   }
 

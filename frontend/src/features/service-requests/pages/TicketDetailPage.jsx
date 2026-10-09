@@ -39,7 +39,11 @@ export function TicketDetailPage() {
   }
 
   return (
-    <SecureWorkspaceLayout title={isOperational ? 'ICT Service Desk' : 'Staff Access Portal'} subtitle="ICT Service Hub">
+    <SecureWorkspaceLayout
+      title={isOperational ? 'ICT Service Desk' : 'Staff Access Portal'}
+      subtitle="ICT Service Hub"
+      breadcrumbs={[{ label: 'My Requests', to: '/service-requests' }, { label: 'Ticket detail' }]}
+    >
       {detailState.error ? (
         <ErrorState title="Ticket detail unavailable" description={detailState.error} onRetry={detailState.refresh} />
       ) : detailState.isLoading ? (

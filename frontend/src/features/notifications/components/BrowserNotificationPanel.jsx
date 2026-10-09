@@ -63,11 +63,11 @@ export function BrowserNotificationPanel({ onNotificationSent }) {
       </div>
 
       {!supported ? (
-        <p className="browser-notification-status warning">{support.reason}</p>
+        <p role="status" className="browser-notification-status warning">{support.reason}</p>
       ) : null}
 
-      {error ? <p className="browser-notification-status error">{error}</p> : null}
-      {message ? <p className="browser-notification-status success">{message}</p> : null}
+      {error ? <p role="alert" className="browser-notification-status error">{error}</p> : null}
+      {message ? <p role="status" aria-live="polite" className="browser-notification-status success">{message}</p> : null}
 
       <div className="browser-notification-actions">
         <button

@@ -59,6 +59,7 @@ test("role mappings expose explicit permissions", () => {
   assert.equal(hasPermission(activeAdmin, PERMISSIONS.USERS_CHANGE_ROLE), true);
   assert.equal(hasPermission(activeIctOfficer, PERMISSIONS.TICKETS_ASSIGN), true);
   assert.equal(hasPermission(activeTechnician, PERMISSIONS.TICKETS_ASSIGN), false);
+  assert.equal(hasPermission(activeTechnician, PERMISSIONS.TICKETS_CREATE), true);
   assert.equal(hasPermission(activeStaff, PERMISSIONS.REPORTS_VIEW), false);
   assert.deepEqual(
     getUserPermissions(activeStaff).sort(),
@@ -137,6 +138,8 @@ test("ticket creation is limited to permitted department scope", () => {
   assert.equal(canCreateTicket(activeStaff, 10), true);
   assert.equal(canCreateTicket(activeStaff, 99), false);
   assert.equal(canCreateTicket(activeIctOfficer, 99), true);
+  assert.equal(canCreateTicket(activeTechnician, 10), true);
+  assert.equal(canCreateTicket(activeTechnician, 99), false);
 });
 
 test("attachment access follows ticket visibility and internal-artifact restrictions", () => {

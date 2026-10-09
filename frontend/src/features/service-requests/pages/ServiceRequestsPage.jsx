@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../../../components/forms/Button.jsx";
 import { AppIcon } from "../../../components/icons/AppIcon.jsx";
 import { ErrorState } from "../../../components/feedback/ErrorState.jsx";
@@ -19,6 +19,7 @@ import {
 export function ServiceRequestsPage() {
   const auth = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { showToast } = useToast();
   const [createOpen, setCreateOpen] = useState(false);
@@ -122,7 +123,7 @@ export function ServiceRequestsPage() {
           {ticketsState.isLoading ? (
             <LoadingState
               variant="table"
-              description="Loading service-request records..."
+              description="Loading tickets..."
             />
           ) : (
             <ServiceRequestQueue
@@ -131,6 +132,8 @@ export function ServiceRequestsPage() {
               totalTickets={ticketsState.totalTickets}
               onSelect={handleSelectTicket}
               onCreate={() => setCreateOpen(true)}
+              createLabel={isOperational ? "New ticket" : "Request help"}
+              selectedTicketId={location.pathname.match(/\/service-requests\/(\d+)/)?.[1] || null}
               onPrevious={() =>
                 ticketsState.setPage(ticketsState.pagination.page - 1)
               }

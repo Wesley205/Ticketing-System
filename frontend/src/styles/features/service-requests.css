@@ -31,9 +31,9 @@
 .service-desk-secure-filters,
 .service-desk-secure-panel,
 .service-desk-detail-card {
-  border: 1px solid #e6e0d2;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: #fffdf8;
+  background: var(--color-panel-background);
 }
 
 .service-desk-secure-filters,
@@ -53,9 +53,9 @@
   display: grid;
   gap: 12px;
   padding: 12px;
-  border: 1px solid #e6e0d2;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: #fffdf8;
+  background: var(--color-panel-background);
 }
 
 .service-request-command-primary,
@@ -72,7 +72,7 @@
 .service-request-command-more {
   grid-template-columns: repeat(2, minmax(180px, 1fr));
   padding-top: 12px;
-  border-top: 1px solid #eee8dc;
+  border-top: 1px solid var(--color-divider);
 }
 
 .service-request-mobile-extra-filters {
@@ -104,7 +104,7 @@
   padding: 5px 9px;
   border: 1px solid #d7ecdf;
   border-radius: 999px;
-  background: #f4fbf6;
+  background: var(--color-brand-soft);
   color: #064723;
   cursor: pointer;
   font-size: 12px;
@@ -121,8 +121,8 @@
 }
 
 .service-request-filter-chips .service-request-clear-filters {
-  border-color: #e6e0d2;
-  background: #fff;
+  border-color: var(--color-border);
+  background: var(--color-control-background);
   color: #68736b;
 }
 
@@ -133,9 +133,9 @@
   gap: 3px;
   padding: 3px;
   overflow-x: auto;
-  border: 1px solid #e2dccf;
+  border: 1px solid var(--color-border);
   border-radius: 7px;
-  background: #f2eee5;
+  background: var(--color-surface-muted);
 }
 
 .service-request-queue-views button {
@@ -213,7 +213,7 @@
 .service-request-row {
   min-height: 66px;
   padding: 10px;
-  border: 1px solid #eee8dc;
+  border: 1px solid var(--color-border-subtle);
   border-left: 4px solid transparent;
   border-radius: 8px;
   background: #fff;
@@ -224,7 +224,22 @@
 .service-request-row:hover,
 .service-request-row:focus-visible {
   border-color: #bedfc9;
+  border-left-color: var(--brand-mid);
+  background: var(--color-surface-subtle);
   outline: none;
+}
+
+.service-request-row:focus-visible {
+  box-shadow: 0 0 0 3px rgb(20 144 74 / 16%);
+}
+
+.service-request-row:active {
+  background: var(--color-brand-soft);
+}
+
+.service-request-row[aria-current='page'] {
+  border-left-color: var(--brand);
+  background: var(--color-brand-soft);
 }
 
 .service-request-row-id strong,
@@ -295,9 +310,16 @@
   justify-content: center;
   gap: 6px;
   padding: 7px 10px;
-  border: 1px solid #e6e0d2;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: #fffdf8;
+  background: var(--color-panel-background);
+}
+
+.service-request-open-link:hover,
+.service-request-open-link:focus-visible {
+  border-color: var(--brand-mid);
+  background: var(--color-brand-soft);
+  outline: none;
 }
 
 .service-request-row-actions a,
@@ -322,9 +344,9 @@
   display: grid;
   gap: 14px;
   padding: 16px;
-  border: 1px solid #e6e0d2;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: #fffdf8;
+  background: var(--color-panel-background);
 }
 
 .service-request-preview-header {
@@ -333,7 +355,7 @@
   gap: 14px;
   align-items: flex-start;
   padding-bottom: 12px;
-  border-bottom: 1px solid #eee8dc;
+  border-bottom: 1px solid var(--color-divider);
 }
 
 .service-request-preview-header h3 {
@@ -348,7 +370,7 @@
   display: grid;
   gap: 10px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #eee8dc;
+  border-bottom: 1px solid var(--color-divider);
 }
 
 .service-request-preview-section h4 {
@@ -394,7 +416,7 @@
   gap: 4px;
   padding: 12px;
   border-radius: 8px;
-  background: #f7f3ea;
+  background: var(--color-surface-subtle);
 }
 
 .service-request-sla span,
@@ -412,6 +434,27 @@
 .service-request-sla small,
 .service-request-action-owner strong {
   color: #344037;
+}
+
+.service-request-title-sla {
+  display: inline-flex;
+  min-width: 0;
+}
+
+.service-request-title-sla .service-request-sla {
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.service-request-title-sla .service-request-sla small {
+  display: none;
+}
+
+.ticket-comment-list-title {
+  margin: 0;
+  color: var(--brand);
+  font-size: 12px;
 }
 
 .service-request-sla-success strong {
@@ -524,9 +567,9 @@
 .service-request-detail-header,
 .service-request-detail-section {
   padding: 16px;
-  border: 1px solid #e6e0d2;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: #fffdf8;
+  background: var(--color-panel-background);
 }
 
 .ticket-approval-panel {
@@ -537,7 +580,7 @@
   border: 1px solid #e3d8bf;
   border-left: 4px solid #c27a0a;
   border-radius: 8px;
-  background: #fffaf0;
+  background: #fff8e8;
 }
 
 .ticket-approval-panel span {
@@ -579,7 +622,7 @@
   padding: 12px;
   border: 1px solid #dfe8e1;
   border-radius: 7px;
-  background: #f4faf6;
+  background: var(--color-brand-soft);
 }
 
 .ticket-catalog-summary p {
@@ -597,7 +640,7 @@
   padding: 14px 16px;
   border-left: 4px solid #08713a;
   border-radius: 7px;
-  background: #eef8f1;
+  background: var(--color-brand-soft);
 }
 
 .requester-status-summary span {
@@ -622,7 +665,7 @@
 .ticket-catalog-responses {
   margin-top: 14px;
   padding-top: 12px;
-  border-top: 1px solid #e8e2d7;
+  border-top: 1px solid var(--color-divider);
 }
 
 .ticket-catalog-responses dt {
@@ -721,7 +764,7 @@
   margin: 14px 0;
   padding: 12px;
   border-radius: 7px;
-  background: #fffaf0;
+  background: #fff8e8;
   color: #a9660f;
   font-weight: 800;
 }
@@ -737,9 +780,9 @@
 
 .service-desk-attachment-grid button,
 .assignment-technician-option {
-  border: 1px solid #eee8dc;
+  border: 1px solid var(--color-border-subtle);
   border-radius: 7px;
-  background: #f7f3ea;
+  background: var(--color-surface-subtle);
   color: #202820;
   cursor: pointer;
 }
@@ -753,7 +796,7 @@
 .service-desk-message-list article {
   padding: 12px;
   border-radius: 7px;
-  background: #f7f3ea;
+  background: var(--color-surface-subtle);
 }
 
 .service-desk-message-list p {
@@ -785,7 +828,7 @@
 
 .assignment-ticket-head {
   padding-bottom: 12px;
-  border-bottom: 1px solid #eee8dc;
+  border-bottom: 1px solid var(--color-divider);
 }
 
 .assignment-ticket-head strong {

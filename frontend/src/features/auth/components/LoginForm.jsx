@@ -64,8 +64,8 @@ export function LoginForm({ onSubmit, errorMessage, isSubmitting = false, defaul
         </div>
       </FormField>
 
-      <Button type="submit" className="auth-submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Signing in...' : 'Sign In'}
+      <Button type="submit" className="auth-submit" loading={isSubmitting} loadingLabel="Signing in...">
+        Sign In
       </Button>
     </form>
   );

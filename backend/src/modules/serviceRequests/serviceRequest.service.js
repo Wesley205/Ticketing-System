@@ -1,10 +1,9 @@
-const fs = require("fs");
 const pool = require("../../config/db");
 const legacyService = require("./serviceRequest.workflow");
 const {
   IMAGE_MIME_TYPES,
   MAX_TICKET_IMAGE_ATTACHMENTS,
-  resolveAttachmentPath,
+  getAttachmentFile,
   saveAttachmentFile,
 } = require("../../utils/ticketAttachments");
 const policy = require("./serviceRequest.policy");
@@ -320,11 +319,10 @@ async function getAttachmentDownload(user, requestId, attachmentId) {
     throw forbidden("You do not have permission to access this attachment.");
   }
 
-  const fullPath = resolveAttachmentPath(attachment.storage_key);
-  await fs.promises.access(fullPath);
+  const media = await getAttachmentFile(attachment.storage_key);
   return {
     attachment,
-    fullPath,
+    ...media,
   };
 }
 

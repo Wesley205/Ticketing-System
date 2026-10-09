@@ -106,24 +106,24 @@ function Lightbox({ items, urls, activeIndex, onClose, onDownload, onNavigate })
           <span>{activeIndex + 1} of {items.length}</span>
         </div>
         <div className="media-lightbox-actions">
-          <button type="button" title="Zoom image" onClick={() => setZoomed((current) => !current)}><LuZoomIn /></button>
-          <button type="button" title="Rotate image" onClick={() => setRotation((current) => current + 90)}><LuRotateCcw /></button>
-          {onDownload ? <button type="button" title="Download image" onClick={() => onDownload(item)}><LuDownload /></button> : null}
-          <button type="button" title="Close viewer" onClick={onClose}><LuX /></button>
+          <button type="button" aria-label="Zoom image" title="Zoom image" onClick={() => setZoomed((current) => !current)}><LuZoomIn /></button>
+          <button type="button" aria-label="Rotate image" title="Rotate image" onClick={() => setRotation((current) => current + 90)}><LuRotateCcw /></button>
+          {onDownload ? <button type="button" aria-label="Download image" title="Download image" onClick={() => onDownload(item)}><LuDownload /></button> : null}
+          <button type="button" aria-label="Close viewer" title="Close viewer" onClick={onClose}><LuX /></button>
         </div>
       </div>
-      <button type="button" className="media-lightbox-nav media-lightbox-prev" title="Previous image" onClick={() => onNavigate(-1)} disabled={items.length < 2}>
+      <button type="button" className="media-lightbox-nav media-lightbox-prev" aria-label="Previous image" title="Previous image" onClick={() => onNavigate(-1)} disabled={items.length < 2}>
         <LuChevronLeft />
       </button>
       <figure className={`media-lightbox-figure ${zoomed ? 'is-zoomed' : ''}`}>
         {src ? (
-          <img src={src} alt={item.altText || displayName(item)} style={{ transform: `rotate(${rotation}deg)` }} />
+                <img src={src} alt={item.altText || displayName(item)} decoding="async" style={{ transform: `rotate(${rotation}deg)` }} />
         ) : (
           <div className="media-image-loading"><LuImage /> Loading image...</div>
         )}
         {item.caption ? <figcaption>{item.caption}</figcaption> : null}
       </figure>
-      <button type="button" className="media-lightbox-nav media-lightbox-next" title="Next image" onClick={() => onNavigate(1)} disabled={items.length < 2}>
+      <button type="button" className="media-lightbox-nav media-lightbox-next" aria-label="Next image" title="Next image" onClick={() => onNavigate(1)} disabled={items.length < 2}>
         <LuChevronRight />
       </button>
     </div>
@@ -213,9 +213,9 @@ export function ImageGallery({
           {normalizedItems.map((item, index) => (
             <button key={item.id} type="button" className="media-thumb" onClick={() => setActiveIndex(index)}>
               {urls[item.id] ? (
-                <img src={urls[item.id]} alt={item.altText || displayName(item)} />
+                <img src={urls[item.id]} alt={item.altText || displayName(item)} loading="lazy" decoding="async" />
               ) : (
-                <span><LuImage /> {errors[item.id] || 'Loading'}</span>
+                <span className={errors[item.id] ? 'media-image-error' : 'media-image-loading'}><LuImage /> {errors[item.id] || 'Loading image...'}</span>
               )}
               <small>{displayName(item)}</small>
             </button>
@@ -277,7 +277,7 @@ export function ImageUploadPreview({
         <div className="media-upload-preview-grid">
           {previews.map((preview, index) => (
             <figure key={`${preview.file.name}-${index}`}>
-              <img src={preview.url} alt={preview.file.name} />
+              <img src={preview.url} alt={preview.file.name} decoding="async" />
               <figcaption>{preview.file.name}</figcaption>
               <button type="button" title="Remove image" onClick={() => onRemove(index)}><LuX /></button>
             </figure>

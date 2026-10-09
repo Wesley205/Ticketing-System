@@ -45,16 +45,17 @@ function Spinner() {
 
 export function LoadingState({
   title = 'Loading...',
-  description = 'Content is being prepared.',
+  description = 'Please wait while this loads.',
   variant = 'default',
   rows = 6,
+  ariaLabel = 'Loading content',
 }) {
   const isTable = variant === 'table';
   const isDetail = variant === 'detail';
   const isOverlay = variant === 'overlay';
 
   return (
-    <section className={`ui-feedback ui-feedback-loading ui-feedback-${variant}`} role="status" aria-live="polite">
+    <section className={`ui-feedback ui-feedback-loading ui-feedback-${variant}`} role="status" aria-live="polite" aria-busy="true" aria-label={ariaLabel}>
       {isTable ? <TableSkeleton rows={rows} /> : null}
       {isDetail ? <DetailSkeleton /> : null}
       {isOverlay ? <Spinner /> : null}

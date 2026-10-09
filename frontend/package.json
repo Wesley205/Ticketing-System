@@ -20,6 +20,7 @@
     "test:departments-smoke": "node src/test/departments-smoke.mjs",
     "test:knowledge-base-live": "node src/test/knowledge-base-live-check.mjs",
     "test:knowledge-base-smoke": "node src/test/knowledge-base-smoke.mjs",
+    "test:knowledge-base-reader": "node src/test/knowledge-base-reader-review.mjs",
     "test:maintenance-live": "node src/test/maintenance-live-check.mjs",
     "test:maintenance-smoke": "node src/test/maintenance-smoke.mjs",
     "test:notifications-smoke": "node src/test/notifications-smoke.mjs",

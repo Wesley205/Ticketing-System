@@ -1,5 +1,5 @@
 import { EmptyState } from '../../../components/feedback/EmptyState.jsx';
-import { formatArticleStatus } from '../services/knowledge-base-copy.js';
+import { formatArticleCategory, formatArticleStatus } from '../services/knowledge-base-copy.js';
 
 export function ArticleList({ articles = [], selectedArticleId = null, hasActiveFilters = false, onSelect }) {
   if (!articles.length) {
@@ -20,10 +20,11 @@ export function ArticleList({ articles = [], selectedArticleId = null, hasActive
           type="button"
           className={`kb-article-card ${Number(selectedArticleId) === Number(article.article_id) ? 'active' : ''}`}
           onClick={() => onSelect(article.article_id)}
+          aria-current={Number(selectedArticleId) === Number(article.article_id) ? 'page' : undefined}
         >
           <strong>{article.title}</strong>
           <span>{article.summary || 'No summary available.'}</span>
-          <small>{article.category || 'General support'} · {formatArticleStatus(article.status)} · {article.view_count} views</small>
+          <small>{formatArticleCategory(article.category)}{article.status && article.status !== 'published' ? ` | ${formatArticleStatus(article.status)}` : ''}</small>
         </button>
       ))}
     </div>

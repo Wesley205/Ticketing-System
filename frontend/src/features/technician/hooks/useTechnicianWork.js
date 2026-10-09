@@ -21,6 +21,7 @@ export function useTechnicianWork() {
   const [maintenance, setMaintenance] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   async function refresh(nextFilters = filters) {
     setIsLoading(true);
@@ -33,6 +34,7 @@ export function useTechnicianWork() {
       ]);
       setTickets(Array.isArray(ticketRows) ? ticketRows : []);
       setMaintenance(Array.isArray(maintenanceRows) ? maintenanceRows : []);
+      setLastUpdated(new Date());
     } catch (loadError) {
       setError(loadError.message || 'Failed to load technician work items.');
       setTickets([]);
@@ -83,6 +85,7 @@ export function useTechnicianWork() {
     dashboard,
     filters,
     isLoading,
+    lastUpdated,
     maintenance,
     queues,
     refresh,

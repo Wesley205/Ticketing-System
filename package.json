@@ -1,0 +1,29 @@
+{
+  "name": "nsc-ict-system",
+  "private": true,
+  "version": "1.0.0",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "build": "npm --prefix frontend ci && npm --prefix frontend run build",
+    "test": "npm --prefix backend test && npm --prefix frontend test",
+    "migrate": "npm --prefix backend run migrate",
+    "vercel-build": "npm run build"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.3.0",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-validator": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^10.0.12",
+    "pg": "^8.23.0",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "vercel": "^63.1.0"
+  }
+}

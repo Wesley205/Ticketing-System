@@ -162,6 +162,32 @@ async function getTechnicianWorkload(executor, filters, canViewGlobal) {
   return result.rows;
 }
 
+async function getAccessTotals(executor, canViewGlobal) {
+  if (!canViewGlobal) {
+    return {
+      pending_invitations: 0,
+      active_accounts: 0,
+      access_anomalies: 0,
+      active_departments: 0,
+    };
+  }
+
+  const result = await executor.query(
+    `SELECT
+       (SELECT COUNT(*) FROM invitations
+        WHERE status = 'pending' AND expires_at > NOW()) AS pending_invitations,
+       (SELECT COUNT(*) FROM users
+        WHERE is_active = TRUE
+          AND COALESCE(account_status, 'active') = 'active'
+          AND (account_expiration_date IS NULL OR account_expiration_date >= CURRENT_DATE)) AS active_accounts,
+       (SELECT COUNT(*) FROM users
+        WHERE failed_login_attempts > 0 OR locked_until > NOW()) AS access_anomalies,
+       (SELECT COUNT(*) FROM departments
+        WHERE is_archived = FALSE) AS active_departments`,
+  );
+  return result.rows[0];
+}
+
 async function getDashboardStats(executor, scopes, filters, canViewGlobal) {
   const [
     ticketTotals,
@@ -171,6 +197,7 @@ async function getDashboardStats(executor, scopes, filters, canViewGlobal) {
     assetStatusRows,
     maintenanceTotals,
     technicianRows,
+    accessTotals,
   ] = await Promise.all([
     getTicketTotals(executor, scopes.ticket),
     getTicketStatusRows(executor, scopes.ticket),
@@ -179,6 +206,7 @@ async function getDashboardStats(executor, scopes, filters, canViewGlobal) {
     getAssetStatusRows(executor, scopes.asset),
     getMaintenanceTotals(executor, scopes.maintenance),
     getTechnicianWorkload(executor, filters, canViewGlobal),
+    getAccessTotals(executor, canViewGlobal),
   ]);
 
   return {
@@ -189,6 +217,7 @@ async function getDashboardStats(executor, scopes, filters, canViewGlobal) {
     ticketPriorityRows,
     ticketStatusRows,
     ticketTotals,
+    accessTotals,
   };
 }
 
@@ -197,5 +226,6 @@ module.exports = {
   buildMaintenanceScope,
   buildTicketScope,
   getDashboardStats,
+  getAccessTotals,
   getTechnicianWorkload,
 };

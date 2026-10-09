@@ -147,8 +147,8 @@ export function getDefaultAuthenticatedRoute(profile) {
 export const SECURE_WORKSPACE_LINKS = Object.freeze({
   staff: [
     { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { to: '/service-requests?mine=1', label: 'My requests', icon: 'ticket' },
-    { to: '/knowledge-base', label: 'Knowledge base', icon: 'book' },
+    { to: '/service-requests?mine=1', label: 'My Requests', icon: 'ticket' },
+    { to: '/knowledge-base', label: 'Knowledge Base', icon: 'book' },
   ],
   technician: [
     { to: '/technician', label: 'Dashboard', icon: 'dashboard' },
