@@ -311,6 +311,15 @@
   align-items: start;
 }
 
+.kb-article-page {
+  max-width: 980px;
+  margin-inline: auto;
+}
+
+.kb-article-page > .kb-secure-detail {
+  min-width: 0;
+}
+
 .kb-layout-list-only {
   grid-template-columns: minmax(0, 760px);
 }
@@ -815,14 +824,6 @@
 @media (max-width: 720px) {
   .kb-layout-react {
     display: block;
-  }
-
-  .kb-layout-react.kb-has-selection > .secure-data-panel {
-    display: none;
-  }
-
-  .kb-layout-react:not(.kb-has-selection) > .kb-secure-detail {
-    display: none;
   }
 
   .kb-filters,

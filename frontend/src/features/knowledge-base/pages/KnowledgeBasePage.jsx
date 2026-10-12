@@ -111,7 +111,28 @@ export function KnowledgeBasePage() {
           />
         ) : null}
 
-        {showEmptyLibrary ? (
+        {articleId ? (
+          <section className="kb-article-page secure-data-panel">
+            <ArticleDetail
+              article={kb.selectedArticle}
+              isLoading={kb.isDetailLoading}
+              error={kb.detailError}
+              canManage={canManage}
+              canFeedback={canFeedback}
+              hasArticles={hasArticles}
+              onBack={() => navigate('/knowledge-base')}
+              onRetry={() =>
+                kb.selectedArticle?.article_id &&
+                kb.selectArticle(kb.selectedArticle.article_id)
+              }
+              onEdit={() => {
+                setEditingArticle(kb.selectedArticle);
+                setFormOpen(true);
+              }}
+              onFeedback={handleFeedback}
+            />
+          </section>
+        ) : showEmptyLibrary ? (
           <EmptyState
             title="No knowledge articles yet"
             description="Create the first approved guide for common ICT tasks and support issues."
@@ -122,7 +143,7 @@ export function KnowledgeBasePage() {
             }}
           />
         ) : (
-        <div className={`kb-layout-react ${articleId ? 'kb-has-selection' : ''}`.trim()}>
+        <div className="kb-layout-react">
           <section className="secure-data-panel">
             <ArticleFilters
               filters={kb.filters}
@@ -146,24 +167,6 @@ export function KnowledgeBasePage() {
             )}
           </section>
 
-          <ArticleDetail
-            article={kb.selectedArticle}
-            isLoading={kb.isDetailLoading}
-            error={kb.detailError}
-            canManage={canManage}
-            canFeedback={canFeedback}
-            hasArticles={hasArticles}
-            onBack={() => navigate('/knowledge-base')}
-            onRetry={() =>
-              kb.selectedArticle?.article_id &&
-              kb.selectArticle(kb.selectedArticle.article_id)
-            }
-            onEdit={() => {
-              setEditingArticle(kb.selectedArticle);
-              setFormOpen(true);
-            }}
-            onFeedback={handleFeedback}
-          />
         </div>
         )}
       </div>
