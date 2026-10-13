@@ -6,25 +6,27 @@ import { ConfirmDialog } from '../../../components/modals/ConfirmDialog.jsx';
 import { normalizeApiError } from '../../../lib/error-handling.js';
 import { IMAGE_MIME_TYPES } from '../../../lib/media-files.js';
 import { ImageUploadPreview } from '../../../components/media/ImageGallery.jsx';
-import { fetchAssets, fetchTicketSuggestions, mapSimplifiedTicketPayload } from '../services/service-requests-api.js';
+import { fetchAssets, fetchClassificationRecommendation, fetchTicketSuggestions, mapSimplifiedTicketPayload } from '../services/service-requests-api.js';
 import { fetchServiceCatalog } from '../services/service-catalog-api.js';
 import { KBSuggestions } from './KBSuggestions.jsx';
 
-const CATEGORY_OPTIONS = ['Computer', 'Network', 'Printer', 'Internet', 'Software', 'Email', 'Hardware', 'Other'];
+const CATEGORY_OPTIONS = ['Account Access', 'Computer', 'Network', 'Printing', 'Software', 'Email', 'Security', 'Phone and Calls', 'Other'];
 const CLASSIFICATION_OPTIONS = [
-  { value: 'Computer|Endpoint Device', label: 'Computer / Endpoint Device' },
-  { value: 'Network|Connectivity', label: 'Network / Connectivity' },
-  { value: 'Network|Uplink Failure', label: 'Network / Uplink Failure' },
-  { value: 'Printer|Secure Print', label: 'Printer / Secure Print' },
-  { value: 'Software|Application Access', label: 'Software / Application Access' },
-  { value: 'Hardware|Peripheral Failure', label: 'Hardware / Peripheral Failure' },
-  { value: 'Other|General Support', label: 'Other / General Support' },
+  { value: 'Account Access|Application access', label: 'Account Access / Application access' },
+  { value: 'Computer|Computer problem', label: 'Computer / Computer problem' },
+  { value: 'Network|Wi-Fi connection', label: 'Network / Wi-Fi connection' },
+  { value: 'Printing|Printer offline', label: 'Printing / Printer offline' },
+  { value: 'Software|Application not working', label: 'Software / Application not working' },
+  { value: 'Email|Cannot send email', label: 'Email / Cannot send email' },
+  { value: 'Security|Suspicious email', label: 'Security / Suspicious email' },
+  { value: 'Phone and Calls|Phone not working', label: 'Phone and Calls / Phone not working' },
+  { value: 'Other|General ICT help', label: 'Other / General ICT help' },
 ];
 const SEVERITY_OPTIONS = ['Low', 'Medium', 'High', 'Critical'];
 const MAX_TICKET_IMAGES = 3;
 const INITIAL_FORM = {
   ticket_type: 'Incident',
-  classification: 'Computer|Endpoint Device',
+  classification: 'Computer|Computer problem',
   severity: 'Medium',
   subject: '',
   description: '',
@@ -44,6 +46,18 @@ function selectedAssetLabel(assets, assetId) {
   return asset ? `${asset.asset_tag} - ${asset.asset_type}` : 'No linked asset';
 }
 
+function recommendationClassificationValue(recommendation) {
+  const category = String(recommendation?.category?.value || '').trim();
+  const subcategory = String(recommendation?.subcategory?.value || 'General Support').trim();
+  if (!category) return '';
+  if (category === 'Hardware' && /printer|scanning/i.test(subcategory)) return 'Printing|Printer offline';
+  if (category === 'Hardware' && /endpoint|device/i.test(subcategory)) return 'Computer|Computer problem';
+  if (category === 'Software' && /email/i.test(subcategory)) return 'Email|Cannot send email';
+  if (category === 'Software' && /application|access/i.test(subcategory)) return 'Software|Application not working';
+  if (category === 'Network' && /connect/i.test(subcategory)) return 'Network|Wi-Fi connection';
+  return `${category}|${subcategory}`;
+}
+
 export function TicketCreateModal({
   open,
   metadata,
@@ -59,6 +73,10 @@ export function TicketCreateModal({
   const [suggestions, setSuggestions] = useState([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [suggestionsError, setSuggestionsError] = useState('');
+  const [classificationRecommendation, setClassificationRecommendation] = useState(null);
+  const [classificationLoading, setClassificationLoading] = useState(false);
+  const [classificationError, setClassificationError] = useState('');
+  const classificationTouchedRef = useRef(new Set());
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
   const [images, setImages] = useState([]);
@@ -80,6 +98,10 @@ export function TicketCreateModal({
     setSubmitError('');
     setSuggestions([]);
     setSuggestionsError('');
+    setClassificationRecommendation(null);
+    setClassificationError('');
+    setClassificationLoading(false);
+    classificationTouchedRef.current = new Set();
     setImages([]);
     setImageError('');
     fetchAssets()
@@ -129,9 +151,67 @@ export function TicketCreateModal({
     return () => clearTimeout(timer);
   }, [form.subject, form.description, form.classification, form.severity, form.ticket_type, form.affected_asset_id, open]);
 
+  useEffect(() => {
+    if (!open) return undefined;
+    const enoughText = form.subject.trim().length >= 3 || form.description.trim().length >= 12;
+    if (!enoughText) {
+      setClassificationRecommendation(null);
+      setClassificationError('');
+      setClassificationLoading(false);
+      return undefined;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setClassificationLoading(true);
+      setClassificationError('');
+      try {
+        const result = await fetchClassificationRecommendation({
+          subject: form.subject,
+          description: form.description,
+          service_needed: selectedCatalogItem?.name || '',
+        });
+        if (!cancelled) setClassificationRecommendation(result);
+      } catch (error) {
+        if (!cancelled) {
+          setClassificationRecommendation(null);
+          setClassificationError(normalizeApiError(error, 'Classification suggestions could not be loaded.').message);
+        }
+      } finally {
+        if (!cancelled) setClassificationLoading(false);
+      }
+    }, 500);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [form.subject, form.description, selectedCatalogItem?.name, open]);
+
   function updateField(key, value) {
+    if (['classification', 'ticket_type', 'severity'].includes(key)) {
+      classificationTouchedRef.current.add(key);
+    }
     setForm((current) => ({ ...current, [key]: value }));
     setFieldErrors((current) => ({ ...current, [key]: '' }));
+  }
+
+  function applyClassificationRecommendations() {
+    const recommendations = classificationRecommendation?.recommendations || {};
+    setForm((current) => {
+      const next = { ...current };
+      if (!classificationTouchedRef.current.has('classification')) {
+        const value = recommendationClassificationValue(recommendations);
+        if (value) next.classification = value;
+      }
+      if (!classificationTouchedRef.current.has('ticket_type') && recommendations.ticket_type?.value) {
+        next.ticket_type = recommendations.ticket_type.value;
+      }
+      if (!classificationTouchedRef.current.has('severity') && recommendations.priority?.value) {
+        next.severity = recommendations.priority.value;
+      }
+      return next;
+    });
   }
 
   function selectCatalogItem(value) {
@@ -355,6 +435,24 @@ export function TicketCreateModal({
             <section className="ticket-create-section">
               <strong>Classify the request</strong>
               <p className="ticket-create-help">Severity maps to priority, impact, and urgency so the request remains simple and consistent.</p>
+              {classificationLoading ? <p className="ticket-create-help" role="status">Checking your description for classification suggestions...</p> : null}
+              {classificationError ? <p className="ui-field-error" role="alert">{classificationError}</p> : null}
+              {classificationRecommendation?.recommendations?.category ? (
+                <div className="ticket-classification-recommendation" role="status">
+                  <div>
+                    <strong>Suggested classification</strong>
+                    <p>
+                      {classificationRecommendation.recommendations.category.value}
+                      {classificationRecommendation.recommendations.subcategory?.value ? ` / ${classificationRecommendation.recommendations.subcategory.value}` : ''}
+                      {classificationRecommendation.catalog_match?.name ? ` - ${classificationRecommendation.catalog_match.name}` : ''}
+                    </p>
+                    <small>
+                      Matched {classificationRecommendation.matched_signals.join(', ')}. Review before submitting.
+                    </small>
+                  </div>
+                  <Button type="button" variant="secondary" size="sm" onClick={applyClassificationRecommendations}>Use suggestion</Button>
+                </div>
+              ) : null}
               <div className="ticket-form-grid">
                 <FormField label="Request Type" htmlFor="create-ticket-type">
                   <select id="create-ticket-type" className="ui-input" value={form.ticket_type} onChange={(event) => updateField('ticket_type', event.target.value)}>
@@ -366,6 +464,11 @@ export function TicketCreateModal({
                   <select id="create-classification" className="ui-input" value={form.classification} onChange={(event) => updateField('classification', event.target.value)}>
                     {CLASSIFICATION_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                     {CATEGORY_OPTIONS.map((value) => <option key={value} value={`${value}|General`}>{value} / General</option>)}
+                    {classificationRecommendation?.recommendations?.category ? (
+                      <option value={recommendationClassificationValue(classificationRecommendation.recommendations)}>
+                        {recommendationClassificationValue(classificationRecommendation.recommendations).replace('|', ' / ')}
+                      </option>
+                    ) : null}
                   </select>
                 </FormField>
 

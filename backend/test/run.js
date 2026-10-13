@@ -33,6 +33,7 @@ require('../src/modules/dashboard/dashboard.test');
 require('../src/modules/reports/report.test');
 require('../src/modules/auditLogs/auditLog.test');
 require('../src/modules/serviceRequests/serviceRequest.test');
+require('../src/modules/serviceRequests/classification/classification.test');
 require('./jobRunner.test');
 require('./operationalJobs.test');
 require('./mediaStorage.test');

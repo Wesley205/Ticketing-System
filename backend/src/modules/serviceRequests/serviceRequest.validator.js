@@ -5,6 +5,7 @@ const {
   TICKET_STATUSES,
   TICKET_TYPES,
 } = require("./serviceRequest.constants");
+const { RECOMMENDATION_INPUT_LIMITS } = require('./classification/classification.constants');
 
 function handleValidation(req, res, next) {
   const errors = validationResult(req);
@@ -27,6 +28,30 @@ const listTicketValidators = [
   query("queue").optional().isIn(["unassigned", "sla_risk", "overdue", "pending_approval"]).withMessage("Invalid operational queue."),
 ];
 
+const classificationRecommendationValidators = [
+  body('subject')
+    .optional({ nullable: true })
+    .isString().withMessage('Subject must be text.')
+    .trim()
+    .isLength({ max: RECOMMENDATION_INPUT_LIMITS.subject }).withMessage('Subject is too long.'),
+  body('description')
+    .optional({ nullable: true })
+    .isString().withMessage('Description must be text.')
+    .trim()
+    .isLength({ max: RECOMMENDATION_INPUT_LIMITS.description }).withMessage('Description is too long.'),
+  body('service_needed')
+    .optional({ nullable: true })
+    .isString().withMessage('Service needed must be text.')
+    .trim()
+    .isLength({ max: RECOMMENDATION_INPUT_LIMITS.service_needed }).withMessage('Service needed is too long.'),
+  body().custom((_, { req }) => {
+    if (!String(req.body?.subject || '').trim() && !String(req.body?.description || '').trim()) {
+      throw new Error('Subject or description is required.');
+    }
+    return true;
+  }),
+];
+
 const createTicketValidators = [
   body("ticket_type").optional().isIn(TICKET_TYPES).withMessage("Invalid ticket type"),
   body("category").notEmpty().withMessage("Category is required"),
@@ -37,8 +62,8 @@ const createTicketValidators = [
   body("floor_id").optional({ nullable: true }).isInt({ min: 1 }).withMessage("Invalid floor"),
   body("catalog_item_id").optional({ nullable: true }).isInt({ min: 1 }).withMessage("Invalid catalog item"),
   body("catalog_responses").optional().isObject().withMessage("Catalog responses must be an object"),
-  body("subject").trim().notEmpty().withMessage("Subject is required"),
-  body("description").trim().notEmpty().withMessage("Description is required"),
+  body("subject").trim().notEmpty().isLength({ max: 200 }).withMessage("Subject must be 200 characters or fewer"),
+  body("description").trim().notEmpty().isLength({ max: 10000 }).withMessage("Description must be 10000 characters or fewer"),
 ];
 
 const statusValidators = [
@@ -71,6 +96,7 @@ module.exports = {
   attachmentValidators,
   approvalValidators,
   commentValidators,
+  classificationRecommendationValidators,
   createTicketValidators,
   handleValidation,
   listTicketValidators,

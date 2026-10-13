@@ -9,6 +9,14 @@ router.get("/", requireAuth, validator.listTicketValidators, validator.handleVal
 router.get("/assigned-to-me", requireAuth, controller.listAssignedToMe);
 router.get("/metadata/options", requireAuth, controller.getMetadata);
 
+router.post(
+  "/classification-recommendation",
+  requireAuth,
+  validator.classificationRecommendationValidators,
+  validator.handleValidation,
+  controller.recommendTicketClassification,
+);
+
 router.get(
   "/:id/assignment-history",
   requireAuth,

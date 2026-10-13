@@ -1,4 +1,6 @@
 const service = require("./serviceRequest.service");
+const { recommendClassificationWithCatalog } = require('./classification/classification.service');
+const serviceCatalog = require('../serviceCatalog/serviceCatalog.service');
 
 function sendError(res, err, fallbackMessage, fallbackStatus = 500) {
   const statusCode = err.statusCode || err.status || fallbackStatus;
@@ -32,6 +34,15 @@ async function getMetadata(_req, res) {
   } catch (err) {
     console.error(err);
     sendError(res, err, "Failed to load ticket metadata.");
+  }
+}
+
+async function recommendTicketClassification(req, res) {
+  try {
+    const catalogItems = await serviceCatalog.listCatalogItems();
+    return res.json(recommendClassificationWithCatalog(req.body, catalogItems));
+  } catch (err) {
+    return sendError(res, err, 'Failed to recommend ticket classification.', 400);
   }
 }
 
@@ -164,6 +175,7 @@ module.exports = {
   getAssignmentHistory,
   getRoutingSuggestions,
   getMetadata,
+  recommendTicketClassification,
   getTicketDetail,
   listAssignedToMe,
   listTickets,

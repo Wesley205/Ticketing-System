@@ -10,6 +10,12 @@ const policy = require("./serviceRequest.policy");
 const mapper = require("./serviceRequest.mapper");
 const repository = require("./serviceRequest.repository");
 const serviceCatalog = require("../serviceCatalog/serviceCatalog.service");
+const { TICKET_PRIORITIES, TICKET_TYPES, TICKET_SOURCE_CHANNELS } = require("./serviceRequest.constants");
+const { isValidClassification } = require("./classification/classification.taxonomy");
+
+const MAX_SUBJECT_LENGTH = 200;
+const MAX_DESCRIPTION_LENGTH = 10000;
+const MAX_CATALOG_RESPONSE_LENGTH = 2000;
 
 function forbidden(message) {
   const err = new Error(message);
@@ -27,6 +33,64 @@ function badRequest(message) {
   const err = new Error(message);
   err.statusCode = 400;
   return err;
+}
+
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function validateText(value, field, maxLength) {
+  if (typeof value !== "string" || !value.trim()) {
+    throw badRequest(`${field} is required.`);
+  }
+  if (value.trim().length > maxLength) {
+    throw badRequest(`${field} must be ${maxLength} characters or fewer.`);
+  }
+  return value.trim();
+}
+
+function validateCatalogResponses(catalogItem, responses = {}) {
+  if (!isPlainObject(responses)) {
+    throw badRequest("Catalog responses must be an object.");
+  }
+
+  const fields = Array.isArray(catalogItem?.form_schema) ? catalogItem.form_schema : [];
+  const allowedKeys = new Set(fields.map((field) => field?.key).filter(Boolean));
+  const unknownKey = Object.keys(responses).find((key) => !allowedKeys.has(key));
+  if (unknownKey) {
+    throw badRequest("The submitted service details contain an unsupported field.");
+  }
+
+  for (const field of fields) {
+    const value = responses[field.key];
+    if (field.required && (value === undefined || value === null || !String(value).trim())) {
+      throw badRequest(`${field.label || field.key} is required for this service.`);
+    }
+    if (value !== undefined && value !== null) {
+      if (!["string", "number", "boolean"].includes(typeof value)) {
+        throw badRequest(`${field.label || field.key} has an invalid value.`);
+      }
+      if (String(value).length > MAX_CATALOG_RESPONSE_LENGTH) {
+        throw badRequest(`${field.label || field.key} must be ${MAX_CATALOG_RESPONSE_LENGTH} characters or fewer.`);
+      }
+    }
+  }
+  return responses;
+}
+
+function normalizeDepartmentId(user, requestedDepartmentId) {
+  const canChooseDepartment = policy.canCreateServiceRequest(user, requestedDepartmentId || user.department_id);
+  if (!canChooseDepartment) {
+    throw forbidden("You may only create requests for your own department.");
+  }
+  return requestedDepartmentId || user.department_id || null;
+}
+
+function validateClassificationValue(value, allowed, field) {
+  if (value !== undefined && value !== null && !allowed.includes(value)) {
+    throw badRequest(`Invalid ${field}.`);
+  }
+  return value;
 }
 
 async function loadRequestOrThrow(requestId) {
@@ -129,9 +193,18 @@ async function getTicketDetail(user, requestId) {
 }
 
 async function createTicket(user, payload) {
-  const departmentId = payload.department_id || user.department_id;
-  if (!policy.canCreateServiceRequest(user, departmentId)) {
-    throw forbidden("You may only create requests for your own department.");
+  const departmentId = normalizeDepartmentId(user, payload.department_id);
+  const subject = validateText(payload.subject, "Subject", MAX_SUBJECT_LENGTH);
+  const description = validateText(payload.description, "Description", MAX_DESCRIPTION_LENGTH);
+  validateClassificationValue(payload.ticket_type, TICKET_TYPES, "ticket type");
+  validateClassificationValue(payload.priority, TICKET_PRIORITIES, "priority");
+  validateClassificationValue(payload.impact, TICKET_PRIORITIES, "impact");
+  validateClassificationValue(payload.urgency, TICKET_PRIORITIES, "urgency");
+  if (!payload.catalog_item_id && !isValidClassification(payload.category, payload.subcategory)) {
+    throw badRequest("Select a valid issue area and specific problem.");
+  }
+  if (payload.source_channel !== undefined) {
+    validateClassificationValue(payload.source_channel, TICKET_SOURCE_CHANNELS, "source channel");
   }
 
   const affectedAsset = await validateAffectedAsset(
@@ -147,14 +220,7 @@ async function createTicket(user, payload) {
     throw badRequest("The selected service catalog item is unavailable.");
   }
 
-  const catalogResponses = payload.catalog_responses && typeof payload.catalog_responses === "object"
-    ? payload.catalog_responses
-    : {};
-  for (const field of catalogItem?.form_schema || []) {
-    if (field.required && !String(catalogResponses[field.key] || "").trim()) {
-      throw badRequest(`${field.label || field.key} is required for this service.`);
-    }
-  }
+  const catalogResponses = validateCatalogResponses(catalogItem, payload.catalog_responses || {});
 
   return legacyService.createServiceRequestRecord({
     requester_id: user.user_id,
@@ -164,8 +230,8 @@ async function createTicket(user, payload) {
     ticket_type: catalogItem?.ticket_type || payload.ticket_type || "Incident",
     category: catalogItem?.category || payload.category,
     subcategory: catalogItem?.name || payload.subcategory,
-    subject: payload.subject,
-    description: payload.description,
+    subject,
+    description,
     priority: catalogItem?.default_priority || payload.priority || "Medium",
     impact: catalogItem?.default_priority || payload.impact || payload.priority || "Medium",
     urgency: catalogItem?.default_priority || payload.urgency || payload.priority || "Medium",
@@ -342,4 +408,7 @@ module.exports = {
   listTickets,
   updateAffectedAsset,
   updateStatus,
+  validateCatalogResponses,
+  normalizeDepartmentId,
+  isValidClassification,
 };

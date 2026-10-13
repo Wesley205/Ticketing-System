@@ -2,6 +2,13 @@ import { apiClient, apiDownload } from '../../../lib/api-client.js';
 import { buildQueryParams } from '../../../lib/query-params.js';
 import { imageFileToUploadPayload } from '../../../lib/media-files.js';
 
+export function fetchClassificationRecommendation(payload = {}) {
+  return apiClient('/service-requests/classification-recommendation', {
+    method: 'POST',
+    body: payload,
+  });
+}
+
 export function mapSimplifiedTicketPayload(form) {
   const [category, subcategory] = String(form.classification || '').split('|');
   const severity = form.severity || 'Medium';

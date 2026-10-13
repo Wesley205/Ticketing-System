@@ -94,6 +94,43 @@ test("service request service keeps legacy workflow helpers available", () => {
   assert.equal(typeof service.updateStatus, "function");
 });
 
+test("submission safeguards reject unknown catalog response fields", () => {
+  assert.throws(
+    () => service.validateCatalogResponses(
+      { form_schema: [{ key: "location", label: "Location", required: true }] },
+      { location: "Floor 2", injected_field: "ignore this" },
+    ),
+    /unsupported field/,
+  );
+});
+
+test("submission safeguards enforce required catalog fields and response types", () => {
+  const catalogItem = {
+    form_schema: [{ key: "business_justification", label: "Business justification", required: true }],
+  };
+
+  assert.throws(
+    () => service.validateCatalogResponses(catalogItem, {}),
+    /Business justification is required/,
+  );
+  assert.throws(
+    () => service.validateCatalogResponses(catalogItem, { business_justification: { unsafe: true } }),
+    /invalid value/,
+  );
+  assert.deepEqual(
+    service.validateCatalogResponses(catalogItem, { business_justification: "Need access for this role" }),
+    { business_justification: "Need access for this role" },
+  );
+});
+
+test("submission safeguards keep recommendation-only fields out of the server contract", () => {
+  const result = service.validateCatalogResponses(
+    { form_schema: [] },
+    {},
+  );
+  assert.deepEqual(result, {});
+});
+
 test("service request approvals require a reason when rejected", async () => {
   await assert.rejects(
     service.decideApproval(
@@ -108,4 +145,11 @@ test("service request approvals require a reason when rejected", async () => {
 test("service request router composes route middleware in the module", () => {
   assert.equal(typeof router, "function");
   assert.ok(router.stack.length >= 10);
+});
+
+test("service request router exposes the authenticated classification recommendation endpoint", () => {
+  const endpoints = router.stack
+    .filter((layer) => layer.route)
+    .map((layer) => `${Object.keys(layer.route.methods).join(',').toUpperCase()} ${layer.route.path}`);
+  assert.ok(endpoints.includes('POST /classification-recommendation'));
 });
